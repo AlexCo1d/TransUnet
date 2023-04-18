@@ -1,0 +1,9 @@
+/img_out/
+/img/
+/logs/
+/miou_pr_dir copy/
+/miou_pr_dir/
+/final_image_plus_video/
+/pytorch文件说明(1)(2)(1).docx
+*.jpg
+*.png
