@@ -6,7 +6,7 @@ from PIL import Image
 import os
 import time
 uNet = uNet()
-imgs = os.listdir("./img")
+imgs = os.listdir("img_test")
 
 for jpg in imgs:
     
