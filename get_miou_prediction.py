@@ -10,6 +10,7 @@ import copy
 import os
 
 
+
 class miou_Pspnet(psp):
     def detect_image(self, image):
         orininal_h = np.array(image).shape[0]
@@ -54,3 +55,4 @@ for image_id in image_ids:
     image = image.resize((512, 512))
     image.save("./miou_pr_dir/" + image_id + ".png")
     print(image_id, " done!")
+

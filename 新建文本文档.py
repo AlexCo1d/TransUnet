@@ -37,7 +37,8 @@ def main():
         os.makedirs(output_folder_image)
     if not os.path.exists(output_folder_label):
         os.makedirs(output_folder_label)
-
+    if not os.path.exists(output_folder_extra):
+        os.makedirs(output_folder_extra)
     positive_samples = []
     negative_samples = []
 
@@ -64,8 +65,8 @@ def main():
 
     for i, sample in enumerate(combined_samples):
         shutil.copy(sample.replace('.png', '.jpg').replace('\label', '\image'),
-                    os.path.join(output_folder_image, f'{i}.jpg'))
-        shutil.copy(sample, os.path.join(output_folder_label, f'{i}.png'))
+                    os.path.join(output_folder_image, os.path.basename(sample).replace('.png', '.jpg')))
+        shutil.copy(sample, os.path.join(output_folder_label, os.path.basename(sample)))
 
     for extra_sample in positive_samples + negative_samples:
         if extra_sample not in combined_samples:
@@ -96,6 +97,12 @@ def txt():
             f.write(jpeg_file + '\n')
 
 
+def label_to_onehot(label_image, num_classes):
+    one_hot_image = np.eye(num_classes)[label_image]
+    one_hot_image = np.transpose(one_hot_image, (2, 0, 1))
+    return one_hot_image
+
+
 if __name__ == '__main__':
-    # main()
-    txt()
+    main()
+    # txt()
