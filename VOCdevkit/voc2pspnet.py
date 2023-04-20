@@ -1,8 +1,8 @@
 import os
 import random 
  
-segfilepath=r'D:\PycharmProjects\really\111\VOCdevkit\VOC2007\SegmentationClass'
-saveBasePath=r"D:\PycharmProjects\really\111\VOCdevkit\VOC2007\ImageSets\Segmentation"
+segfilepath='./VOCdevkit/VOC2007/SegmentationClass'
+saveBasePath="./VOCdevkit/VOC2007/ImageSets/Segmentation"
  
 trainval_percent=1
 train_percent=0.9

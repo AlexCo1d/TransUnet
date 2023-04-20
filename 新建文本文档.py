@@ -78,7 +78,7 @@ def main():
 
 
 def txt():
-    image_folder = './img/'
+    image_folder = './img/extra_for_test/image'
 
     # 指定要写入的txt文件路径
     output_txt_file = './VOCdevkit/VOC2007/ImageSets/Segmentation/val.txt'
