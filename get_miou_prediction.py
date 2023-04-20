@@ -53,6 +53,6 @@ for image_id in image_ids:
     image = Image.open(image_path)
     image = psp.detect_image(image)
     image = image.resize((512, 512))
-    image.save("./miou_pr_dir/" + image_id + ".png"gedpkgdp
+    image.save("./miou_pr_dir/" + image_id + ".png")
     print(image_id, " done!")
 

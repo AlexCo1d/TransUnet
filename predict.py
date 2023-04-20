@@ -39,10 +39,11 @@ class miou_Pspnet(psp):
 def show_image():
     from unet import uNet
     uNet = uNet()
-    imgs = os.listdir("./for_test/image")
+    fpath="./for_test/image"
+    imgs = os.listdir(fpath)
 
     for jpg in imgs:
-        img = Image.open("./img/" + jpg).convert('RGB')
+        img = Image.open(os.path.join(fpath,jpg)).convert('RGB')
         start_time = time.time()
         image = uNet.detect_image(img)
         duration = time.time() - start_time
