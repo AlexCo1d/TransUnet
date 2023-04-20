@@ -59,18 +59,18 @@ def transfer_image():
     if not os.path.exists("./miou_pr_dir"):
         os.makedirs("./miou_pr_dir")
 
-    for image in os.listdir(label_path):
+    for image_name in os.listdir(label_path):
         # 测试集原标签
-        image = Image.open(os.path.join(test_path, image))
+        image = Image.open(os.path.join(label_path, image_name))
         image = image.resize((512, 512))
-        image.save(f"./miou_pr_dir copy/{image}")
+        image.save(f"miou_pr_dir copy/{image_name}")
 
         # 测试集生成标签
-        image = Image.open(os.path.join(image_path, image.replace('.png', '.jpg')))
+        image = Image.open(os.path.join(image_path, image_name.replace('.png', '.jpg')))
         image = psp.detect_image(image)
         image = image.resize((512, 512))
-        image.save(f"./miou_pr_dir/{image}")
-        print(image, " done!")
+        image.save(f"miou_pr_dir/{image_name}")
+        print(image_name, " done!")
 
 
 if __name__ == '__main__':
