@@ -42,7 +42,7 @@ class PreActBottleneck(nn.Module):
     def __init__(self, cin, cout=None, cmid=None, stride=1):
         super().__init__()
         cout = cout or cin
-        cmid = cmid or cout//4
+        cmid = cmid or cout // 4
 
         self.gn1 = nn.GroupNorm(32, cmid, eps=1e-6)
         self.conv1 = conv1x1(cin, cmid, bias=False)
@@ -109,6 +109,7 @@ class PreActBottleneck(nn.Module):
             self.gn_proj.weight.copy_(proj_gn_weight.view(-1))
             self.gn_proj.bias.copy_(proj_gn_bias.view(-1))
 
+
 class ResNetV2(nn.Module):
     """Implementation of Pre-activation (v2) ResNet mode."""
 
@@ -126,17 +127,20 @@ class ResNetV2(nn.Module):
 
         self.body = nn.Sequential(OrderedDict([
             ('block1', nn.Sequential(OrderedDict(
-                [('unit1', PreActBottleneck(cin=width, cout=width*4, cmid=width))] +
-                [(f'unit{i:d}', PreActBottleneck(cin=width*4, cout=width*4, cmid=width)) for i in range(2, block_units[0] + 1)],
-                ))),
+                [('unit1', PreActBottleneck(cin=width, cout=width * 4, cmid=width))] +
+                [(f'unit{i:d}', PreActBottleneck(cin=width * 4, cout=width * 4, cmid=width)) for i in
+                 range(2, block_units[0] + 1)],
+            ))),
             ('block2', nn.Sequential(OrderedDict(
-                [('unit1', PreActBottleneck(cin=width*4, cout=width*8, cmid=width*2, stride=2))] +
-                [(f'unit{i:d}', PreActBottleneck(cin=width*8, cout=width*8, cmid=width*2)) for i in range(2, block_units[1] + 1)],
-                ))),
+                [('unit1', PreActBottleneck(cin=width * 4, cout=width * 8, cmid=width * 2, stride=2))] +
+                [(f'unit{i:d}', PreActBottleneck(cin=width * 8, cout=width * 8, cmid=width * 2)) for i in
+                 range(2, block_units[1] + 1)],
+            ))),
             ('block3', nn.Sequential(OrderedDict(
-                [('unit1', PreActBottleneck(cin=width*8, cout=width*16, cmid=width*4, stride=2))] +
-                [(f'unit{i:d}', PreActBottleneck(cin=width*16, cout=width*16, cmid=width*4)) for i in range(2, block_units[2] + 1)],
-                ))),
+                [('unit1', PreActBottleneck(cin=width * 8, cout=width * 16, cmid=width * 4, stride=2))] +
+                [(f'unit{i:d}', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4)) for i in
+                 range(2, block_units[2] + 1)],
+            ))),
         ]))
 
     def forward(self, x):
@@ -145,10 +149,12 @@ class ResNetV2(nn.Module):
         x = self.root(x)
         features.append(x)
         x = nn.MaxPool2d(kernel_size=3, stride=2, padding=0)(x)
-        for i in range(len(self.body)-1):
+        for i in range(len(self.body) - 1):
             x = self.body[i](x)
-            right_size = int(in_size / 4 / (i+1))
+            right_size = int(in_size / 4 / (i + 1))
             if x.size()[2] != right_size:
+                '''这个 forward 函数中的 if 语句的目的是检查当前特征图 x 的空间尺寸（宽度和高度）是否等于期望的 right_size。如果不等于， 它将创建一个填充零的新特征图 
+                feat，并将原始特征图 x 复制到这个新特征图的左上角，以使其空间尺寸与期望的尺寸相符。这样做主要是为了确保特征图的尺寸在之后的操作中是正确的，例如在特征金字塔网络中对特征图进行上采样和融合时。 '''
                 pad = right_size - x.size()[2]
                 assert pad < 3 and pad > 0, "x {} should {}".format(x.size(), right_size)
                 feat = torch.zeros((b, x.size()[1], right_size, right_size), device=x.device)
@@ -159,3 +165,102 @@ class ResNetV2(nn.Module):
         x = self.body[-1](x)
 
         return x, features[::-1]
+
+
+# 空洞卷积
+class ASPPConv(nn.Sequential):
+    def __init__(self, in_channels, out_channels, dilation):
+        modules = [
+            nn.Conv2d(in_channels, out_channels, 3, padding=dilation, dilation=dilation, bias=False),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU()
+        ]
+        super(ASPPConv, self).__init__(*modules)
+
+
+# 池化 -> 1*1 卷积 -> 上采样
+class ASPPPooling(nn.Sequential):
+    def __init__(self, in_channels, out_channels):
+        super(ASPPPooling, self).__init__(
+            nn.AdaptiveAvgPool2d(1),  # 自适应均值池化
+            nn.Conv2d(in_channels, out_channels, 1, bias=False),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU())
+
+    def forward(self, x):
+        size = x.shape[-2:]
+        for mod in self:
+            x = mod(x)
+        # 上采样
+        return F.interpolate(x, size=size, mode='bilinear', align_corners=False)
+
+
+# 整个 ASPP 架构
+class ASPP(nn.Module):
+    def __init__(self, in_channels, atrous_rates, out_channels=256):
+        super(ASPP, self).__init__()
+        modules = []
+        # 1*1 卷积
+        modules.append(nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, 1, bias=False),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU()))
+
+        # 多尺度空洞卷积
+        rates = tuple(atrous_rates)
+        for rate in rates:
+            modules.append(ASPPConv(in_channels, out_channels, rate))
+
+        # 池化
+        modules.append(ASPPPooling(in_channels, out_channels))
+
+        self.convs = nn.ModuleList(modules)
+
+        # 拼接后的卷积
+        self.project = nn.Sequential(
+            nn.Conv2d(len(self.convs) * out_channels, out_channels, 1, bias=False),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(),
+            nn.Dropout(0.5))
+
+    def forward(self, x):
+        res = []
+        for conv in self.convs:
+            res.append(conv(x))
+        res = torch.cat(res, dim=1)
+        return self.project(res)
+
+
+class ResNetV2_ASPP(ResNetV2):
+    def __init__(self, block_units, width_factor):
+        super(ResNetV2_ASPP, self).__init__(block_units, width_factor)
+        width = int(64 * width_factor)
+        self.width = width
+
+        self.root = nn.Sequential(OrderedDict([
+            ('conv', StdConv2d(3, width, kernel_size=7, stride=2, bias=False, padding=3)),
+            ('gn', nn.GroupNorm(32, width, eps=1e-6)),
+            ('relu', nn.ReLU(inplace=True)),
+            # ('pool', nn.MaxPool2d(kernel_size=3, stride=2, padding=0))
+        ]))
+
+        self.body = nn.Sequential(OrderedDict([
+            ('block1', nn.Sequential(OrderedDict(
+                [('unit1', PreActBottleneck(cin=width, cout=width * 4, cmid=width))] +
+                [(f'unit{i:d}', PreActBottleneck(cin=width * 4, cout=width * 4, cmid=width)) for i in
+                 range(2, block_units[0] + 1)],
+            ))),
+            ('block2', nn.Sequential(OrderedDict(
+                [('unit1', PreActBottleneck(cin=width * 4, cout=width * 8, cmid=width * 2, stride=2))] +
+                [(f'unit{i:d}', PreActBottleneck(cin=width * 8, cout=width * 8, cmid=width * 2)) for i in
+                 range(2, block_units[1] + 1)],
+            ))),
+            ('block3', nn.Sequential(OrderedDict(
+                [('unit1', PreActBottleneck(cin=width * 8, cout=width * 16, cmid=width * 4, stride=2))] +
+                [(f'unit{i:d}', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4)) for i in
+                 range(2, block_units[2] - 1)] +
+                [('ASPP_unit8', ASPP(in_channels=width * 16, out_channels=width * 16, atrous_rates=(6, 12, 18)))] +
+                [(f'unit{i:d}', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4)) for i in
+                 range(block_units[2] - 1, block_units[2])],
+            ))),
+        ]))
