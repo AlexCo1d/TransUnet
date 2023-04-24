@@ -62,11 +62,13 @@ def transfer_image():
     for image_name in os.listdir(label_path):
         # 测试集原标签
         image = Image.open(os.path.join(label_path, image_name))
+        # image = image.resize((512, 512))
         image.save(f"miou_pr_dir copy/{image_name}")
 
         # 测试集生成标签
         image = Image.open(os.path.join(image_path, image_name.replace('.png', '.jpg')))
         image = psp.detect_image(image)
+        # image = image.resize((512, 512))
         image.save(f"miou_pr_dir/{image_name}")
         print(image_name, " done!")
 
