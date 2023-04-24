@@ -1,10 +1,16 @@
 import numpy as np
+import torch
 from PIL import Image
 import matplotlib.pyplot as plt
 import os
 import sys
 import shutil
 import random
+from torchinfo import summary
+
+from nets.TransUnet import get_transNet
+from nets.vit_seg_modeling import VisionTransformer
+from nets.vit_seg_modeling_resnet_skip import *
 
 path = r'D:/PycharmProjects/unet/transunet 癌细胞/transunet/VOCdevkit/VOC2007/SegmentationClass/'
 newpath = r'D:\PycharmProjects\unet\transunet 癌细胞\transunet\VOCdevkit\VOC2007\lable'
@@ -38,7 +44,9 @@ def main():
     if not os.path.exists(output_folder_label):
         os.makedirs(output_folder_label)
     if not os.path.exists(output_folder_extra):
-        os.makedirs(output_folder_extra)
+        os.makedirs(os.path.join(output_folder_extra))
+        os.makedirs(os.path.join(output_folder_extra,'label'))
+        os.makedirs(os.path.join(output_folder_extra,'image'))
     positive_samples = []
     negative_samples = []
 
@@ -55,7 +63,7 @@ def main():
         else:
             negative_samples.append(img_path)
 
-    min_samples = min(len(positive_samples), len(negative_samples)) - 100
+    min_samples = min(len(positive_samples), len(negative_samples))
     print(f"min_samples: {min_samples}")
     combined_samples = []
 
@@ -103,6 +111,27 @@ def label_to_onehot(label_image, num_classes):
     return one_hot_image
 
 
+def observe():
+    from nets.vit_seg_modeling import CONFIGS as CONFIGS_ViT_seg
+    img_size = 256
+    vit_patches_size = 16
+    vit_name = 'R50-ViT-B_16'
+
+    config_vit = CONFIGS_ViT_seg[vit_name]
+    config_vit.n_classes = 1
+    config_vit.n_skip = 3
+    if vit_name.find('R50') != -1:
+        config_vit.patches.grid = (int(img_size / vit_patches_size), int(img_size / vit_patches_size))
+    print(config_vit)
+    net=ResNetV2_ASPP(block_units=config_vit.resnet.num_layers, width_factor=config_vit.resnet.width_factor)
+    print(config_vit.resnet.width_factor)
+    # net = VisionTransformer(config_vit, img_size=img_size, num_classes=1)
+    summary(net,input_size=(2,3,256,256))
+    #summary(VisionTransformer(config_vit, img_size=img_size, num_classes=1),input_size=(2,3,256,256))
+    print(VisionTransformer(config_vit, img_size=img_size, num_classes=1))
+
+
 if __name__ == '__main__':
-    main()
+    observe()
+    # main()
     # txt()
