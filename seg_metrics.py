@@ -170,8 +170,10 @@ for i in range(colorDict_GRAY.shape[0]):
     predict_all[predict_all == colorDict_GRAY[i][0]] = i
 
 #  拉直成一维
-label_all = label_all.flatten()
-predict_all = predict_all.flatten()
+# label_all = label_all.flatten()
+# predict_all = predict_all.flatten()
+label_all = [item for array in label_all for item in array.flatten()]
+predict_all = [item for array in predict_all for item in array.flatten()]
 
 #  计算混淆矩阵及各精度参数
 confusionMatrix = ConfusionMatrix(classNum, predict_all, label_all)
