@@ -218,3 +218,57 @@ print("FWIoU:")
 print(FWIOU)
 print("dice:")
 print(dice)
+
+def dice_coefficient(y_true, y_pred):
+    intersection = np.sum(y_true * y_pred)
+    return (2. * intersection) / (np.sum(y_true) + np.sum(y_pred))
+def compute_dice():
+    label_folder = "path/to/label/folder"
+    prediction_folder = "path/to/prediction/folder"
+
+    label_list = sorted(os.listdir(label_folder))
+    prediction_list = sorted(os.listdir(prediction_folder))
+
+    dice_values = []
+
+    for label_file, prediction_file in zip(label_list, prediction_list):
+        label_path = os.path.join(label_folder, label_file)
+        prediction_path = os.path.join(prediction_folder, prediction_file)
+
+        label_img = cv2.imread(label_path, cv2.IMREAD_GRAYSCALE)
+        prediction_img = cv2.imread(prediction_path, cv2.IMREAD_GRAYSCALE)
+
+        # 如果需要，您可以在此处将图像值映射到类标签（例如，将像素值从0-255映射到0-4）
+
+        dice_val = dice_coefficient(label_img, prediction_img)
+        dice_values.append(dice_val)
+
+    mean_dice_value = np.mean(dice_values)
+
+def compute_conf_matrix(label_folder,prediction_folder):
+    label_list = sorted(os.listdir(label_folder))
+    prediction_list = sorted(os.listdir(prediction_folder))
+
+    # 初始化混淆矩阵
+    num_classes = 2  # 根据您的任务更改类别数量
+    conf_mat = np.zeros((num_classes, num_classes), dtype=np.int64)
+
+    for label_file, prediction_file in zip(label_list, prediction_list):
+        label_path = os.path.join(label_folder, label_file)
+        prediction_path = os.path.join(prediction_folder, prediction_file)
+
+        label_img = cv2.imread(label_path, cv2.IMREAD_GRAYSCALE)
+        prediction_img = cv2.imread(prediction_path, cv2.IMREAD_GRAYSCALE)
+
+        # 如果需要，您可以在此处将图像值映射到类标签（例如，将像素值从0-255映射到0-1）
+
+        # 计算单个图像的混淆矩阵
+        single_conf_mat = confusion_matrix(label_img.flatten(), prediction_img.flatten())
+
+        # 将单个混淆矩阵累加到总混淆矩阵
+        conf_mat += single_conf_mat
+
+    print("混淆矩阵：\n", conf_mat)
+
+from sklearn.metrics import confusion_matrix
+compute_conf_matrix("./miou_pr_dir copy","./miou_pr_dir")
