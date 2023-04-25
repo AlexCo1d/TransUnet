@@ -259,8 +259,9 @@ def compute_conf_matrix(label_folder,prediction_folder):
 
         label_img = cv2.imread(label_path, cv2.IMREAD_GRAYSCALE)
         prediction_img = cv2.imread(prediction_path, cv2.IMREAD_GRAYSCALE)
-        label_img=cv2.cvtColor(label_img,cv2.COLOR_BGR2GRAY)
-        prediction_img=cv2.cvtColor(prediction_img,cv2.COLOR_BGR2GRAY)
+
+        label_img[label_img != 0] = 1
+        prediction_img[prediction_img!=0]=1
 
         # 如果需要，您可以在此处将图像值映射到类标签（例如，将像素值从0-255映射到0-1）
 
