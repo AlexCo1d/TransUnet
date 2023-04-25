@@ -152,15 +152,17 @@ Label0 = cv2.imread(LabelPath + "//" + labelList[0], 0)
 label_num = len(labelList)
 
 #  把所有图像放在一个数组里
-label_all = np.zeros((label_num,) + Label0.shape, np.uint8)
-predict_all = np.zeros((label_num,) + Label0.shape, np.uint8)
+# label_all = np.zeros((label_num,) + Label0.shape, np.uint8)
+# predict_all = np.zeros((label_num,) + Label0.shape, np.uint8)
+label_all=[]
+predict_all=[]
 for i in range(label_num):
     Label = cv2.imread(LabelPath + "//" + labelList[i])
     Label = cv2.cvtColor(Label, cv2.COLOR_BGR2GRAY)
-    label_all[i] = Label
+    label_all.append(Label)
     Predict = cv2.imread(PredictPath + "//" + PredictList[i])
     Predict = cv2.cvtColor(Predict, cv2.COLOR_BGR2GRAY)
-    predict_all[i] = Predict
+    predict_all.append(Predict)
 
 #  把颜色映射为0,1,2,3...
 for i in range(colorDict_GRAY.shape[0]):
