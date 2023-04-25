@@ -132,6 +132,6 @@ def observe():
 
 
 if __name__ == '__main__':
-    observe()
+    # observe()
     # main()
-    # txt()
+    txt()
