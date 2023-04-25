@@ -68,6 +68,7 @@ def transfer_image():
         image=Image.fromarray(image)
         # image = image.resize((512, 512))
         image.save(f"miou_pr_dir copy/{image_name}")
+        image.save(f'{label_path}/{image.name}')
 
         # 测试集生成标签
         image = Image.open(os.path.join(image_path, image_name.replace('.png', '.jpg')))
