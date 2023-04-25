@@ -258,9 +258,7 @@ class ResNetV2_ASPP(ResNetV2):
             ('block3', nn.Sequential(OrderedDict(
                 [('unit1', PreActBottleneck(cin=width * 8, cout=width * 16, cmid=width * 4, stride=2))] +
                 [(f'unit{i:d}', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4)) for i in
-                 range(2, block_units[2] - 1)] +
-                [('ASPP_unit8', ASPP(in_channels=width * 16, out_channels=width * 16, atrous_rates=(6, 12, 18)))] +
-                [(f'unit{i:d}', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4)) for i in
-                 range(block_units[2] - 1, block_units[2])],
+                 range(2, block_units[2])] +
+                [('ASPP_unit9', ASPP(in_channels=width * 16, out_channels=width * 16, atrous_rates=(6, 12, 18)))]
             ))),
         ]))
