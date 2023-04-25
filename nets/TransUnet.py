@@ -5,8 +5,7 @@ import torch.nn.functional as F
 from .vit_seg_modeling import VisionTransformer as ViT_seg
 from .vit_seg_modeling import CONFIGS as CONFIGS_ViT_seg
 
-def get_transNet(n_classes):
-    img_size = 256
+def get_transNet(n_classes,img_size=256):
     vit_patches_size = 16
     vit_name = 'R50-ViT-B_16'
 
