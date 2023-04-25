@@ -87,10 +87,10 @@ def main():
 
 
 def txt():
-    image_folder = './img'
+    image_folder = './VOCdevkit/VOC2007/JPEGImages'
 
     # 指定要写入的txt文件路径
-    output_txt_file = './VOCdevkit/VOC2007/ImageSets/Segmentation/val.txt'
+    output_txt_file = './VOCdevkit/VOC2007/ImageSets/Segmentation/train.txt'
 
     all_files = os.listdir(image_folder)
 
