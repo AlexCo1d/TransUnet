@@ -188,7 +188,7 @@ if __name__ == "__main__":
     #-------------------------------#
     Cuda = True
 
-    model =get_transNet(n_classes=NUM_CLASSES).train()
+    model =get_transNet(n_classes=NUM_CLASSES,img_size=inputs_size[0]).train()
     
     #-------------------------------------------#
     #   权值文件的下载请看README
