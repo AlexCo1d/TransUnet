@@ -219,13 +219,13 @@ print(FWIOU)
 print("dice:")
 print(dice)
 
+
 def dice_coefficient(y_true, y_pred):
     intersection = np.sum(y_true * y_pred)
     return (2. * intersection) / (np.sum(y_true) + np.sum(y_pred))
-def compute_dice():
-    label_folder = "path/to/label/folder"
-    prediction_folder = "path/to/prediction/folder"
 
+
+def compute_dice(label_folder,prediction_folder):
     label_list = sorted(os.listdir(label_folder))
     prediction_list = sorted(os.listdir(prediction_folder))
 
@@ -237,6 +237,9 @@ def compute_dice():
 
         label_img = cv2.imread(label_path, cv2.IMREAD_GRAYSCALE)
         prediction_img = cv2.imread(prediction_path, cv2.IMREAD_GRAYSCALE)
+        #
+        label_img[label_img != 0] = 1
+        prediction_img[prediction_img!=0]=1
 
         # 如果需要，您可以在此处将图像值映射到类标签（例如，将像素值从0-255映射到0-4）
 
@@ -244,6 +247,8 @@ def compute_dice():
         dice_values.append(dice_val)
 
     mean_dice_value = np.mean(dice_values)
+    print(f'mean_dice: {mean_dice_value}')
+
 
 def compute_conf_matrix(label_folder,prediction_folder):
     label_list = sorted(os.listdir(label_folder))
@@ -259,7 +264,7 @@ def compute_conf_matrix(label_folder,prediction_folder):
 
         label_img = cv2.imread(label_path, cv2.IMREAD_GRAYSCALE)
         prediction_img = cv2.imread(prediction_path, cv2.IMREAD_GRAYSCALE)
-
+        #
         label_img[label_img != 0] = 1
         prediction_img[prediction_img!=0]=1
 
@@ -274,4 +279,4 @@ def compute_conf_matrix(label_folder,prediction_folder):
     print("混淆矩阵：\n", conf_mat)
 
 from sklearn.metrics import confusion_matrix
-compute_conf_matrix("./miou_pr_dir copy","./miou_pr_dir")
+compute_dice("./miou_pr_dir copy","./miou_pr_dir")
