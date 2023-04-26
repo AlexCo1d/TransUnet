@@ -114,7 +114,7 @@ def fit_one_epoch(net, epoch, epoch_size, epoch_size_val, gen, genval, Epoch, cu
                     labels = labels.cuda()
                     cls_weights=torch.tensor(cls_weights).cuda()
                 #-------------------------------#
-                #   判断是否使用辅助分支
+                #   判断是否使用辅助分支 not use
                 #-------------------------------#
                 if aux_branch:
                     aux_outputs, outputs = net(imgs)
@@ -141,11 +141,11 @@ def fit_one_epoch(net, epoch, epoch_size, epoch_size_val, gen, genval, Epoch, cu
                 #-------------------------------#
                 _f_score = f_score(outputs, labels)
 
-                val_toal_loss += val_loss.item()
+                val_toal_loss += loss.item()
                 val_total_f_score += _f_score.item()
 
 
-            pbar.set_postfix(**{'total_loss': val_toal_loss / (iteration + 1),
+            pbar.set_postfix(**{'val_loss': val_toal_loss / (iteration + 1),
                                 'f_score'   : val_total_f_score / (iteration + 1),
                                 'lr'        : get_lr(optimizer)})
             pbar.update(1)
