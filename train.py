@@ -153,7 +153,7 @@ def fit_one_epoch(net,epoch,epoch_size,epoch_size_val,gen,genval,Epoch,cuda,aux_
 
 
 if __name__ == "__main__":
-    inputs_size = [256,256,3]
+    inputs_size = [512,512,3]
     log_dir = "logs/"   
     #---------------------#
     #   分类个数+1
@@ -228,7 +228,7 @@ if __name__ == "__main__":
     if True:
         lr = 1e-3
         Init_Epoch = 0
-        Interval_Epoch = 100
+        Interval_Epoch = 200
         Batch_size = 5
         optimizer = optim.Adam(model.parameters(),lr)
         lr_scheduler = optim.lr_scheduler.StepLR(optimizer,step_size=1,gamma=0.9)
