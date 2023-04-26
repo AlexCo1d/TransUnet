@@ -51,6 +51,7 @@ def fit_one_epoch(net, epoch, epoch_size, epoch_size_val, gen, genval, Epoch, cu
             #   判断是否使用辅助分支并回传
             #-------------------------------#
             optimizer.zero_grad()
+            # not use now
             if aux_branch:
                 aux_outputs, outputs = net(imgs)
                 aux_loss  = CE_Loss(aux_outputs, pngs, num_classes = num_classes)
@@ -102,10 +103,16 @@ def fit_one_epoch(net, epoch, epoch_size, epoch_size_val, gen, genval, Epoch, cu
                 imgs = Variable(torch.from_numpy(imgs).type(torch.FloatTensor))
                 pngs = Variable(torch.from_numpy(pngs).type(torch.FloatTensor)).long()
                 labels = Variable(torch.from_numpy(labels).type(torch.FloatTensor))
+                if cls_weights is False:
+                    # 类别均衡
+                    cls_weights = np.ones([num_classes],np.float32)
+                else:
+                    cls_weights = get_loss_weight(num_classes, pngs)
                 if cuda:
                     imgs = imgs.cuda()
                     pngs = pngs.cuda()
                     labels = labels.cuda()
+                    cls_weights=torch.tensor(cls_weights).cuda()
                 #-------------------------------#
                 #   判断是否使用辅助分支
                 #-------------------------------#
@@ -120,11 +127,14 @@ def fit_one_epoch(net, epoch, epoch_size, epoch_size_val, gen, genval, Epoch, cu
                         val_loss  = val_loss + aux_dice + main_dice
 
                 else:
-                    outputs  = net(imgs)
-                    val_loss = CE_Loss(outputs, pngs, num_classes = num_classes)
+                    outputs = net(imgs)
+                    if focal_loss:
+                        loss = Focal_Loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
+                    else:
+                        loss = CE_Loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
                     if dice_loss:
                         main_dice = Dice_loss(outputs, labels)
-                        val_loss  = val_loss + main_dice
+                        loss = loss + main_dice
 
                 #-------------------------------#
                 #   计算f_score
@@ -174,7 +184,7 @@ if __name__ == "__main__":
     #   种类多（十几类）时，如果batch_size比较小（10以下），那么设置为False
     # ---------------------------------------------------------------------#
     dice_loss = True
-    focal_loss= True
+    focal_loss= False
     cls_weights=True
     # -------------------------------#
     #   主干网络预训练权重的使用
@@ -237,7 +247,7 @@ if __name__ == "__main__":
     if True:
         lr = 1e-3
         Init_Epoch = 0
-        Interval_Epoch = 1
+        Interval_Epoch = 300
         Batch_size = 4
         optimizer = optim.Adam(model.parameters(), lr)
         lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.9)

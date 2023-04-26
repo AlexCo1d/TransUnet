@@ -24,8 +24,13 @@ def get_loss_weight(num_classes: int, pngs: torch.tensor):
         class_counts[i] = np.sum(numpy_array == i)
     epsilon = 1e-5
     class_counts = np.where(class_counts == 0, epsilon, class_counts)
+    # 1
     t = class_counts / np.sum(class_counts)
     w = np.median(t) / t
+
+    # 2
+    # k=max(class_counts)
+    # w=k/class_counts
 
     # or
     return w
