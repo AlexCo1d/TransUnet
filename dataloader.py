@@ -88,15 +88,14 @@ class unetDataset(Dataset):
         # ------------------------------------------#
         #   将图像多余的部分加上灰条
         # ------------------------------------------#
-        if rand() < .4:
-            dx = int(rand(0, w - nw))
-            dy = int(rand(0, h - nh))
-            new_image = Image.new('RGB', (w, h), (128, 128, 128))
-            new_label = Image.new('L', (w, h), (0))
-            new_image.paste(image, (dx, dy))
-            new_label.paste(label, (dx, dy))
-            image = new_image
-            label = new_label
+        dx = int(rand(0, w - nw))
+        dy = int(rand(0, h - nh))
+        new_image = Image.new('RGB', (w, h), (128, 128, 128))
+        new_label = Image.new('L', (w, h), (0))
+        new_image.paste(image, (dx, dy))
+        new_label.paste(label, (dx, dy))
+        image = new_image
+        label = new_label
 
         # flip image or not
         if rand() < .5:
@@ -157,6 +156,8 @@ class unetDataset(Dataset):
         seg_labels = np.eye(self.num_classes + 1)[png.reshape([-1])]
         print(f'seg_labels{seg_labels.shape}')
         seg_labels = seg_labels.reshape((int(self.image_size[1]), int(self.image_size[0]), self.num_classes + 1))
+
+        # 归一化和维度交换
         jpg = np.transpose(np.array(jpg), [2, 0, 1]) / 255
 
         return jpg, png, seg_labels
