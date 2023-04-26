@@ -34,7 +34,7 @@ def fit_one_epoch(net, epoch, epoch_size, epoch_size_val, gen, genval, Epoch, cu
                 labels = Variable(torch.from_numpy(labels).type(torch.FloatTensor))
                 if cls_weights is False:
                     # 类别均衡
-                    cls_weights = np.ones(num_classes)
+                    cls_weights = np.ones([num_classes],np.float32)
                 else:
                     cls_weights = get_loss_weight(num_classes, pngs)
                 if cuda:

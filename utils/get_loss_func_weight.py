@@ -17,7 +17,7 @@ def get_loss_weight(num_classes: int, pngs: torch.tensor):
     numpy_array = pngs.cpu().numpy()
 
     # 初始化一个一行 num_classes 列的数组，用于存储每个类别的数量
-    class_counts = np.zeros(num_classes)
+    class_counts = np.zeros([num_classes],np.float32)
 
     # 遍历每个类别并统计它们在 NumPy 数组中的数量
     for i in range(num_classes):
