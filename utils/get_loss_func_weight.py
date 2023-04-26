@@ -3,6 +3,16 @@ import torch
 
 
 def get_loss_weight(num_classes: int, pngs: torch.tensor):
+    """
+
+    Args:
+        num_classes:
+        pngs:
+
+    Returns:
+        w(numpy.ndarray): 损失函数权重
+
+    """
     # 将张量转换为 NumPy 数组
     numpy_array = pngs.cpu().numpy()
 
