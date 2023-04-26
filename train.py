@@ -1,5 +1,6 @@
 import time
 
+import numpy as np
 import torch
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
@@ -12,7 +13,10 @@ from dataloader import unetDataset, unet_dataset_collate
 from utils.metrics import CE_Loss, Dice_loss, Focal_Loss, f_score
 
 
-def fit_one_epoch(net, epoch, epoch_size, epoch_size_val, gen, genval, Epoch, cuda, aux_branch, num_classes, dice_loss, focal_loss, cls_weights):
+def fit_one_epoch(net, epoch, epoch_size, epoch_size_val, gen, genval, Epoch, cuda, aux_branch, num_classes, dice_loss, focal_loss, cls_weights=True):
+    if cls_weights is False:
+        # 类别均衡
+        cls_weights=np.ones((1, num_classes))
     net = net.train()
     total_loss = 0
     total_f_score = 0
@@ -34,7 +38,7 @@ def fit_one_epoch(net, epoch, epoch_size, epoch_size_val, gen, genval, Epoch, cu
                     imgs = imgs.cuda()
                     pngs = pngs.cuda()
                     labels = labels.cuda()
-
+            print("uniq",np.unique(pngs.numpy()))
             #-------------------------------#
             #   判断是否使用辅助分支并回传
             #-------------------------------#
@@ -54,7 +58,7 @@ def fit_one_epoch(net, epoch, epoch_size, epoch_size_val, gen, genval, Epoch, cu
                 if focal_loss:
                     loss = Focal_Loss(outputs, pngs, cls_weights=cls_weights,num_classes=num_classes)
                 else:
-                    loss = CE_Loss(outputs, pngs, num_classes=num_classes)
+                    loss = CE_Loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
                 if dice_loss:
                     main_dice = Dice_loss(outputs, labels)
                     loss = loss + main_dice
@@ -163,6 +167,7 @@ if __name__ == "__main__":
     # ---------------------------------------------------------------------#
     dice_loss = True
     focal_loss= True
+    cls_weights=True
     # -------------------------------#
     #   主干网络预训练权重的使用
     #
@@ -224,7 +229,7 @@ if __name__ == "__main__":
     if True:
         lr = 1e-3
         Init_Epoch = 0
-        Interval_Epoch = 300
+        Interval_Epoch = 1
         Batch_size = 4
         optimizer = optim.Adam(model.parameters(), lr)
         lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.9)
@@ -240,7 +245,7 @@ if __name__ == "__main__":
         epoch_size_val = max(1, len(val_lines) // Batch_size)
 
         for epoch in range(Init_Epoch, Interval_Epoch):
-            fit_one_epoch(model, epoch, epoch_size, epoch_size_val, gen, gen_val, Interval_Epoch, Cuda, aux_branch,num_classes=NUM_CLASSES,focal_loss=focal_loss,dice_loss=dice_loss,cls_weights=None)
+            fit_one_epoch(model, epoch, epoch_size, epoch_size_val, gen, gen_val, Interval_Epoch, Cuda, aux_branch,num_classes=NUM_CLASSES,focal_loss=focal_loss,dice_loss=dice_loss,cls_weights=cls_weights)
             lr_scheduler.step()
 
     # if True:

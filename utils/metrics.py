@@ -22,6 +22,7 @@ def CE_Loss(inputs, target, cls_weights, num_classes=21):
     CE_loss  = nn.CrossEntropyLoss(weight=cls_weights, ignore_index=num_classes)(temp_inputs, temp_target)
     return CE_loss
 
+
 def Focal_Loss(inputs, target, cls_weights, num_classes=21, alpha=0.5, gamma=2):
     n, c, h, w = inputs.size()
     nt, ht, wt = target.size()
@@ -38,6 +39,7 @@ def Focal_Loss(inputs, target, cls_weights, num_classes=21, alpha=0.5, gamma=2):
     loss = -((1 - pt) ** gamma) * logpt
     loss = loss.mean()
     return loss
+
 
 def Dice_loss(inputs, target, beta=1, smooth = 1e-5):
     n, c, h, w = inputs.size()
