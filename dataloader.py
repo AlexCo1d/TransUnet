@@ -56,7 +56,6 @@ class unetDataset(Dataset):
 
     def get_random_data(self, image, label, input_shape, jitter=.3, hue=.1, sat=1.5, val=1.5, fil=.5):
         label = Image.fromarray(np.array(label))
-        print('!!',np.array(image).shape,np.array(label).shape)
         # crop image or not
         if rand() < .6:
             height, width, _ = np.array(image).shape
@@ -145,6 +144,7 @@ class unetDataset(Dataset):
 
         if self.random_data:
             jpg, png = self.get_random_data(jpg, png, (int(self.image_size[1]), int(self.image_size[0])))
+            #print('!!', np.array(jpg).shape, np.array(png).shape)
         else:
             jpg, png = letterbox_image(jpg, png, (int(self.image_size[1]), int(self.image_size[0])))
 
@@ -154,7 +154,7 @@ class unetDataset(Dataset):
 
         # 转化成one_hot的形式
         seg_labels = np.eye(self.num_classes + 1)[png.reshape([-1])]
-        print(f'seg_labels{seg_labels.shape}')
+        #print(f'seg_labels{seg_labels.shape}')
         seg_labels = seg_labels.reshape((int(self.image_size[1]), int(self.image_size[0]), self.num_classes + 1))
 
         # 归一化和维度交换
