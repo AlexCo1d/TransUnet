@@ -249,11 +249,8 @@ def compute_dice(label_folder,prediction_folder):
         if len(np.unique(label_img))==1:
             pass
         else:
-            if len(np.unique(prediction_img))==1:
-                pass
-            else:
-                dice_val = dice_coefficient(label_img, prediction_img)
-                dice_values.append(dice_val)
+            dice_val = dice_coefficient(label_img, prediction_img)
+            dice_values.append(dice_val)
     print(len(dice_values))
     mean_dice_value = np.nanmean(dice_values)
     print(f'mean_dice: {mean_dice_value}')
