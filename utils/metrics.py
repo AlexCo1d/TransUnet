@@ -12,7 +12,7 @@ from torch.nn import functional as F
 from utils.get_loss_func_weight import get_loss_weight
 
 
-def CE_Loss(inputs, target, cls_weights: bool, num_classes=2):
+def CE_Loss(inputs, target, cls_weights, num_classes=2):
     n, c, h, w = inputs.size()
     nt, ht, wt = target.size()
     if h != ht and w != wt:
@@ -20,18 +20,12 @@ def CE_Loss(inputs, target, cls_weights: bool, num_classes=2):
 
     temp_inputs = inputs.transpose(1, 2).transpose(2, 3).contiguous().view(-1, c)
     temp_target = target.view(-1)
-
-    if cls_weights is False:
-        # 类别均衡
-        cls_weights = np.ones((1, num_classes))
-    else:
-        cls_weights = get_loss_weight(num_classes, target)
 
     CE_loss = nn.CrossEntropyLoss(weight=torch.tensor(cls_weights), ignore_index=num_classes)(temp_inputs, temp_target)
     return CE_loss
 
 
-def Focal_Loss(inputs, target, cls_weights: bool, num_classes=2, alpha=0.5, gamma=2):
+def Focal_Loss(inputs, target, cls_weights, num_classes=2, alpha=0.5, gamma=2):
     n, c, h, w = inputs.size()
     nt, ht, wt = target.size()
     if h != ht and w != wt:
@@ -40,13 +34,7 @@ def Focal_Loss(inputs, target, cls_weights: bool, num_classes=2, alpha=0.5, gamm
     temp_inputs = inputs.transpose(1, 2).transpose(2, 3).contiguous().view(-1, c)
     temp_target = target.view(-1)
 
-    if cls_weights is False:
-        # 类别均衡
-        cls_weights = np.ones((1, num_classes))
-    else:
-        cls_weights = get_loss_weight(num_classes, target)
-
-    logpt = -nn.CrossEntropyLoss(weight=torch.tensor(cls_weights), ignore_index=num_classes, reduction='none')(temp_inputs,
+    logpt = -nn.CrossEntropyLoss(weight=cls_weights, ignore_index=num_classes, reduction='none')(temp_inputs,
                                                                                                  temp_target)
     pt = torch.exp(logpt)
     if alpha is not None:
