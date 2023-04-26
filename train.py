@@ -14,6 +14,11 @@ from utils.get_loss_func_weight import get_loss_weight
 from utils.metrics import CE_Loss, Dice_loss, Focal_Loss, f_score
 
 
+def get_lr(optimizer):
+    for param_group in optimizer.param_groups:
+        return param_group['lr']
+
+
 def fit_one_epoch(net, epoch, epoch_size, epoch_size_val, gen, genval, Epoch, cuda, aux_branch, num_classes, dice_loss, focal_loss, cls_weights=True):
     net = net.train()
     total_loss = 0
@@ -277,6 +282,3 @@ if __name__ == "__main__":
     #         lr_scheduler.step()
 
 
-def get_lr(optimizer):
-    for param_group in optimizer.param_groups:
-        return param_group['lr']

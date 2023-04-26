@@ -22,6 +22,10 @@ def get_loss_weight(num_classes: int, pngs: torch.tensor):
     # 遍历每个类别并统计它们在 NumPy 数组中的数量
     for i in range(num_classes):
         class_counts[i] = np.sum(numpy_array == i)
+    epsilon = 1e-5
+    class_counts = np.where(class_counts == 0, epsilon, class_counts)
     t = class_counts / np.sum(class_counts)
     w = np.median(t) / t
+
+    # or
     return w
