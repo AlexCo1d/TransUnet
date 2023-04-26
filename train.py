@@ -153,7 +153,7 @@ def fit_one_epoch(net,epoch,epoch_size,epoch_size_val,gen,genval,Epoch,cuda,aux_
 
 
 if __name__ == "__main__":
-    inputs_size = [512,512,3]
+    inputs_size = [256,256,3]
     log_dir = "logs/"   
     #---------------------#
     #   分类个数+1

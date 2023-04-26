@@ -56,13 +56,13 @@ class unetDataset(Dataset):
 
     def get_random_data(self, image, label, input_shape, jitter=.3, hue=.1, sat=1.5, val=1.5, fil=.5):
         label = Image.fromarray(np.array(label))
-
+        print('!!',np.array(image).shape,np.array(label).shape)
         # crop image or not
         if rand() < .6:
             height, width, _ = np.array(image).shape
             pc = rand(1, 1.5)
-            crop_height = min(pc * input_shape[0], height)
-            crop_width = min(pc * input_shape[0], width)
+            crop_height = min(int(pc * input_shape[0]), height)
+            crop_width = min(int(pc * input_shape[0]), width)
             left = random.randint(0, width - crop_width)
             upper = random.randint(0, height - crop_height)
             image = image.crop((left, upper, left + crop_width, upper + crop_height))
@@ -155,6 +155,7 @@ class unetDataset(Dataset):
 
         # 转化成one_hot的形式
         seg_labels = np.eye(self.num_classes + 1)[png.reshape([-1])]
+        print(f'seg_labels{seg_labels.shape}')
         seg_labels = seg_labels.reshape((int(self.image_size[1]), int(self.image_size[0]), self.num_classes + 1))
         jpg = np.transpose(np.array(jpg), [2, 0, 1]) / 255
 
