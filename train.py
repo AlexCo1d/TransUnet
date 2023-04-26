@@ -10,6 +10,7 @@ from tqdm import tqdm
 from nets.TransUnet import get_transNet
 from torch.utils.data import DataLoader
 from dataloader import unetDataset, unet_dataset_collate
+from utils.get_loss_func_weight import get_loss_weight
 from utils.metrics import CE_Loss, Dice_loss, Focal_Loss, f_score
 
 
@@ -31,10 +32,16 @@ def fit_one_epoch(net, epoch, epoch_size, epoch_size_val, gen, genval, Epoch, cu
                 imgs = Variable(torch.from_numpy(imgs).type(torch.FloatTensor))
                 pngs = Variable(torch.from_numpy(pngs).type(torch.FloatTensor)).long()
                 labels = Variable(torch.from_numpy(labels).type(torch.FloatTensor))
+                if cls_weights is False:
+                    # 类别均衡
+                    cls_weights = np.ones(num_classes)
+                else:
+                    cls_weights = get_loss_weight(num_classes, pngs)
                 if cuda:
                     imgs = imgs.cuda()
                     pngs = pngs.cuda()
                     labels = labels.cuda()
+                    cls_weights=torch.tensor(cls_weights).cuda()
             #-------------------------------#
             #   判断是否使用辅助分支并回传
             #-------------------------------#
