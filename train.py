@@ -14,9 +14,6 @@ from utils.metrics import CE_Loss, Dice_loss, Focal_Loss, f_score
 
 
 def fit_one_epoch(net, epoch, epoch_size, epoch_size_val, gen, genval, Epoch, cuda, aux_branch, num_classes, dice_loss, focal_loss, cls_weights=True):
-    if cls_weights is False:
-        # 类别均衡
-        cls_weights=np.ones((1, num_classes))
     net = net.train()
     total_loss = 0
     total_f_score = 0
@@ -38,7 +35,6 @@ def fit_one_epoch(net, epoch, epoch_size, epoch_size_val, gen, genval, Epoch, cu
                     imgs = imgs.cuda()
                     pngs = pngs.cuda()
                     labels = labels.cuda()
-            print("uniq",np.unique(pngs.numpy()))
             #-------------------------------#
             #   判断是否使用辅助分支并回传
             #-------------------------------#

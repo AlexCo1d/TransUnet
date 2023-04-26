@@ -90,7 +90,7 @@ class unetDataset(Dataset):
         dx = int(rand(0, w - nw))
         dy = int(rand(0, h - nh))
         new_image = Image.new('RGB', (w, h), (128, 128, 128))
-        new_label = Image.new('L', (w, h), (0))
+        new_label = Image.new('L', (w, h), 0)
         new_image.paste(image, (dx, dy))
         new_label.paste(label, (dx, dy))
         image = new_image

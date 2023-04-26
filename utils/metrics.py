@@ -1,5 +1,5 @@
 import torch
-import torch.nn.functional as F  
+import torch.nn.functional as F
 import numpy as np
 from torch import nn
 from torch.autograd import Variable
@@ -9,8 +9,10 @@ from PIL import Image
 import cv2
 from torch.nn import functional as F
 
+from utils.get_loss_func_weight import get_loss_weight
 
-def CE_Loss(inputs, target, cls_weights, num_classes=21):
+
+def CE_Loss(inputs, target, cls_weights: bool, num_classes=2):
     n, c, h, w = inputs.size()
     nt, ht, wt = target.size()
     if h != ht and w != wt:
@@ -19,11 +21,17 @@ def CE_Loss(inputs, target, cls_weights, num_classes=21):
     temp_inputs = inputs.transpose(1, 2).transpose(2, 3).contiguous().view(-1, c)
     temp_target = target.view(-1)
 
-    CE_loss  = nn.CrossEntropyLoss(weight=cls_weights, ignore_index=num_classes)(temp_inputs, temp_target)
+    if cls_weights is False:
+        # 类别均衡
+        cls_weights = np.ones((1, num_classes))
+    else:
+        cls_weights = get_loss_weight(num_classes, target)
+
+    CE_loss = nn.CrossEntropyLoss(weight=cls_weights, ignore_index=num_classes)(temp_inputs, temp_target)
     return CE_loss
 
 
-def Focal_Loss(inputs, target, cls_weights, num_classes=21, alpha=0.5, gamma=2):
+def Focal_Loss(inputs, target, cls_weights: bool, num_classes=2, alpha=0.5, gamma=2):
     n, c, h, w = inputs.size()
     nt, ht, wt = target.size()
     if h != ht and w != wt:
@@ -32,7 +40,14 @@ def Focal_Loss(inputs, target, cls_weights, num_classes=21, alpha=0.5, gamma=2):
     temp_inputs = inputs.transpose(1, 2).transpose(2, 3).contiguous().view(-1, c)
     temp_target = target.view(-1)
 
-    logpt  = -nn.CrossEntropyLoss(weight=cls_weights, ignore_index=num_classes, reduction='none')(temp_inputs, temp_target)
+    if cls_weights is False:
+        # 类别均衡
+        cls_weights = np.ones((1, num_classes))
+    else:
+        cls_weights = get_loss_weight(num_classes, target)
+
+    logpt = -nn.CrossEntropyLoss(weight=cls_weights, ignore_index=num_classes, reduction='none')(temp_inputs,
+                                                                                                 temp_target)
     pt = torch.exp(logpt)
     if alpha is not None:
         logpt *= alpha
@@ -41,43 +56,43 @@ def Focal_Loss(inputs, target, cls_weights, num_classes=21, alpha=0.5, gamma=2):
     return loss
 
 
-def Dice_loss(inputs, target, beta=1, smooth = 1e-5):
+def Dice_loss(inputs, target, beta=1, smooth=1e-5):
     n, c, h, w = inputs.size()
     nt, ht, wt, ct = target.size()
-    
+
     if h != ht and w != wt:
         inputs = F.interpolate(inputs, size=(ht, wt), mode="bilinear", align_corners=True)
-    temp_inputs = torch.softmax(inputs.transpose(1, 2).transpose(2, 3).contiguous().view(n, -1, c),-1)
+    temp_inputs = torch.softmax(inputs.transpose(1, 2).transpose(2, 3).contiguous().view(n, -1, c), -1)
     temp_target = target.view(n, -1, ct)
 
-    #--------------------------------------------#
+    # --------------------------------------------#
     #   计算dice loss
-    #--------------------------------------------#
-    tp = torch.sum(temp_target[...,:-1] * temp_inputs, axis=[0,1])
-    fp = torch.sum(temp_inputs                       , axis=[0,1]) - tp
-    fn = torch.sum(temp_target[...,:-1]              , axis=[0,1]) - tp
+    # --------------------------------------------#
+    tp = torch.sum(temp_target[..., :-1] * temp_inputs, axis=[0, 1])
+    fp = torch.sum(temp_inputs, axis=[0, 1]) - tp
+    fn = torch.sum(temp_target[..., :-1], axis=[0, 1]) - tp
 
     score = ((1 + beta ** 2) * tp + smooth) / ((1 + beta ** 2) * tp + beta ** 2 * fn + fp + smooth)
     dice_loss = 1 - torch.mean(score)
     return dice_loss
 
 
-def f_score(inputs, target, beta=1, smooth = 1e-5, threhold = 0.5):
+def f_score(inputs, target, beta=1, smooth=1e-5, threhold=0.5):
     n, c, h, w = inputs.size()
     nt, ht, wt, ct = target.size()
 
     if h != ht and w != wt:
         inputs = F.interpolate(inputs, size=(ht, wt), mode="bilinear", align_corners=True)
-    temp_inputs = torch.softmax(inputs.transpose(1, 2).transpose(2, 3).contiguous().view(n, -1, c),-1)
+    temp_inputs = torch.softmax(inputs.transpose(1, 2).transpose(2, 3).contiguous().view(n, -1, c), -1)
     temp_target = target.view(n, -1, ct)
 
-    #--------------------------------------------#
+    # --------------------------------------------#
     #   计算dice系数
-    #--------------------------------------------#
+    # --------------------------------------------#
     temp_inputs = torch.gt(temp_inputs, threhold).float()
-    tp = torch.sum(temp_target[...,:-1] * temp_inputs, axis=[0,1])
-    fp = torch.sum(temp_inputs                       , axis=[0,1]) - tp
-    fn = torch.sum(temp_target[...,:-1]              , axis=[0,1]) - tp
+    tp = torch.sum(temp_target[..., :-1] * temp_inputs, axis=[0, 1])
+    fp = torch.sum(temp_inputs, axis=[0, 1]) - tp
+    fn = torch.sum(temp_target[..., :-1], axis=[0, 1]) - tp
 
     score = ((1 + beta ** 2) * tp + smooth) / ((1 + beta ** 2) * tp + beta ** 2 * fn + fp + smooth)
     score = torch.mean(score)
