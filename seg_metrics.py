@@ -246,10 +246,15 @@ def compute_dice(label_folder,prediction_folder):
             prediction_img[prediction_img == colorDict_GRAY[i][0]] = i
 
         # 如果需要，您可以在此处将图像值映射到类标签（例如，将像素值从0-255映射到0-4）
-
-        dice_val = dice_coefficient(label_img, prediction_img)
-        dice_values.append(dice_val)
-
+        if len(np.unique(label_img))==1:
+            pass
+        else:
+            if len(np.unique(prediction_img))==1:
+                pass
+            else:
+                dice_val = dice_coefficient(label_img, prediction_img)
+                dice_values.append(dice_val)
+    print(len(dice_values))
     mean_dice_value = np.nanmean(dice_values)
     print(f'mean_dice: {mean_dice_value}')
 
