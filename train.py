@@ -47,10 +47,10 @@ def fit_one_epoch(net, epoch, epoch_size, epoch_size_val, gen, genval, Epoch, cu
                     pngs = pngs.cuda()
                     labels = labels.cuda()
                     cls_weights=torch.tensor(cls_weights).cuda()
+            optimizer.zero_grad()
             #-------------------------------#
             #   判断是否使用辅助分支并回传
             #-------------------------------#
-            optimizer.zero_grad()
             # not use now
             if aux_branch:
                 aux_outputs, outputs = net(imgs)
