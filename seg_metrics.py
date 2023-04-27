@@ -9,6 +9,8 @@ import numpy as np
 import cv2
 import os
 
+from PIL import Image
+
 """ 
 混淆矩阵
 P\L     P    N 
@@ -235,11 +237,8 @@ def compute_dice(label_folder,prediction_folder):
         label_path = os.path.join(label_folder, label_file)
         prediction_path = os.path.join(prediction_folder, prediction_file)
 
-        label_img = cv2.imread(label_path, cv2.IMREAD_GRAYSCALE)
-        prediction_img = cv2.imread(prediction_path, cv2.IMREAD_GRAYSCALE)
-        #
-        label_img[label_img != 0] = 1
-        prediction_img[prediction_img!=0]=1
+        label_img = np.array(Image.open(label_path))
+        prediction_img = np.array(Image.open(prediction_path))
 
         for i in range(colorDict_GRAY.shape[0]):
             label_img[label_img == colorDict_GRAY[i][0]] = i
@@ -256,12 +255,12 @@ def compute_dice(label_folder,prediction_folder):
     print(f'mean_dice: {mean_dice_value}')
 
 
-def compute_conf_matrix(label_folder,prediction_folder):
+def compute_conf_matrix(label_folder,prediction_folder,num):
     label_list = sorted(os.listdir(label_folder))
     prediction_list = sorted(os.listdir(prediction_folder))
 
     # 初始化混淆矩阵
-    num_classes = 2  # 根据您的任务更改类别数量
+    num_classes = num  # 根据您的任务更改类别数量
     conf_mat = np.zeros((num_classes, num_classes), dtype=np.int64)
 
     for label_file, prediction_file in zip(label_list, prediction_list):
@@ -285,4 +284,4 @@ def compute_conf_matrix(label_folder,prediction_folder):
     print("混淆矩阵：\n", conf_mat)
 
 from sklearn.metrics import confusion_matrix
-compute_dice("./miou_pr_dir copy","./miou_pr_dir")
+compute_dice("./miou_pr_dir copy","./miou_pr_dir",classNum)

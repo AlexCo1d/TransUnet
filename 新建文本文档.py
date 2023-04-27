@@ -130,8 +130,21 @@ def observe():
     #summary(VisionTransformer(config_vit, img_size=img_size, num_classes=1),input_size=(2,3,256,256))
     print(VisionTransformer(config_vit, img_size=img_size, num_classes=1))
 
+def count_pos():
+    path='./for_test/label'
+    count=0
+    l=[]
+    for image in os.listdir(path):
+        img=os.path.join(path,image)
+        img=np.array(Image.open(img))
+        if len(np.unique(img))>1:
+            count+=1
+            l.append(image)
+    print(f'pos num: {count}')
+    print(f'list:\n {l}')
 
 if __name__ == '__main__':
     # observe()
     # main()
     txt()
+
