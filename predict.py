@@ -44,7 +44,7 @@ def show_image():
     for jpg in imgs:
         img = Image.open(os.path.join(fpath,jpg)).convert('RGB')
         start_time = time.time()
-        image = uNet.detect_image(img,mix=True)
+        image = uNet.detect_image(img,mix=2)
         duration = time.time() - start_time
         print("预测时间", duration)
         image.save("./img_out/" + jpg)
@@ -76,7 +76,7 @@ def transfer_image():
         #
         image[image!=0]=set_label
         image=Image.fromarray(image)
-        image = unet.detect_image(image,mix=False)
+        image = unet.detect_image(image,mix=0)
         # image = image.resize((512, 512))
         image.save(f"miou_pr_dir/{image_name}")
         print(image_name, " done!")
