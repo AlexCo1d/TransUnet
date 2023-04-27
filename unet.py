@@ -100,11 +100,11 @@ class uNet(object):
                 images = images.cuda()
 
             pr = self.net(images)[0]
-            pr = F.softmax(pr.permute(1, 2, 0), dim=-1).cpu().numpy()
+            pre = F.softmax(pr.permute(1, 2, 0), dim=-1).cpu().numpy()
             # --------------------------------------#
             #   将灰条部分截取掉
             # --------------------------------------#
-            pr = pr[int((self.model_image_size[0] - nh) // 2):int((self.model_image_size[0] - nh) // 2 + nh),
+            pr = pre[int((self.model_image_size[0] - nh) // 2):int((self.model_image_size[0] - nh) // 2 + nh),
                  int((self.model_image_size[1] - nw) // 2):int((self.model_image_size[1] - nw) // 2 + nw)]
             # ---------------------------------------------------#
             #   进行图片的resize
@@ -114,6 +114,7 @@ class uNet(object):
             #   取出每一个像素点的种类
             # ---------------------------------------------------#
             pr = pr.argmax(axis=-1)
+
         if self.mix == 2:
             # 混合图像
             # seg_img = np.zeros((np.shape(pr)[0], np.shape(pr)[1], 3))
@@ -130,10 +131,16 @@ class uNet(object):
             #   将新图与原图及进行混合
             # ------------------------------------------------#
             image = blend_images(image,old_img, 0.5)
+
         elif self.mix == 1:
             seg_img = np.reshape(np.array(self.colors, np.uint8)[np.reshape(pr, [-1])], [orininal_h, orininal_w, -1])
             image = Image.fromarray(np.uint8(seg_img))
+
         elif self.mix == 0:
+            pr=pre.argmax(axis=-1)
+            pr = pr[int((self.model_image_size[0] - nh) // 2):int((self.model_image_size[0] - nh) // 2 + nh),
+                 int((self.model_image_size[1] - nw) // 2):int((self.model_image_size[1] - nw) // 2 + nw)]
+
             image = Image.fromarray(np.uint8(pr)).resize((orininal_w, orininal_h), Image.NEAREST)
             # ------------------------------------------------#
             #   将新图片转换成Image的形式
