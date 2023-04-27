@@ -45,8 +45,8 @@ def main():
         os.makedirs(output_folder_label)
     if not os.path.exists(output_folder_extra):
         os.makedirs(os.path.join(output_folder_extra))
-        os.makedirs(os.path.join(output_folder_extra,'label'))
-        os.makedirs(os.path.join(output_folder_extra,'image'))
+        os.makedirs(os.path.join(output_folder_extra, 'label'))
+        os.makedirs(os.path.join(output_folder_extra, 'image'))
     positive_samples = []
     negative_samples = []
 
@@ -123,28 +123,30 @@ def observe():
     if vit_name.find('R50') != -1:
         config_vit.patches.grid = (int(img_size / vit_patches_size), int(img_size / vit_patches_size))
     print(config_vit)
-    net=ResNetV2_ASPP(block_units=config_vit.resnet.num_layers, width_factor=config_vit.resnet.width_factor)
+    net = ResNetV2_ASPP(block_units=config_vit.resnet.num_layers, width_factor=config_vit.resnet.width_factor)
     print(config_vit.resnet.width_factor)
     # net = VisionTransformer(config_vit, img_size=img_size, num_classes=1)
-    summary(net,input_size=(2,3,256,256))
-    #summary(VisionTransformer(config_vit, img_size=img_size, num_classes=1),input_size=(2,3,256,256))
+    summary(net, input_size=(2, 3, 256, 256))
+    # summary(VisionTransformer(config_vit, img_size=img_size, num_classes=1),input_size=(2,3,256,256))
     print(VisionTransformer(config_vit, img_size=img_size, num_classes=1))
 
+
 def count_pos():
-    path='./for_test/label'
-    count=0
-    l=[]
+    path = './for_test/label'
+    count = 0
+    l = []
     for image in os.listdir(path):
-        img=os.path.join(path,image)
-        img=np.array(Image.open(img))
-        if len(np.unique(img))>1:
-            count+=1
+        img = os.path.join(path, image)
+        img = np.array(Image.open(img))
+        if len(np.unique(img)) > 1:
+            count += 1
             l.append(image)
     print(f'pos num: {count}')
     print(f'list:\n {l}')
 
+
 if __name__ == '__main__':
     # observe()
     # main()
-    txt()
-
+    # txt()
+    count_pos()
