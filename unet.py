@@ -1,3 +1,4 @@
+import cv2
 from numpy.core.numeric import False_, True_
 from nets.TransUnet import get_transNet
 from torch import nn
@@ -18,12 +19,14 @@ class uNet(object):
     #-----------------------------------------#
     _defaults = {
         "model_path"        :   './logs/Epoch100-Total_Loss0.4042-Val_Loss0.3818.pth',
-        "model_image_size"  :   (256, 256, 3),
+        "model_image_size"  :   (512, 512, 3),
         "backbone"          :   "ECAresnet",
         "downsample_factor" :   16,
         "num_classes"       :   2,
         "cuda"              :   True,
-        "blend"             :   False,
+        # -------------------------------------------------#
+        "mix": True,
+        # --------------------------------#
     }
 
     #---------------------------------------------------#
@@ -83,8 +86,8 @@ class uNet(object):
         orininal_w = np.array(image).shape[1]
 
         image, nw, nh = self.letterbox_image(image,(self.model_image_size[1],self.model_image_size[0]))
-        images = [np.array(image)/255]
-        images = np.transpose(images,(0,3,1,2))
+        images = np.array(image,np.float32)/255.0
+        images = np.expand_dims(np.transpose(images, (2, 0, 1)), 0)
 
         with torch.no_grad():
             images = Variable(torch.from_numpy(images).type(torch.FloatTensor))
@@ -92,18 +95,41 @@ class uNet(object):
                 images =images.cuda()
 
             pr = self.net(images)[0]
-            pr = F.softmax(pr.permute(1,2,0),dim = -1).cpu().numpy().argmax(axis=-1)
+            pr = F.softmax(pr.permute(1,2,0),dim = -1).cpu().numpy()
+            #--------------------------------------#
+            #   将灰条部分截取掉
+            #--------------------------------------#
             pr = pr[int((self.model_image_size[0]-nh)//2):int((self.model_image_size[0]-nh)//2+nh), int((self.model_image_size[1]-nw)//2):int((self.model_image_size[1]-nw)//2+nw)]
+            # ---------------------------------------------------#
+            #   进行图片的resize
+            # ---------------------------------------------------#
+            pr = cv2.resize(pr, (orininal_w, orininal_h), interpolation=cv2.INTER_LINEAR)
+            # ---------------------------------------------------#
+            #   取出每一个像素点的种类
+            # ---------------------------------------------------#
+            pr = pr.argmax(axis=-1)
+        if self.mix is True:
+            # 混合图像
+            # seg_img = np.zeros((np.shape(pr)[0], np.shape(pr)[1], 3))
+            # for c in range(self.num_classes):
+            #     seg_img[:, :, 0] += ((pr[:, :] == c) * (self.colors[c][0])).astype('uint8')
+            #     seg_img[:, :, 1] += ((pr[:, :] == c) * (self.colors[c][1])).astype('uint8')
+            #     seg_img[:, :, 2] += ((pr[:, :] == c) * (self.colors[c][2])).astype('uint8')
+            seg_img = np.reshape(np.array(self.colors, np.uint8)[np.reshape(pr, [-1])], [orininal_h, orininal_w, -1])
+            #------------------------------------------------#
+            #   将新图片转换成Image的形式
+            #------------------------------------------------#
+            image   = Image.fromarray(np.uint8(seg_img))
+            #------------------------------------------------#
+            #   将新图与原图及进行混合
+            #------------------------------------------------#
+            image   = Image.blend(old_img, image, 0.7)
+        elif self.mix is False:
+            seg_img = np.reshape(np.array(self.colors, np.uint8)[np.reshape(pr, [-1])], [orininal_h, orininal_w, -1])
+            #------------------------------------------------#
+            #   将新图片转换成Image的形式
+            #------------------------------------------------#
+            image   = Image.fromarray(np.uint8(seg_img))
 
-        seg_img = np.zeros((np.shape(pr)[0],np.shape(pr)[1],3))
-        for c in range(self.num_classes):
-            seg_img[:,:,0] += ((pr[:,: ] == c )*( self.colors[c][0] )).astype('uint8')
-            seg_img[:,:,1] += ((pr[:,: ] == c )*( self.colors[c][1] )).astype('uint8')
-            seg_img[:,:,2] += ((pr[:,: ] == c )*( self.colors[c][2] )).astype('uint8')
-
-        image = Image.fromarray(np.uint8(seg_img)).resize((orininal_w,orininal_h))
-        if self.blend:
-            image = Image.blend(old_img,image,0.3)
-        
         return image
 
