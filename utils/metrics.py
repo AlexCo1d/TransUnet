@@ -9,7 +9,7 @@ from PIL import Image
 import cv2
 from torch.nn import functional as F
 
-from utils.get_loss_func_weight import get_loss_weight
+from utils.Loss_utils import get_loss_weight
 
 
 def CE_Loss(inputs, target, cls_weights, num_classes=2):
