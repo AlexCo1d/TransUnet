@@ -18,7 +18,7 @@ class uNet(object):
     #   使其符合自己的模型
     #-----------------------------------------#
     _defaults = {
-        "model_path"        :   './logs/Epoch100-Total_Loss0.4042-Val_Loss0.3818.pth',
+        "model_path"        :   './logs/Epoch300-Total_Loss0.5099-Val_Loss0.5715.pth',
         "model_image_size"  :   (512, 512, 3),
         "backbone"          :   "ECAresnet",
         "downsample_factor" :   16,
