@@ -64,5 +64,7 @@ def batch_visualize(image_folder: str, label_folder: str, output_folder: str, co
             cv2.imwrite(output,overlayed)
 
 
+
+
 if __name__ == "__main__":
     main()
