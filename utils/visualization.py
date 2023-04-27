@@ -6,6 +6,8 @@ import numpy as np
 #------------------
 #参数
 #------------------
+from PIL import Image
+
 label_path='./'
 image_path=''
 output_path=''
@@ -63,6 +65,39 @@ def batch_visualize(image_folder: str, label_folder: str, output_folder: str, co
 
             cv2.imwrite(output,overlayed)
 
+def blend_images(image: Image.Image, label: Image.Image, alpha: float) -> Image.Image:
+    """
+    融合两幅RGB图像，设定指定的alpha，对于第一张图像零像素位置，完全使用第二张图像，其余位置按alpha进行融合。
+
+    Args:
+        image (Image.Image): 第一张RGB图像。
+        label (Image.Image): 第二张RGB图像。
+        alpha (float): 融合时的权重，范围为 0.0 到 1.0。
+
+    Returns:
+        Image.Image: 融合后的图像。
+    """
+
+    # 将PIL.Image转换为numpy数组
+    image = np.array(image)
+    label = np.array(label)
+
+    # 创建一个空白的输出图像（与输入图像大小相同）
+    blended_np = np.zeros_like(image)
+
+    # 找到第一张图像中非零像素的位置
+    non_zero_indices = np.any(image != 0, axis=-1)
+
+    # 对于第一张图像零像素位置，完全使用第二张图像
+    blended_np[~non_zero_indices] = label[~non_zero_indices]
+
+    # 按alpha进行融合的其余位置
+    blended_np[non_zero_indices] = (1 - alpha) * image[non_zero_indices] + alpha * label[non_zero_indices]
+
+    # 将numpy数组转换回PIL.Image
+    blended_image = Image.fromarray(blended_np.astype(np.uint8))
+
+    return blended_image
 
 
 
