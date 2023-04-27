@@ -113,6 +113,9 @@ class unetDataset(Dataset):
             enhancer = ImageEnhance.Sharpness(image)
             image = enhancer.enhance(factor)
 
+        #mix up image
+
+
         # distort image
         image_data = image
         if rand() < .7:
