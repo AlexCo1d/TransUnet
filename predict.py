@@ -45,7 +45,7 @@ def show_image():
     for jpg in imgs:
         img = Image.open(os.path.join(fpath,jpg)).convert('RGB')
         start_time = time.time()
-        image = uNet.detect_image(img)
+        image = uNet.detect_image(img,mix=True)
         duration = time.time() - start_time
         print("预测时间", duration)
         image.save("./img_out/" + jpg)
@@ -68,7 +68,7 @@ def transfer_image():
         image=Image.fromarray(image)
         # image = image.resize((512, 512))
         image.save(f"miou_pr_dir copy/{image_name}")
-        image.save(f'{label_path}/{image.name}')
+        image.save(f'{label_path}/{image_name}')
 
         # 测试集生成标签
         image = Image.open(os.path.join(image_path, image_name.replace('.png', '.jpg')))
@@ -76,7 +76,7 @@ def transfer_image():
         #
         image[image!=0]=set_label
         image=Image.fromarray(image)
-        image = psp.detect_image(image)
+        image = psp.detect_image(image,mix=False)
         # image = image.resize((512, 512))
         image.save(f"miou_pr_dir/{image_name}")
         print(image_name, " done!")
