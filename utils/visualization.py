@@ -21,7 +21,7 @@ alpha=0.5
 
 
 def main():
-    pass
+    blend_raw_images()
 
 
 
@@ -59,7 +59,8 @@ def blend_images(image1: Image.Image, image2: Image.Image, alpha: float) -> Imag
 
     return blended_image
 
-
+def blend_raw_images():
+    pass
 
 if __name__ == "__main__":
     main()
