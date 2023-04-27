@@ -129,7 +129,7 @@ class uNet(object):
             # ------------------------------------------------#
             #   将新图与原图及进行混合
             # ------------------------------------------------#
-            image = blend_images(old_img, image, 0.7)
+            image = blend_images(image,old_img, 0.5)
         elif self.mix == 1:
             seg_img = np.reshape(np.array(self.colors, np.uint8)[np.reshape(pr, [-1])], [orininal_h, orininal_w, -1])
             image = Image.fromarray(np.uint8(seg_img))
