@@ -140,11 +140,11 @@ def fit_one_epoch(model_train,model,loss_history, optimizer, epoch, epoch_size, 
                 aux_outputs, outputs = model_train(imgs)
                 aux_loss  = CE_Loss(aux_outputs, pngs, num_classes = num_classes)
                 main_loss = CE_Loss(outputs, pngs, num_classes = num_classes)
-                val_loss  = aux_loss + main_loss
+                val_toal_loss  = aux_loss + main_loss
                 if dice_loss:
                     aux_dice  = Dice_loss(aux_outputs, labels)
                     main_dice = Dice_loss(outputs, labels)
-                    val_loss  = val_loss + aux_dice + main_dice
+                    val_toal_loss  = val_toal_loss + aux_dice + main_dice
             else:
                 outputs = model_train(imgs)
                 if focal_loss:
@@ -163,26 +163,26 @@ def fit_one_epoch(model_train,model,loss_history, optimizer, epoch, epoch_size, 
             val_total_f_score += _f_score.item()
 
         if local_rank == 0:
-            pbar.set_postfix(**{'val_loss'  : val_loss / (iteration + 1),
+            pbar.set_postfix(**{'val_loss'  : val_toal_loss / (iteration + 1),
                                 'f_score'   : val_total_f_score / (iteration + 1),
                                 'lr'        : get_lr(optimizer)})
             pbar.update(1)
     if local_rank == 0:
         pbar.close()
         print('Finish Validation')
-        loss_history.append_loss(epoch + 1, total_loss / epoch_size, val_loss / epoch_size_val)
+        loss_history.append_loss(epoch + 1, total_loss / epoch_size, val_toal_loss / epoch_size_val)
         # eval_callback.on_epoch_end(epoch + 1, model_train)
         print('Epoch:' + str(epoch + 1) + '/' + str(Epoch))
-        print('Total Loss: %.3f || Val Loss: %.3f ' % (total_loss / epoch_size, val_loss / epoch_size_val))
+        print('Total Loss: %.3f || Val Loss: %.3f ' % (total_loss / epoch_size, val_toal_loss / epoch_size_val))
 
         # -----------------------------------------------#
         #   保存权值
         # -----------------------------------------------#
         if (epoch + 1) % 5 == 0 or epoch + 1 == Epoch:
             torch.save(model.state_dict(), os.path.join(save_dir, 'ep%03d-loss%.3f-val_loss%.3f.pth' % (
-            (epoch + 1), total_loss / epoch_size, val_loss / epoch_size_val)))
+            (epoch + 1), total_loss / epoch_size, val_toal_loss / epoch_size_val)))
 
-        if len(loss_history.val_loss) <= 1 or (val_loss / epoch_size_val) <= min(loss_history.val_loss):
+        if len(loss_history.val_loss) <= 1 or (val_toal_loss / epoch_size_val) <= min(loss_history.val_loss):
             print('Save best model to best_epoch_weights.pth')
             torch.save(model.state_dict(), os.path.join(save_dir, "best_epoch_weights.pth"))
 
