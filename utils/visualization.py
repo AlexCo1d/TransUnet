@@ -8,21 +8,29 @@ import numpy as np
 #------------------
 from PIL import Image
 
-label_path='./'
+label_path='./for_test/image'
 image_path=''
 output_path=''
-color_map = {
-    0: [0, 0, 0],      # 背景
-    1: [0, 255, 0],    # 类别1
-    2: [0, 0, 255],    # 类别2
-    # 更多类别...
-}
+color_map = [(0, 0, 0), (0, 255, 0), (0, 128, 0), (128, 128, 0), (128, 0, 128), (0, 128, 128),
+               (128, 128, 128), (64, 0, 0), (192, 0, 0), (64, 128, 0), (192, 128, 0), (64, 0, 128),
+               (192, 0, 128),
+               (64, 128, 128), (192, 128, 128), (0, 64, 0), (128, 64, 0), (0, 192, 0), (128, 192, 0),
+               (0, 64, 128), (128, 64, 12)]
 alpha=0.5
 
 
 def main():
-    blend_raw_images()
+    blend_raw_images(label_path,image_path,output_path,color_map,alpha)
 
+
+def convert_to_rgb(label_img, colormap):
+    rgb_img = np.zeros((label_img.shape[0], label_img.shape[1], 3), dtype=np.uint8)
+
+    for label in colormap:
+        color = colormap[label]
+        rgb_img[np.where(label_img == label)] = color
+
+    return rgb_img
 
 
 def blend_images(image1: Image.Image, image2: Image.Image, alpha: float) -> Image.Image:
@@ -30,8 +38,8 @@ def blend_images(image1: Image.Image, image2: Image.Image, alpha: float) -> Imag
     融合两幅RGB图像，设定指定的alpha，对于第一张图像零像素位置，完全使用第二张图像，其余位置按alpha进行融合。
 
     Args:
-        image1 (Image.Image): 第一张RGB图像。
-        image2 (Image.Image): 第二张RGB图像。
+        image1 (Image.Image): 第一张RGB图像,label
+        image2 (Image.Image): 第二张RGB图像,image
         alpha (float): 融合时的权重，范围为 0.0 到 1.0。
 
     Returns:
@@ -59,8 +67,15 @@ def blend_images(image1: Image.Image, image2: Image.Image, alpha: float) -> Imag
 
     return blended_image
 
-def blend_raw_images():
-    pass
+def blend_raw_images(label_path,image_path,output_path,color_map,alpha):
+    # 将2个文件夹的图像融合输出进新文件夹
+    for label_name in os.listdir(label_path):
+        label=np.array(Image.open(os.path.join(label_path,label_name)))
+        label=convert_to_rgb(label,colormap=color_map)
+        image=np.array(Image.open(os.path.join(image_path,label_name.replace('.png','.jpg'))))
+        blend_image=blend_images(Image.fromarray(label),Image.fromarray(image),alpha)
+        blend_image.save(os.path.join(output_path,label_name).replace('.png','.jpg'))
+
 
 if __name__ == "__main__":
     main()
