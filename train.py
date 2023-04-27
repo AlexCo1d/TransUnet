@@ -248,7 +248,7 @@ if __name__ == "__main__":
         lr = 1e-3
         Init_Epoch = 0
         Interval_Epoch = 300
-        Batch_size = 4
+        Batch_size = 2
         optimizer = optim.Adam(model.parameters(), lr)
         lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.9)
 
