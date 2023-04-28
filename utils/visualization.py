@@ -8,9 +8,9 @@ import numpy as np
 #------------------
 from PIL import Image
 
-label_path='./for_test/image'
-image_path=''
-output_path=''
+label_path='./for_test/label'
+image_path='./for_test/image'
+output_path='./for_test/visualization'
 color_map = [(0, 0, 0), (0, 255, 0), (0, 128, 0), (128, 128, 0), (128, 0, 128), (0, 128, 128),
                (128, 128, 128), (64, 0, 0), (192, 0, 0), (64, 128, 0), (192, 128, 0), (64, 0, 128),
                (192, 0, 128),
@@ -68,6 +68,8 @@ def blend_images(image1: Image.Image, image2: Image.Image, alpha: float) -> Imag
     return blended_image
 
 def blend_raw_images(label_path,image_path,output_path,color_map,alpha):
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
     # 将2个文件夹的图像融合输出进新文件夹
     for label_name in os.listdir(label_path):
         label=np.array(Image.open(os.path.join(label_path,label_name)))
