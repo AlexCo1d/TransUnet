@@ -26,7 +26,7 @@ def main():
 def convert_to_rgb(label_img, colormap):
     rgb_img = np.zeros((label_img.shape[0], label_img.shape[1], 3), dtype=np.uint8)
 
-    for label in colormap:
+    for label in range(len(colormap)):
         color = colormap[label]
         rgb_img[np.where(label_img == label)] = color
 
