@@ -254,16 +254,16 @@ if __name__ == "__main__":
     #       设置            distributed = True
     #       在终端中输入    CUDA_VISIBLE_DEVICES=0,1 python -m torch.distributed.launch --nproc_per_node=2 train.py
     #---------------------------------------------------------------------#
-    distributed     = False
+    distributed     = True
     #---------------------------------------------------------------------#
     #   sync_bn     是否使用sync_bn，DDP模式多卡可用
     #---------------------------------------------------------------------#
-    sync_bn         = False
+    sync_bn         =True
     #------------------------------------------------------#
     #   设置用到的显卡
     #------------------------------------------------------#
     ngpus_per_node  = torch.cuda.device_count()
-    print(f'ngpus: {ngpus_per_node}')
+    # print(f'ngpus: {ngpus_per_node}')
     if distributed:
         dist.init_process_group(backend="nccl")
         local_rank  = int(os.environ["LOCAL_RANK"])
@@ -354,7 +354,7 @@ if __name__ == "__main__":
         lr = 1e-3
         Init_Epoch = 0
         Interval_Epoch = 300
-        Batch_size = 2
+        Batch_size = 5
         # set opt
         optimizer = optim.Adam(model.parameters(), lr)
         lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.9)

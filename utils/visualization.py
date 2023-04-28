@@ -8,8 +8,8 @@ import numpy as np
 #------------------
 from PIL import Image
 
-label_path='./for_test/label'
-image_path='./for_test/image'
+label_path='./for_test/label/'
+image_path='./for_test/image/'
 output_path='./for_test/visualization'
 color_map = [(0, 0, 0), (0, 255, 0), (0, 128, 0), (128, 128, 0), (128, 0, 128), (0, 128, 128),
                (128, 128, 128), (64, 0, 0), (192, 0, 0), (64, 128, 0), (192, 128, 0), (64, 0, 128),
@@ -26,7 +26,7 @@ def main():
 def convert_to_rgb(label_img, colormap):
     rgb_img = np.zeros((label_img.shape[0], label_img.shape[1], 3), dtype=np.uint8)
 
-    for label in colormap:
+    for label in range(len(colormap)):
         color = colormap[label]
         rgb_img[np.where(label_img == label)] = color
 
