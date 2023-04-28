@@ -10,9 +10,6 @@ import torch.nn.functional as F
 import numpy as np
 import torch
 
-txt_path = "./VOCdevkit/VOC2007/ImageSets/Segmentation/val.txt"
-image_path='./VOCdevkit/VOC2007/JPEGImages'
-label_path='./VOCdevkit/VOC2007/SegmentationClass'
 
 # class miou_Pspnet(psp):
 #     def detect_image(self, image):
@@ -41,14 +38,11 @@ label_path='./VOCdevkit/VOC2007/SegmentationClass'
 def show_image():
     from unet import uNet
     uNet = uNet()
+    fpath="./for_test/image"
+    imgs = os.listdir(fpath)
 
-
-    with open(txt_path, "r") as file:
-        lines = file.readlines()
-
-    for jpg in lines:
-        jpg=jpg.split()[0]+'.jpg'
-        img = Image.open(os.path.join(image_path,jpg)).convert('RGB')
+    for jpg in imgs:
+        img = Image.open(os.path.join(fpath,jpg)).convert('RGB')
         start_time = time.time()
         image = uNet.detect_image(img,mix=2)
         duration = time.time() - start_time
@@ -59,29 +53,37 @@ def show_image():
 def transfer_image():
     from unet import uNet
     unet = uNet()
+    test_path = './for_test'
+    label_path = os.path.join(test_path, 'label')
+    image_path = os.path.join(test_path, 'image')
+    if not os.path.exists("./miou_pr_dir"):
+        os.makedirs("./miou_pr_dir")
 
-    with open(txt_path, "r") as file:
-        lines = file.readlines()
-
-    for image_name in lines:
+    for image_name in os.listdir(label_path):
         # 测试集原标签
-        image_name=image_name.split()[0]+'.jpg'
-        label_name=image_name.replace('.jpg','.png')
-
-        label = Image.open(os.path.join(label_path, label_name))
-
+        image = Image.open(os.path.join(label_path, image_name))
+        # image=np.array(image)
+        # #
+        # image[image!=0]=set_label
+        # image=Image.fromarray(image)
         # image = image.resize((512, 512))
-        label.save(f"miou_pr_dir copy/{image_name}")
+        image.save(f"miou_pr_dir copy/{image_name}")
+        # image.save(f'{label_path}/{image_name}')
 
         # 测试集生成标签
-        image = Image.open(os.path.join(image_path, image_name))
-        label = unet.detect_image(image,mix=0)
-
+        image = Image.open(os.path.join(image_path, image_name.replace('.png', '.jpg')))
+        # image=np.array(image)
+        # #
+        # image[image!=0]=set_label
+        # image=Image.fromarray(image)
+        image = unet.detect_image(image,mix=0)
         # image = image.resize((512, 512))
-        label.save(f"miou_pr_dir/{image_name}")
-        print(label_name, " done!")
+        image.save(f"miou_pr_dir/{image_name}")
+        print(image_name, " done!")
 
 
 if __name__ == '__main__':
+    set_label = 1
+
     show_image()
     transfer_image()
