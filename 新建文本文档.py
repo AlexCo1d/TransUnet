@@ -87,10 +87,10 @@ def main():
 
 
 def txt():
-    image_folder = './VOCdevkit/VOC2007/JPEGImages'
+    image_folder = './for_test/image'#'./VOCdevkit/VOC2007/JPEGImages'
 
     # 指定要写入的txt文件路径
-    output_txt_file = './VOCdevkit/VOC2007/ImageSets/Segmentation/train.txt'
+    output_txt_file = './VOCdevkit/VOC2007/ImageSets/Segmentation/val.txt'
 
     all_files = os.listdir(image_folder)
 
@@ -148,5 +148,5 @@ def count_pos():
 if __name__ == '__main__':
     # observe()
     # main()
-    # txt()
-    count_pos()
+    txt()
+    #count_pos()
