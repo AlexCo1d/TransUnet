@@ -144,9 +144,44 @@ def count_pos():
     print(f'pos num: {count}')
     print(f'list:\n {l}')
 
+def ob_weight():
+    import datetime
+    import os
+    import time
+    import torch.distributed as dist
+    import numpy as np
+    import torch
+    from utils.Loss_utils import get_loss_weight, LossHistory, get_lr_scheduler, set_optimizer_lr
+    from utils.metrics import CE_Loss, Dice_loss, Focal_Loss, f_score
+    #     -------------------------------------------#
+    #       权值文件的下载请看README
+    #       权值和主干特征提取网络一定要对应
+    #     -------------------------------------------#
+    model = get_transNet(n_classes=2, img_size=512).train()
+    model_path = './logs/Epoch37-Total_Loss0.2965-Val_Loss0.3085.pth'
+    # 加快模型训练的效率
+    print('Loading weights into state dict...')
+    model_dict = model.state_dict()
+    pretrained_dict = torch.load(model_path)
+    load_key, no_load_key, temp_dict = [], [], {}
+    for k, v in pretrained_dict.items():
+        if k in model_dict.keys() and np.shape(model_dict[k]) == np.shape(v):
+            temp_dict[k] = v
+            load_key.append(k)
+        else:
+            no_load_key.append(k)
+    model_dict.update(temp_dict)
+    model.load_state_dict(model_dict)
+    # ------------------------------------------------------#
+    #   显示没有匹配上的Key
+    # ------------------------------------------------------#
+    print("\nSuccessful Load Key:", str(load_key)[:500], "……\nSuccessful Load Key Num:", len(load_key))
+    print("\nFail To Load Key:", str(no_load_key)[:500], "……\nFail To Load Key num:", len(no_load_key))
+    print("\n\033[1;33;44m温馨提示，head部分没有载入是正常现象，Backbone部分没有载入是错误的。\033[0m")
 
 if __name__ == '__main__':
     # observe()
     # main()
-    txt()
+    #txt()
     #count_pos()
+    ob_weight()

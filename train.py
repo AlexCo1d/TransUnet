@@ -23,6 +23,27 @@ def get_lr(optimizer):
 
 def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size, epoch_size_val, gen, genval, Epoch,
                   cuda, aux_branch, num_classes, dice_loss, focal_loss, local_rank=0, cls_weights=True):
+    """
+
+    Args:
+        model_train: true trained model
+        model:
+        loss_history:
+        optimizer:
+        epoch:
+        epoch_size:
+        epoch_size_val:
+        gen:
+        genval:
+        Epoch:
+        cuda:
+        aux_branch:
+        num_classes:
+        dice_loss:
+        focal_loss:
+        local_rank:
+        cls_weights:
+    """
     total_loss = 0
     total_f_score = 0
 
@@ -327,12 +348,12 @@ if __name__ == "__main__":
             # ----------------------------#
             #   多卡平行运行
             # ----------------------------#
-            net = model.cuda(local_rank)
-            net = torch.nn.parallel.DistributedDataParallel(net, device_ids=[local_rank], find_unused_parameters=True)
+            model_train = model.cuda(local_rank)
+            model_train = torch.nn.parallel.DistributedDataParallel(model_train, device_ids=[local_rank], find_unused_parameters=True)
         else:
-            net = torch.nn.DataParallel(model)
+            model_train = torch.nn.DataParallel(model)
             cudnn.benchmark = True
-            net = net.cuda()
+            model_train = model_train.cuda()
 
     # 打开数据集的txt
     with open(r"VOCdevkit/VOC2007/ImageSets/Segmentation/train.txt", "r") as f:
