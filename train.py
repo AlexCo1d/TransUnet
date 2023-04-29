@@ -12,7 +12,7 @@ from tqdm import tqdm
 from nets.TransUnet import get_transNet
 from torch.utils.data import DataLoader
 from dataloader import unetDataset, unet_dataset_collate
-from utils.Loss_utils import get_loss_weight, LossHistory
+from utils.Loss_utils import get_loss_weight, LossHistory, get_lr_scheduler, set_optimizer_lr
 from utils.metrics import CE_Loss, Dice_loss, Focal_Loss, f_score
 
 
@@ -21,8 +21,8 @@ def get_lr(optimizer):
         return param_group['lr']
 
 
-def fit_one_epoch(model_train,model,loss_history, optimizer, epoch, epoch_size, epoch_size_val, gen, genval, Epoch, cuda, aux_branch, num_classes, dice_loss, focal_loss, local_rank=0, cls_weights=True):
-
+def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size, epoch_size_val, gen, genval, Epoch,
+                  cuda, aux_branch, num_classes, dice_loss, focal_loss, local_rank=0, cls_weights=True):
     total_loss = 0
     total_f_score = 0
 
@@ -33,7 +33,7 @@ def fit_one_epoch(model_train,model,loss_history, optimizer, epoch, epoch_size, 
 
     if local_rank == 0:
         print('Start Train')
-        pbar = tqdm(total=epoch_size,desc=f'Epoch {epoch + 1}/{Epoch}',postfix=dict,mininterval=0.3)
+        pbar = tqdm(total=epoch_size, desc=f'Epoch {epoch + 1}/{Epoch}', postfix=dict, mininterval=0.3)
 
     model_train.train()
 
@@ -49,7 +49,7 @@ def fit_one_epoch(model_train,model,loss_history, optimizer, epoch, epoch_size, 
 
             if cls_weights is False:
                 # 类别均衡
-                cls_weights = np.ones([num_classes],np.float32)
+                cls_weights = np.ones([num_classes], np.float32)
             else:
                 cls_weights = get_loss_weight(num_classes, pngs)
 
@@ -57,27 +57,27 @@ def fit_one_epoch(model_train,model,loss_history, optimizer, epoch, epoch_size, 
                 imgs = imgs.cuda(local_rank)
                 pngs = pngs.cuda(local_rank)
                 labels = labels.cuda(local_rank)
-                cls_weights=torch.tensor(cls_weights).cuda(local_rank)
+                cls_weights = torch.tensor(cls_weights).cuda(local_rank)
 
         optimizer.zero_grad()
-        #-------------------------------#
+        # -------------------------------#
         #   判断是否使用辅助分支并回传
-        #-------------------------------#
+        # -------------------------------#
         # not use now
         if aux_branch:
             aux_outputs, outputs = model_train(imgs)
-            aux_loss  = CE_Loss(aux_outputs, pngs, num_classes = num_classes)
-            main_loss = CE_Loss(outputs, pngs, num_classes = num_classes)
-            loss      = aux_loss + main_loss
+            aux_loss = CE_Loss(aux_outputs, pngs, num_classes=num_classes)
+            main_loss = CE_Loss(outputs, pngs, num_classes=num_classes)
+            loss = aux_loss + main_loss
             if dice_loss:
-                aux_dice  = Dice_loss(aux_outputs, labels)
+                aux_dice = Dice_loss(aux_outputs, labels)
                 main_dice = Dice_loss(outputs, labels)
-                loss      = loss + aux_dice + main_dice
+                loss = loss + aux_dice + main_dice
 
         else:
             outputs = model_train(imgs)
             if focal_loss:
-                loss = Focal_Loss(outputs, pngs, cls_weights=cls_weights,num_classes=num_classes)
+                loss = Focal_Loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
             else:
                 loss = CE_Loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
             if dice_loss:
@@ -85,9 +85,9 @@ def fit_one_epoch(model_train,model,loss_history, optimizer, epoch, epoch_size, 
                 loss = loss + main_dice
 
         with torch.no_grad():
-            #-------------------------------#
+            # -------------------------------#
             #   计算f_score
-            #-------------------------------#
+            # -------------------------------#
             _f_score = f_score(outputs, labels)
 
         loss.backward()
@@ -97,11 +97,11 @@ def fit_one_epoch(model_train,model,loss_history, optimizer, epoch, epoch_size, 
         total_f_score += _f_score.item()
 
         waste_time = time.time() - start_time
-        if local_rank==0:
+        if local_rank == 0:
             pbar.set_postfix(**{'total_loss': total_loss / (iteration + 1),
-                                'f_score'   : total_f_score / (iteration + 1),
-                                's/step'    : waste_time,
-                                'lr'        : get_lr(optimizer)})
+                                'f_score': total_f_score / (iteration + 1),
+                                's/step': waste_time,
+                                'lr': get_lr(optimizer)})
 
             pbar.update(1)
 
@@ -124,7 +124,7 @@ def fit_one_epoch(model_train,model,loss_history, optimizer, epoch, epoch_size, 
             labels = Variable(torch.from_numpy(labels).type(torch.FloatTensor))
             if cls_weights is False:
                 # 类别均衡
-                cls_weights = np.ones([num_classes],np.float32)
+                cls_weights = np.ones([num_classes], np.float32)
             else:
                 cls_weights = get_loss_weight(num_classes, pngs)
 
@@ -132,19 +132,19 @@ def fit_one_epoch(model_train,model,loss_history, optimizer, epoch, epoch_size, 
                 imgs = imgs.cuda(local_rank)
                 pngs = pngs.cuda(local_rank)
                 labels = labels.cuda(local_rank)
-                cls_weights=torch.tensor(cls_weights).cuda(local_rank)
-            #-------------------------------#
+                cls_weights = torch.tensor(cls_weights).cuda(local_rank)
+            # -------------------------------#
             #   判断是否使用辅助分支 not use
-            #-------------------------------#
+            # -------------------------------#
             if aux_branch:
                 aux_outputs, outputs = model_train(imgs)
-                aux_loss  = CE_Loss(aux_outputs, pngs, num_classes = num_classes)
-                main_loss = CE_Loss(outputs, pngs, num_classes = num_classes)
-                val_toal_loss  = aux_loss + main_loss
+                aux_loss = CE_Loss(aux_outputs, pngs, num_classes=num_classes)
+                main_loss = CE_Loss(outputs, pngs, num_classes=num_classes)
+                val_toal_loss = aux_loss + main_loss
                 if dice_loss:
-                    aux_dice  = Dice_loss(aux_outputs, labels)
+                    aux_dice = Dice_loss(aux_outputs, labels)
                     main_dice = Dice_loss(outputs, labels)
-                    val_toal_loss  = val_toal_loss + aux_dice + main_dice
+                    val_toal_loss = val_toal_loss + aux_dice + main_dice
             else:
                 outputs = model_train(imgs)
                 if focal_loss:
@@ -154,18 +154,18 @@ def fit_one_epoch(model_train,model,loss_history, optimizer, epoch, epoch_size, 
                 if dice_loss:
                     main_dice = Dice_loss(outputs, labels)
                     loss = loss + main_dice
-            #-------------------------------#
+            # -------------------------------#
             #   计算f_score
-            #-------------------------------#
+            # -------------------------------#
             _f_score = f_score(outputs, labels)
 
             val_toal_loss += loss.item()
             val_total_f_score += _f_score.item()
 
         if local_rank == 0:
-            pbar.set_postfix(**{'val_loss'  : val_toal_loss / (iteration + 1),
-                                'f_score'   : val_total_f_score / (iteration + 1),
-                                'lr'        : get_lr(optimizer)})
+            pbar.set_postfix(**{'val_loss': val_toal_loss / (iteration + 1),
+                                'f_score': val_total_f_score / (iteration + 1),
+                                'lr': get_lr(optimizer)})
             pbar.update(1)
     if local_rank == 0:
         pbar.close()
@@ -180,7 +180,7 @@ def fit_one_epoch(model_train,model,loss_history, optimizer, epoch, epoch_size, 
         # -----------------------------------------------#
         if (epoch + 1) % 5 == 0 or epoch + 1 == Epoch:
             torch.save(model.state_dict(), os.path.join(save_dir, 'ep%03d-loss%.3f-val_loss%.3f.pth' % (
-            (epoch + 1), total_loss / epoch_size, val_toal_loss / epoch_size_val)))
+                (epoch + 1), total_loss / epoch_size, val_toal_loss / epoch_size_val)))
 
         if len(loss_history.val_loss) <= 1 or (val_toal_loss / epoch_size_val) <= min(loss_history.val_loss):
             print('Save best model to best_epoch_weights.pth')
@@ -221,8 +221,8 @@ if __name__ == "__main__":
     #   种类多（十几类）时，如果batch_size比较小（10以下），那么设置为False
     # ---------------------------------------------------------------------#
     dice_loss = True
-    focal_loss= True
-    cls_weights=True
+    focal_loss = True
+    cls_weights = True
     # -------------------------------#
     #   主干网络预训练权重的使用
     #
@@ -243,7 +243,7 @@ if __name__ == "__main__":
     #   Cuda的使用
     # -------------------------------#
     Cuda = True
-    #---------------------------------------------------------------------#
+    # ---------------------------------------------------------------------#
     #   distributed     用于指定是否使用单机多卡分布式运行
     #                   终端指令仅支持Ubuntu。CUDA_VISIBLE_DEVICES用于在Ubuntu下指定显卡。
     #                   Windows系统下默认使用DP模式调用所有显卡，不支持DDP。
@@ -253,28 +253,28 @@ if __name__ == "__main__":
     #   DDP模式：
     #       设置            distributed = True
     #       在终端中输入    CUDA_VISIBLE_DEVICES=0,1 python -m torch.distributed.launch --nproc_per_node=2 train.py
-    #---------------------------------------------------------------------#
-    distributed     = True
-    #---------------------------------------------------------------------#
+    # ---------------------------------------------------------------------#
+    distributed = True
+    # ---------------------------------------------------------------------#
     #   sync_bn     是否使用sync_bn，DDP模式多卡可用
-    #---------------------------------------------------------------------#
-    sync_bn         =True
-    #------------------------------------------------------#
+    # ---------------------------------------------------------------------#
+    sync_bn = True
+    # ------------------------------------------------------#
     #   设置用到的显卡
-    #------------------------------------------------------#
-    ngpus_per_node  = torch.cuda.device_count()
+    # ------------------------------------------------------#
+    ngpus_per_node = torch.cuda.device_count()
     # print(f'ngpus: {ngpus_per_node}')
     if distributed:
         dist.init_process_group(backend="nccl")
-        local_rank  = int(os.environ["LOCAL_RANK"])
-        rank        = int(os.environ["RANK"])
-        device      = torch.device("cuda", local_rank)
+        local_rank = int(os.environ["LOCAL_RANK"])
+        rank = int(os.environ["RANK"])
+        device = torch.device("cuda", local_rank)
         if local_rank == 0:
             print(f"[{os.getpid()}] (rank = {rank}, local_rank = {local_rank}) training...")
             print("Gpu Device Count : ", ngpus_per_node)
     else:
-        device          = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        local_rank      = 0
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        local_rank = 0
 
     model = get_transNet(n_classes=NUM_CLASSES, img_size=inputs_size[0]).train()
 
@@ -304,16 +304,16 @@ if __name__ == "__main__":
     #     print("\nFail To Load Key:", str(no_load_key)[:500], "……\nFail To Load Key num:", len(no_load_key))
     #     print("\n\033[1;33;44m温馨提示，head部分没有载入是正常现象，Backbone部分没有载入是错误的。\033[0m")
 
-    #----------------------#
+    # ----------------------#
     #   记录Loss
-    #----------------------#
-    save_dir='logs'
+    # ----------------------#
+    save_dir = 'logs'
     if local_rank == 0:
-        time_str        = datetime.datetime.strftime(datetime.datetime.now(),'%Y_%m_%d_%H_%M_%S')
-        log_dir         = os.path.join(save_dir, "loss_" + str(time_str))
-        loss_history    = LossHistory(log_dir, model, input_shape=inputs_size[:2])
+        time_str = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H_%M_%S')
+        log_dir = os.path.join(save_dir, "loss_" + str(time_str))
+        loss_history = LossHistory(log_dir, model, input_shape=inputs_size[:2])
     else:
-        loss_history    = None
+        loss_history = None
 
     model_train = model.train()
 
@@ -324,9 +324,9 @@ if __name__ == "__main__":
 
     if Cuda:
         if distributed:
-            #----------------------------#
+            # ----------------------------#
             #   多卡平行运行
-            #----------------------------#
+            # ----------------------------#
             net = model.cuda(local_rank)
             net = torch.nn.parallel.DistributedDataParallel(net, device_ids=[local_rank], find_unused_parameters=True)
         else:
@@ -351,46 +351,102 @@ if __name__ == "__main__":
     #   提示OOM或者显存不足请调小Batch_size
     # ------------------------------------------------------#
     if True:
+        """
+        important parameter
+        """
         lr = 1e-3
         Init_Epoch = 0
         Interval_Epoch = 300
-        Batch_size = 5
+        # --------------#
+        # BATCH_SIZE
+        # --------------#
+        Batch_size = 4
+
         # set opt
-        optimizer = optim.Adam(model.parameters(), lr)
-        lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.9)
+        # ------------------------------------------------------------------#
+        #   Init_lr         模型的最大学习率
+        #                   当使用Adam优化器时建议设置  Init_lr=1e-4
+        #                   当使用SGD优化器时建议设置   Init_lr=1e-2
+        #   Min_lr          模型的最小学习率，默认为最大学习率的0.01
+        # ------------------------------------------------------------------#
+        Init_lr = 1e-4
+        Min_lr = Init_lr * 0.01
+        # ------------------------------------------------------------------#
+        #   optimizer_type  使用到的优化器种类，可选的有adam、sgd
+        #                   当使用Adam优化器时建议设置  Init_lr=1e-4
+        #                   当使用SGD优化器时建议设置   Init_lr=1e-2
+        #   momentum        优化器内部使用到的momentum参数
+        #   weight_decay    权值衰减，可防止过拟合
+        #                   adam会导致weight_decay错误，使用adam时建议设置为0。
+        # ------------------------------------------------------------------#
+        optimizer_type = "adam"
+        momentum = 0.9
+        weight_decay = 0
+        # ------------------------------------------------------------------#
+        #   lr_decay_type   使用到的学习率下降方式，可选的有'step'、'cos'
+        # ------------------------------------------------------------------#
+        lr_decay_type = 'cos'
+        # -------------------------------------------------------------------#
+        #   判断当前batch_size，自适应调整学习率
+        # -------------------------------------------------------------------#
+        nbs = 16
+        lr_limit_max = 1e-4 if optimizer_type == 'adam' else 1e-1
+        lr_limit_min = 1e-4 if optimizer_type == 'adam' else 5e-4
+        Init_lr_fit = min(max(Batch_size / nbs * Init_lr, lr_limit_min), lr_limit_max)
+        Min_lr_fit = min(max(Batch_size / nbs * Min_lr, lr_limit_min * 1e-2), lr_limit_max * 1e-2)
+        # ---------------------------------------#
+        #   根据optimizer_type选择优化器
+        # ---------------------------------------#
+        optimizer = {
+            'adam': optim.Adam(model.parameters(), Init_lr_fit, betas=(momentum, 0.999), weight_decay=weight_decay),
+            'sgd': optim.SGD(model.parameters(), Init_lr_fit, momentum=momentum, nesterov=True,
+                             weight_decay=weight_decay)
+        }[optimizer_type]
+        #---------------------------------------#
+        #   获得学习率下降的公式
+        #---------------------------------------#
+        lr_scheduler_func = get_lr_scheduler(lr_decay_type, Init_lr_fit, Min_lr_fit, Interval_Epoch)
+
+        # optimizer = optim.Adam(model.parameters(), lr)
+        # lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.9)
 
         train_dataset = unetDataset(train_lines, inputs_size, NUM_CLASSES, True)
         val_dataset = unetDataset(val_lines, inputs_size, NUM_CLASSES, False)
 
         if distributed:
-            train_sampler   = torch.utils.data.distributed.DistributedSampler(train_dataset, shuffle=True,)
-            val_sampler     = torch.utils.data.distributed.DistributedSampler(val_dataset, shuffle=False,)
-            # batch_size      = Batch_size // ngpus_per_node
-            shuffle         = False
+            train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset, shuffle=True, )
+            val_sampler = torch.utils.data.distributed.DistributedSampler(val_dataset, shuffle=False, )
+            batch_size      = Batch_size // ngpus_per_node
+            shuffle = False
         else:
-            train_sampler   = None
-            val_sampler     = None
-            shuffle         = True
+            train_sampler = None
+            val_sampler = None
+            shuffle = True
 
-        gen     = DataLoader(train_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
-                         drop_last=True, collate_fn=unet_dataset_collate,sampler=train_sampler)
+        gen = DataLoader(train_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
+                         drop_last=True, collate_fn=unet_dataset_collate, sampler=train_sampler)
         gen_val = DataLoader(val_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
-                             drop_last=True, collate_fn=unet_dataset_collate,sampler=val_sampler)
+                             drop_last=True, collate_fn=unet_dataset_collate, sampler=val_sampler)
 
         epoch_size = max(1, len(train_lines) // Batch_size)
         epoch_size_val = max(1, len(val_lines) // Batch_size)
 
+        # begin train
         for epoch in range(Init_Epoch, Interval_Epoch):
 
-            gen = DataLoader(train_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
-                             drop_last=True, collate_fn=unet_dataset_collate, sampler=train_sampler)
-            gen_val = DataLoader(val_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
-                                 drop_last=True, collate_fn=unet_dataset_collate, sampler=val_sampler)
+            # gen = DataLoader(train_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
+            #                  drop_last=True, collate_fn=unet_dataset_collate, sampler=train_sampler)
+            # gen_val = DataLoader(val_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
+            #                      drop_last=True, collate_fn=unet_dataset_collate, sampler=val_sampler)
             if distributed:
                 train_sampler.set_epoch(epoch)
 
-            fit_one_epoch(model_train,model,loss_history, optimizer,epoch, epoch_size, epoch_size_val, gen, gen_val, Interval_Epoch, Cuda, aux_branch,num_classes=NUM_CLASSES,focal_loss=focal_loss,dice_loss=dice_loss,cls_weights=cls_weights,local_rank=local_rank)
-            lr_scheduler.step()
+            set_optimizer_lr(optimizer, lr_scheduler_func, epoch)
+
+            fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size, epoch_size_val, gen, gen_val,
+                          Interval_Epoch, Cuda, aux_branch, num_classes=NUM_CLASSES, focal_loss=focal_loss,
+                          dice_loss=dice_loss, cls_weights=cls_weights, local_rank=local_rank)
+            #lr_scheduler.step()
 
             if distributed:
                 dist.barrier()
@@ -420,5 +476,3 @@ if __name__ == "__main__":
     #     for epoch in range(Interval_Epoch,Epoch):
     #         fit_one_epoch(model,epoch,epoch_size,epoch_size_val,gen,gen_val,Epoch,Cuda,aux_branch)
     #         lr_scheduler.step()
-
-
