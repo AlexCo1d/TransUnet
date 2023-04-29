@@ -71,14 +71,14 @@ def transfer_image():
         label = Image.open(os.path.join(label_path, label_name))
 
         # image = image.resize((512, 512))
-        label.save(f"miou_pr_dir copy/{image_name}")
+        label.save(f"miou_pr_dir copy/{label_name}")
 
         # 测试集生成标签
         image = Image.open(os.path.join(image_path, image_name))
         label = unet.detect_image(image,mix=0)
 
         # image = image.resize((512, 512))
-        label.save(f"miou_pr_dir/{image_name}")
+        label.save(f"miou_pr_dir/{label_name}")
         print(label_name, " done!")
 
 
