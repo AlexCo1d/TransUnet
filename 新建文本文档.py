@@ -158,20 +158,24 @@ def ob_weight():
     #       权值和主干特征提取网络一定要对应
     #     -------------------------------------------#
     model = get_transNet(n_classes=2, img_size=512).train()
-    model_path = './logs/Epoch37-Total_Loss0.2965-Val_Loss0.3085.pth'
+    model_path = './model_data/R50+ViT-B_16.npz'
     # 加快模型训练的效率
     print('Loading weights into state dict...')
     model_dict = model.state_dict()
-    pretrained_dict = torch.load(model_path)
+    pretrained_dict = np.load(model_path)
+    model.load_from(pretrained_dict)
     load_key, no_load_key, temp_dict = [], [], {}
     for k, v in pretrained_dict.items():
+        print(k)
         if k in model_dict.keys() and np.shape(model_dict[k]) == np.shape(v):
-            temp_dict[k] = v
+
             load_key.append(k)
         else:
             no_load_key.append(k)
     model_dict.update(temp_dict)
     model.load_state_dict(model_dict)
+
+
     # ------------------------------------------------------#
     #   显示没有匹配上的Key
     # ------------------------------------------------------#
