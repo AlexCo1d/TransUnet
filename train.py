@@ -242,7 +242,7 @@ if __name__ == "__main__":
     #   种类多（十几类）时，如果batch_size比较小（10以下），那么设置为False
     # ---------------------------------------------------------------------#
     dice_loss = True
-    focal_loss = True
+    focal_loss = False
     cls_weights = True
     # -------------------------------#
     #   主干网络预训练权重的使用
@@ -343,9 +343,9 @@ if __name__ == "__main__":
             if name in frozen_modules:
                 for param in child.parameters():
                     param.requires_grad = True
-            else:
-                for param in child.parameters():
-                    param.requires_grad = False
+            # else:
+            #     for param in child.parameters():
+            #         param.requires_grad = False
 
 
     # ----------------------#
@@ -400,7 +400,7 @@ if __name__ == "__main__":
         """
         # lr = 1e-3
         Init_Epoch = 0
-        Interval_Epoch = 120
+        Interval_Epoch = 150
         # 设置冻结的
         Freeze_Epoch=50
         # --------------#
