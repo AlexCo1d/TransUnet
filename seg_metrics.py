@@ -170,9 +170,9 @@ label_all = np.concatenate([array.flatten() for array in label_all])
 predict_all = np.concatenate([array.flatten() for array in predict_all])
 
 #  把颜色映射为0,1,2,3...
-for i in range(colorDict_GRAY.shape[0]):
-    label_all[label_all == colorDict_GRAY[i][0]] = i
-    predict_all[predict_all == colorDict_GRAY[i][0]] = i
+# for i in range(colorDict_GRAY.shape[0]):
+#     label_all[label_all == colorDict_GRAY[i][0]] = i
+#     predict_all[predict_all == colorDict_GRAY[i][0]] = i
 
 #  拉直成一维
 # label_all = label_all.flatten()

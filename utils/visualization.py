@@ -67,7 +67,7 @@ def blend_images(image1: Image.Image, image2: Image.Image, alpha: float) -> Imag
 
     return blended_image
 
-def blend_raw_images(label_path,image_path,output_path,color_map,alpha):
+def blend_raw_images(label_path,image_path,output_path,color_map,alpha=0.5):
     if not os.path.exists(output_path):
         os.makedirs(output_path)
     # 将2个文件夹的图像融合输出进新文件夹
