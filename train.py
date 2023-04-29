@@ -450,8 +450,9 @@ if __name__ == "__main__":
 
             if distributed:
                 dist.barrier()
-    if local_rank == 0:
-        loss_history.writer.close()
+        if local_rank == 0:
+            loss_history.writer.close()
+
     # if True:
     #     lr = 1e-5
     #     Interval_Epoch = 50
