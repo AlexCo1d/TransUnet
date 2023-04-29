@@ -470,3 +470,12 @@ CONFIGS = {
     'R50-ViT-L_16': configs.get_r50_l16_config(),
     'testing': configs.get_testing(),
 }
+
+class Vit_CGM(VisionTransformer):
+    def __init__(self, config, img_size=256, num_classes=21843, zero_head=False, vis=False):
+
+        self.cls = nn.Sequential(
+                    nn.Dropout(p=0.5),
+                    nn.Conv2d(filters[4], 2, 1),
+                    nn.AdaptiveMaxPool2d(1),
+                    nn.Sigmoid())

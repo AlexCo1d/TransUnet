@@ -13,6 +13,7 @@ from nets.TransUnet import get_transNet
 from torch.utils.data import DataLoader
 from dataloader import unetDataset, unet_dataset_collate
 from utils.Loss_utils import get_loss_weight, LossHistory, get_lr_scheduler, set_optimizer_lr
+from utils.init_weight import init_weights
 from utils.metrics import CE_Loss, Dice_loss, Focal_Loss, f_score
 
 
@@ -103,7 +104,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
                 loss = CE_Loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
             if dice_loss:
                 main_dice = Dice_loss(outputs, labels)
-                loss = 0.5*loss + 0.5*main_dice
+                loss = 0.5 * loss + 0.5 * main_dice
 
         with torch.no_grad():
             # -------------------------------#
@@ -297,8 +298,11 @@ if __name__ == "__main__":
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         local_rank = 0
 
-    # 得到model
+    # -------------------------------------------#
+    # 得到model,并进行初始化，可以选择!
+    # -------------------------------------------#
     model = get_transNet(n_classes=NUM_CLASSES, img_size=inputs_size[0]).train()
+    init_weights(model, init_type='kaiming')
 
     # -------------------------------------------#
     #   权值文件的下载请看README
@@ -320,7 +324,6 @@ if __name__ == "__main__":
         model_dict.update(temp_dict)
         model.load_state_dict(model_dict)
 
-
         # ------------------------------------------------------#
         #   显示没有匹配上的Key
         # ------------------------------------------------------#
@@ -333,7 +336,7 @@ if __name__ == "__main__":
         # ------------------------------------------------------#
         #  注意！！将改动过的模块名字都列出来，为冻结训练作准备！
         # ------------------------------------------------------#
-        frozen_modules = ["cbam","decoder"]
+        frozen_modules = ["cbam", "decoder"]
         # 将所有模块的requires_grad属性设置为False
         for param in model.parameters():
             param.requires_grad = False
@@ -346,7 +349,6 @@ if __name__ == "__main__":
             # else:
             #     for param in child.parameters():
             #         param.requires_grad = False
-
 
     # ----------------------#
     #   记录Loss
@@ -372,7 +374,8 @@ if __name__ == "__main__":
             #   多卡平行运行
             # ----------------------------#
             model_train = model.cuda(local_rank)
-            model_train = torch.nn.parallel.DistributedDataParallel(model_train, device_ids=[local_rank], find_unused_parameters=True)
+            model_train = torch.nn.parallel.DistributedDataParallel(model_train, device_ids=[local_rank],
+                                                                    find_unused_parameters=True)
         else:
             model_train = torch.nn.DataParallel(model)
             cudnn.benchmark = True
@@ -401,8 +404,8 @@ if __name__ == "__main__":
         # lr = 1e-3
         Init_Epoch = 0
         Interval_Epoch = 150
-        # 设置冻结的
-        Freeze_Epoch=50
+        # 设置冻结的epoch
+        Freeze_Epoch = 50
         # --------------#
         # BATCH_SIZE
         # --------------#
@@ -448,9 +451,9 @@ if __name__ == "__main__":
             'sgd': optim.SGD(model.parameters(), Init_lr_fit, momentum=momentum, nesterov=True,
                              weight_decay=weight_decay)
         }[optimizer_type]
-        #---------------------------------------#
+        # ---------------------------------------#
         #   获得学习率下降的公式
-        #---------------------------------------#
+        # ---------------------------------------#
         lr_scheduler_func = get_lr_scheduler(lr_decay_type, Init_lr_fit, Min_lr_fit, Interval_Epoch)
 
         # optimizer = optim.Adam(model.parameters(), lr)
@@ -462,7 +465,7 @@ if __name__ == "__main__":
         if distributed:
             train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset, shuffle=True, )
             val_sampler = torch.utils.data.distributed.DistributedSampler(val_dataset, shuffle=False, )
-            Batch_size      = Batch_size // ngpus_per_node
+            Batch_size = Batch_size // ngpus_per_node
             shuffle = False
         else:
             train_sampler = None
@@ -484,10 +487,10 @@ if __name__ == "__main__":
             #                  drop_last=True, collate_fn=unet_dataset_collate, sampler=train_sampler)
             # gen_val = DataLoader(val_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
             #                      drop_last=True, collate_fn=unet_dataset_collate, sampler=val_sampler)
-            if (pretrained is True) and (epoch==Freeze_Epoch):
+            if (pretrained is True) and (epoch == Freeze_Epoch):
                 # 解冻!!
                 for param in model.parameters():
-                    param.requires_grad=True
+                    param.requires_grad = True
 
             if distributed:
                 train_sampler.set_epoch(epoch)
@@ -497,7 +500,7 @@ if __name__ == "__main__":
             fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size, epoch_size_val, gen, gen_val,
                           Interval_Epoch, Cuda, aux_branch, num_classes=NUM_CLASSES, focal_loss=focal_loss,
                           dice_loss=dice_loss, cls_weights=cls_weights, local_rank=local_rank)
-            #lr_scheduler.step()
+            # lr_scheduler.step()
 
             if distributed:
                 dist.barrier()
