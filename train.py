@@ -103,7 +103,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
                 loss = CE_Loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
             if dice_loss:
                 main_dice = Dice_loss(outputs, labels)
-                loss = loss + main_dice
+                loss = 0.5*loss + 0.5*main_dice
 
         with torch.no_grad():
             # -------------------------------#
@@ -174,7 +174,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
                     loss = CE_Loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
                 if dice_loss:
                     main_dice = Dice_loss(outputs, labels)
-                    loss = loss + main_dice
+                    loss = 0.5 * loss + 0.5 * main_dice
             # -------------------------------#
             #   计算f_score
             # -------------------------------#
@@ -248,7 +248,7 @@ if __name__ == "__main__":
     #   主干网络预训练权重的使用
     #
     # -------------------------------#
-    pretrained = False
+    pretrained = True
     backbone = "ECAresnet"
     # ---------------------#
     #   是否使用辅助分支
@@ -297,6 +297,7 @@ if __name__ == "__main__":
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         local_rank = 0
 
+    # 得到model
     model = get_transNet(n_classes=NUM_CLASSES, img_size=inputs_size[0]).train()
 
     # -------------------------------------------#
@@ -304,7 +305,7 @@ if __name__ == "__main__":
     #   权值和主干特征提取网络一定要对应
     # -------------------------------------------#
     if pretrained:
-        model_path = r"model_data/pspnet_mobilenetv2.pth"
+        model_path = './model_data/pretrained_weight.pth'
         # 加快模型训练的效率
         print('Loading weights into state dict...')
         model_dict = model.state_dict()
@@ -318,6 +319,8 @@ if __name__ == "__main__":
                 no_load_key.append(k)
         model_dict.update(temp_dict)
         model.load_state_dict(model_dict)
+
+
         # ------------------------------------------------------#
         #   显示没有匹配上的Key
         # ------------------------------------------------------#
@@ -325,6 +328,25 @@ if __name__ == "__main__":
             print("\nSuccessful Load Key:", str(load_key)[:500], "……\nSuccessful Load Key Num:", len(load_key))
             print("\nFail To Load Key:", str(no_load_key)[:500], "……\nFail To Load Key num:", len(no_load_key))
             # print("\n\033[1;33;44m温馨提示，head部分没有载入是正常现象，Backbone部分没有载入是错误的。\033[0m")
+            # 定义需要冻结的模块名称
+
+        # ------------------------------------------------------#
+        #  注意！！将改动过的模块名字都列出来，为冻结训练作准备！
+        # ------------------------------------------------------#
+        frozen_modules = ["cbam","decoder"]
+        # 将所有模块的requires_grad属性设置为False
+        for param in model.parameters():
+            param.requires_grad = False
+
+        # 解冻需要训练的的模块，一般包括上采样部分和改动的网络
+        for name, child in model.named_children():
+            if name in frozen_modules:
+                for param in child.parameters():
+                    param.requires_grad = True
+            else:
+                for param in child.parameters():
+                    param.requires_grad = False
+
 
     # ----------------------#
     #   记录Loss
@@ -376,9 +398,11 @@ if __name__ == "__main__":
         """
         important parameter
         """
-        lr = 1e-3
+        # lr = 1e-3
         Init_Epoch = 0
-        Interval_Epoch = 300
+        Interval_Epoch = 120
+        # 设置冻结的
+        Freeze_Epoch=50
         # --------------#
         # BATCH_SIZE
         # --------------#
@@ -460,6 +484,11 @@ if __name__ == "__main__":
             #                  drop_last=True, collate_fn=unet_dataset_collate, sampler=train_sampler)
             # gen_val = DataLoader(val_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
             #                      drop_last=True, collate_fn=unet_dataset_collate, sampler=val_sampler)
+            if (pretrained is True) and (epoch==Freeze_Epoch):
+                # 解冻!!
+                for param in model.parameters():
+                    param.requires_grad=True
+
             if distributed:
                 train_sampler.set_epoch(epoch)
 
