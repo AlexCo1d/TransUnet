@@ -494,10 +494,10 @@ class Vit_CGM(VisionTransformer):
             nn.Sigmoid())
 
     def dotProduct(self, seg, cls):
-        print('!!!',seg.size(),cls.size())
+        # print('!!!',seg.size(),cls.size())
         B, N, H, W = seg.size()
         seg = seg.reshape(B, N, H * W)
-        final = torch.einsum("ijk,ij->ijk", [seg, cls])
+        final = torch.einsum("ijk,ij->ijk", seg, cls)
         final = final.view(B, N, H, W)
         return final
 
