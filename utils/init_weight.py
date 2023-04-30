@@ -5,11 +5,11 @@ from torch.nn import init
 def weights_init_normal(m):
     classname = m.__class__.__name__
     #print(classname)
-    if classname.find('Conv') != -1:
+    if isinstance(m, nn.Conv2d):
         init.normal_(m.weight.data, 0.0, 0.02)
-    elif classname.find('Linear') != -1:
+    elif isinstance(m, nn.Linear):
         init.normal_(m.weight.data, 0.0, 0.02)
-    elif classname.find('BatchNorm') != -1:
+    elif isinstance(m, nn.BatchNorm2d):
         init.normal_(m.weight.data, 1.0, 0.02)
         init.constant_(m.bias.data, 0.0)
 
@@ -17,11 +17,11 @@ def weights_init_normal(m):
 def weights_init_xavier(m):
     classname = m.__class__.__name__
     #print(classname)
-    if classname.find('Conv') != -1:
+    if isinstance(m, nn.Conv2d):
         init.xavier_normal_(m.weight.data, gain=1)
-    elif classname.find('Linear') != -1:
+    elif isinstance(m, nn.Linear):
         init.xavier_normal_(m.weight.data, gain=1)
-    elif classname.find('BatchNorm') != -1:
+    elif isinstance(m, nn.BatchNorm2d):
         init.normal_(m.weight.data, 1.0, 0.02)
         init.constant_(m.bias.data, 0.0)
 
@@ -29,11 +29,11 @@ def weights_init_xavier(m):
 def weights_init_kaiming(m):
     classname = m.__class__.__name__
     #print(classname)
-    if classname.find('Conv') != -1:
+    if isinstance(m, nn.Conv2d):
         init.kaiming_normal_(m.weight.data, a=0, mode='fan_in')
-    elif classname.find('Linear') != -1:
+    elif isinstance(m, nn.Linear):
         init.kaiming_normal_(m.weight.data, a=0, mode='fan_in')
-    elif classname.find('BatchNorm') != -1:
+    elif isinstance(m, nn.BatchNorm2d):
         init.normal_(m.weight.data, 1.0, 0.02)
         init.constant_(m.bias.data, 0.0)
 
@@ -41,11 +41,11 @@ def weights_init_kaiming(m):
 def weights_init_orthogonal(m):
     classname = m.__class__.__name__
     #print(classname)
-    if classname.find('Conv') != -1:
+    if isinstance(m, nn.Conv2d):
         init.orthogonal_(m.weight.data, gain=1)
-    elif classname.find('Linear') != -1:
+    elif isinstance(m, nn.Linear):
         init.orthogonal_(m.weight.data, gain=1)
-    elif classname.find('BatchNorm') != -1:
+    elif isinstance(m, nn.BatchNorm2d):
         init.normal_(m.weight.data, 1.0, 0.02)
         init.constant_(m.bias.data, 0.0)
 
