@@ -139,8 +139,8 @@ class Embeddings(nn.Module):
             self.hybrid = False
 
         if self.hybrid:
-            self.hybrid_model = ResNetV2_ASPP_1(block_units=config.resnet.num_layers,
-                                              width_factor=config.resnet.width_factor)
+            self.hybrid_model = ResNetV2_ASPP(block_units=config.resnet.num_layers,
+                                                width_factor=config.resnet.width_factor)
             in_channels = self.hybrid_model.width * 16
         self.patch_embeddings = Conv2d(in_channels=in_channels,
                                        out_channels=config.hidden_size,
@@ -368,7 +368,7 @@ class DecoderCup(nn.Module):
         B, n_patch, hidden = hidden_states.size()  # reshape from (B, n_patch, hidden) to (B, h, w, hidden)
         h, w = int(np.sqrt(n_patch)), int(np.sqrt(n_patch))
         #####变矩阵###########3  
-        # --------------------2,1024,768------2,512,32,32
+        # --------------------2,1024,768------2,512,32,32 if 512
         # ------------------从transformer变成cnn
         # ----------------------
         x = hidden_states.permute(0, 2, 1)
@@ -471,11 +471,57 @@ CONFIGS = {
     'testing': configs.get_testing(),
 }
 
+
 class Vit_CGM(VisionTransformer):
     def __init__(self, config, img_size=256, num_classes=21843, zero_head=False, vis=False):
+        super(Vit_CGM, self).__init__(config, img_size, num_classes, zero_head, vis)
+        self.num_classes = num_classes
+        self.zero_head = zero_head
+        self.classifier = config.classifier
+        self.transformer = Transformer(config, img_size, vis)
+        self.decoder = DecoderCup(config)
+        self.segmentation_head = SegmentationHead(
+            in_channels=config['decoder_channels'][-1],
+            out_channels=config['n_classes'],
+            kernel_size=3,
+        )
+        self.config = config
 
         self.cls = nn.Sequential(
-                    nn.Dropout(p=0.5),
-                    nn.Conv2d(config.hidden_size, 2, 1),
-                    nn.AdaptiveMaxPool2d(1),
-                    nn.Sigmoid())
+            nn.Dropout(p=0.5),
+            nn.Conv2d(config.hidden_size, 2, 1),
+            nn.AdaptiveMaxPool2d(1),
+            nn.Sigmoid())
+
+    def dotProduct(self, seg, cls):
+        B, N, H, W = seg.size()
+        seg = seg.view(B, N, H * W)
+        final = torch.einsum("ijk,ij->ijk", [seg, cls])
+        final = final.view(B, N, H, W)
+        return final
+
+    def forward(self, x):
+        if x.size()[1] == 1:
+            x = x.repeat(1, 3, 1, 1)
+        x, attn_weights, features = self.transformer(x)  # (B, n_patch, hidden),x= (B, 1024(if 512), 768(hidden size))
+
+        B, n_patch, hidden = x.size()  # reshape from (B, n_patch, hidden) to (B, h, w, hidden)
+        h, w = int(np.sqrt(n_patch)), int(np.sqrt(n_patch))
+        #####变矩阵###########
+        # --------------------2,1024,768------2,768,32,32 if 512
+        # ------------------从transformer变成cnn
+        # ----------------------
+        x1 = x.permute(0, 2, 1)
+        x1 = x1.contiguous().view(B, hidden, h, w)
+
+        # CGM module
+        cls_branch = self.cls(x1).squeeze(3).squeeze(2)  # (B,C,H,W)->(B,2,1,1)->(B,N)
+        cls_branch_max = cls_branch.argmax(dim=1)
+        cls_branch_max = cls_branch_max[:, np.newaxis].float()
+
+        # decoder
+        x = self.decoder(x, features)
+
+        logits = self.segmentation_head(x)
+        logits = self.dotProduct(logits, cls_branch_max)
+        return logits
