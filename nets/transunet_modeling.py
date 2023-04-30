@@ -140,7 +140,7 @@ class Embeddings(nn.Module):
 
         if self.hybrid:
             self.hybrid_model = ResNetV2_ASPP(block_units=config.resnet.num_layers,
-                                                width_factor=config.resnet.width_factor)
+                                              width_factor=config.resnet.width_factor)
             in_channels = self.hybrid_model.width * 16
         self.patch_embeddings = Conv2d(in_channels=in_channels,
                                        out_channels=config.hidden_size,
@@ -472,26 +472,66 @@ CONFIGS = {
 }
 
 
-class Vit_CGM(VisionTransformer):
-    def __init__(self, config, img_size=256, num_classes=21843, zero_head=False, vis=False):
-        super(Vit_CGM, self).__init__(config, img_size, num_classes, zero_head, vis)
-        self.num_classes = num_classes
-        self.zero_head = zero_head
-        self.classifier = config.classifier
-        self.transformer = Transformer(config, img_size, vis)
-        self.decoder = DecoderCup(config)
-        self.segmentation_head = SegmentationHead(
-            in_channels=config['decoder_channels'][-1],
-            out_channels=config['n_classes'],
-            kernel_size=3,
-        )
-        self.config = config
+class DepthwiseSeparableConv(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0):
+        super(DepthwiseSeparableConv, self).__init__()
 
+        self.depthwise_conv = nn.Conv2d(in_channels, in_channels, kernel_size, stride, padding, groups=in_channels,
+                                        bias=False)
+        self.bn1 = nn.BatchNorm2d(in_channels)
+        self.relu1 = nn.ReLU(inplace=True)
+
+        self.pointwise_conv = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(out_channels)
+        self.relu2 = nn.ReLU(inplace=True)
+
+    def forward(self, x):
+        x = self.depthwise_conv(x)
+        x = self.bn1(x)
+        x = self.relu1(x)
+
+        x = self.pointwise_conv(x)
+        x = self.bn2(x)
+        x = self.relu2(x)
+
+        return x
+
+
+class ReducedBinaryClassifier(nn.Module):
+    def __init__(self, in_channels, num_classes):
+        super(ReducedBinaryClassifier, self).__init__()
+
+        self.conv1 = DepthwiseSeparableConv(in_channels, 128, kernel_size=3, padding=1)
+        self.conv2 = DepthwiseSeparableConv(128, 32, kernel_size=3, padding=1)
+
+        self.pool = nn.AdaptiveAvgPool2d(1)
+        self.fc = nn.Linear(32, num_classes)
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.conv2(x)
+
+        x = self.pool(x)
+        x = x.view(x.size(0), -1)
+        x = self.fc(x)
+
+        return x
+
+
+model = ReducedBinaryClassifier()
+
+
+class Vit_CGM(VisionTransformer):
+    def __init__(self, config, img_size=256, num_classes=21843, zero_head=False, vis=False, cgm=True):
+        super(Vit_CGM, self).__init__(config, img_size, num_classes, zero_head, vis)
+        self.if_cgm = cgm
         self.cls = nn.Sequential(
             nn.Dropout(p=0.5),
             nn.Conv2d(config.hidden_size, 2, 1),
             nn.AdaptiveMaxPool2d(1),
             nn.Sigmoid())
+
+        self.BinaryClassifier = ReducedBinaryClassifier(config.hidden_size, num_classes)
 
     def dotProduct(self, seg, cls):
         B, N, H, W = seg.size()
@@ -502,29 +542,40 @@ class Vit_CGM(VisionTransformer):
         return final
 
     def forward(self, x):
+
         if x.size()[1] == 1:
             x = x.repeat(1, 3, 1, 1)
         x, attn_weights, features = self.transformer(x)  # (B, n_patch, hidden),x= (B, 1024(if 512), 768(hidden size))
 
-        B, n_patch, hidden = x.size()  # reshape from (B, n_patch, hidden) to (B, h, w, hidden)
-        h, w = int(np.sqrt(n_patch)), int(np.sqrt(n_patch))
-        #####变矩阵###########
-        # --------------------2,1024,768------2,768,32,32 if 512
-        # ------------------从transformer变成cnn
-        # ----------------------
-        x1 = x.permute(0, 2, 1)
-        x1 = x1.contiguous().view(B, hidden, h, w)
+        global cls_branch_max
+        if self.if_cgm:
+            B, n_patch, hidden = x.size()  # reshape from (B, n_patch, hidden) to (B, h, w, hidden)
+            h, w = int(np.sqrt(n_patch)), int(np.sqrt(n_patch))
+            #####变矩阵###########
+            # --------------------2,1024,768------2,768,32,32 if 512
+            # ------------------从transformer变成cnn
+            # ----------------------
+            x1 = x.permute(0, 2, 1)
+            x1 = x1.contiguous().view(B, hidden, h, w)
 
-        # CGM module
-        cls_branch = self.cls(x1).squeeze(3).squeeze(2)  # (B,C,H,W)->(B,2,1,1)->(B,N)
-        cls_branch_max = cls_branch.argmax(dim=1)
-        # print(f'clsbm1!{cls_branch_max.size()}')
-        cls_branch_max = cls_branch_max[:, np.newaxis].float()  # (B,1) binary classification
-        # print(f'clsbm2!{cls_branch_max.size()}')
+            # CGM module
+            cls_branch = self.cls(x1).squeeze(3).squeeze(2)  # (B,C,H,W)->(B,2,1,1)->(B,N)
+            cls_branch_max = cls_branch.argmax(dim=1)
+            # print(f'clsbm1!{cls_branch_max.size()}')
+            cls_branch_max = cls_branch_max[:, np.newaxis].float()  # (B,1) binary classification
+            # print(f'clsbm2!{cls_branch_max.size()}')
+
+            # back up
+            # cls_branch=self.BinaryClassifier(x1)
+            # cls_branch_max = cls_branch.argmax(dim=1)
+            # # print(f'clsbm1!{cls_branch_max.size()}')
+            # cls_branch_max = cls_branch_max[:, np.newaxis].float()  # (B,1) binary classification
 
         # decoder
         x = self.decoder(x, features)
-
         logits = self.segmentation_head(x)
-        logits = self.dotProduct(logits, cls_branch_max)
+
+        if self.if_cgm:
+            logits = self.dotProduct(logits, cls_branch_max)
+
         return logits
