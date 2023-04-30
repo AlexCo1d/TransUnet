@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import functools
 import torch.nn.functional as F
-from .vit_seg_modeling import VisionTransformer as ViT_seg
+from .vit_seg_modeling import Vit_CGM,VisionTransformer as ViT_seg
 from .vit_seg_modeling import CONFIGS as CONFIGS_ViT_seg
 
 def get_transNet(n_classes,img_size=256):
@@ -14,7 +14,8 @@ def get_transNet(n_classes,img_size=256):
     config_vit.n_skip = 3
     if vit_name.find('R50') != -1:
         config_vit.patches.grid = (int(img_size / vit_patches_size), int(img_size / vit_patches_size))
-    net = ViT_seg(config_vit, img_size=img_size, num_classes=n_classes)
+    # net = ViT_seg(config_vit, img_size=img_size, num_classes=n_classes)
+    net = Vit_CGM(config_vit, img_size=img_size, num_classes=n_classes)
     return net
 
 
