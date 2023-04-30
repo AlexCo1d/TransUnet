@@ -9,7 +9,7 @@ import random
 from torchinfo import summary
 
 from nets.TransUnet import get_transNet
-from nets.vit_seg_modeling import VisionTransformer
+from nets.transunet_modeling import *
 from nets.vit_seg_modeling_resnet_skip import *
 
 path = r'D:/PycharmProjects/unet/transunet 癌细胞/transunet/VOCdevkit/VOC2007/SegmentationClass/'
