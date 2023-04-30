@@ -484,19 +484,19 @@ def label_to_onehot(label_image, num_classes):
     return one_hot_image
 
 
-def observe():
+def observe_model():
     from nets.TransUnet import get_transNet
 
     model = get_transNet(n_classes=2, img_size=512)
     # model=UNet_3Plus_DeepSup_CGM()
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model.to(device)
-    # t=torch.rand(2,3, 512, 512)
-    # x=model.transformer(t)
-    # print(x.shape)
+    t=torch.rand(2,3, 512, 512)
+    x=model(t)
+    print(x.shape)
     #summary(model, input_size=(2, 3, 512, 512))
     # summary(VisionTransformer(config_vit, img_size=img_size, num_classes=1),input_size=(2,3,256,256))
-    print(model)
+    #print(model)
 
 
 
@@ -578,7 +578,7 @@ def ob_weight():
     print("\n\033[1;33;44m温馨提示，head部分没有载入是正常现象，Backbone部分没有载入是错误的。\033[0m")
 
 if __name__ == '__main__':
-    observe()
+    observe_model()
     # main()
     #txt()
     #count_pos()
