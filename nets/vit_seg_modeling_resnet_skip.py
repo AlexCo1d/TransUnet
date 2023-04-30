@@ -266,7 +266,7 @@ class ResNetV2_ASPP(ResNetV2):
 
 class ResNetV2_ASPP_1(ResNetV2):
     def __init__(self, block_units, width_factor):
-        super(ResNetV2_ASPP, self).__init__(block_units, width_factor)
+        super(ResNetV2_ASPP_1, self).__init__(block_units, width_factor)
         width = int(64 * width_factor)
         self.width = width
 
@@ -293,6 +293,6 @@ class ResNetV2_ASPP_1(ResNetV2):
                 [(f'unit{i:d}', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4)) for i in
                  range(2, block_units[2])-1] +
                 [('ASPP_unit8', ASPP(in_channels=width * 16, out_channels=width * 16, atrous_rates=(6, 12, 18)))]+
-                [(f'unit9', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4))]
+                [(f'unit9', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4))],
             ))),
         ]))

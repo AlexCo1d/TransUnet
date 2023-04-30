@@ -243,14 +243,14 @@ if __name__ == "__main__":
     #   种类多（十几类）时，如果batch_size比较小（10以下），那么设置为False
     # ---------------------------------------------------------------------#
     dice_loss = True
-    focal_loss = False
+    focal_loss = True
     cls_weights = True
     # -------------------------------#
     #   主干网络预训练权重的使用
     #
     # -------------------------------#
     pretrained = True
-    backbone = "ECAresnet"
+    # backbone = "ECAresnet"
     # ---------------------#
     #   是否使用辅助分支
     #   会占用大量显存
