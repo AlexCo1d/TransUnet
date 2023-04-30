@@ -539,22 +539,17 @@ def ob_weight():
     # changed_weights = []
     # unchanged_weights = []
 
-    # for key in original_weights.keys():
-    #     # 比较权重张量是否相等
-    #     if torch.allclose(original_weights[key], loaded_weights[key], rtol=1e-05, atol=1e-08):
-    #         unchanged_weights.append(key)
-    #     else:
-    #         changed_weights.append(key)
-    #
-    # # 打印加载和未加载的权重名称
-    # print("Changed weights:")
-    # for name in changed_weights:
-    #     print(f"  - {name}")
-    #
-    # print("\nUnchanged weights:")
-    # for name in unchanged_weights:
-    #     print(f"  - {name}")
-    # torch.save(loaded_weights,'./model_data/pretrained_weight.pth')
+    # 观察权值矩阵！
+    def traverse_children(model, prefix=''):
+        for name, child in model.named_children():
+            # 如果需要，可以在此处对子模块执行某些操作
+            print(f"{prefix}{name}")
+
+            # 继续递归遍历子模块的子模块
+            traverse_children(child, prefix=prefix + '  ')
+
+    # 使用这个函数遍历模型的所有子模块
+    traverse_children(model)
 
     # load_key, no_load_key, temp_dict = [], [], {}
     # for k, v in pretrained_dict.items():
