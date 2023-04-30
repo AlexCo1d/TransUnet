@@ -139,7 +139,7 @@ class Embeddings(nn.Module):
             self.hybrid = False
 
         if self.hybrid:
-            self.hybrid_model = ResNetV2_ASPP(block_units=config.resnet.num_layers,
+            self.hybrid_model = ResNetV2_ASPP_1(block_units=config.resnet.num_layers,
                                               width_factor=config.resnet.width_factor)
             in_channels = self.hybrid_model.width * 16
         self.patch_embeddings = Conv2d(in_channels=in_channels,
@@ -368,7 +368,7 @@ class DecoderCup(nn.Module):
         B, n_patch, hidden = hidden_states.size()  # reshape from (B, n_patch, hidden) to (B, h, w, hidden)
         h, w = int(np.sqrt(n_patch)), int(np.sqrt(n_patch))
         #####变矩阵###########3  
-        # --------------------2,256,768------2,768,16,16
+        # --------------------2,1024,768------2,512,32,32
         # ------------------从transformer变成cnn
         # ----------------------
         x = hidden_states.permute(0, 2, 1)
@@ -476,6 +476,6 @@ class Vit_CGM(VisionTransformer):
 
         self.cls = nn.Sequential(
                     nn.Dropout(p=0.5),
-                    nn.Conv2d(filters[4], 2, 1),
+                    nn.Conv2d(config.hidden_size, 2, 1),
                     nn.AdaptiveMaxPool2d(1),
                     nn.Sigmoid())

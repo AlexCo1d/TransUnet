@@ -112,23 +112,18 @@ def label_to_onehot(label_image, num_classes):
 
 
 def observe():
-    from nets.vit_seg_modeling import CONFIGS as CONFIGS_ViT_seg
-    img_size = 256
-    vit_patches_size = 16
-    vit_name = 'R50-ViT-B_16'
+    from nets.TransUnet import get_transNet
 
-    config_vit = CONFIGS_ViT_seg[vit_name]
-    config_vit.n_classes = 1
-    config_vit.n_skip = 3
-    if vit_name.find('R50') != -1:
-        config_vit.patches.grid = (int(img_size / vit_patches_size), int(img_size / vit_patches_size))
-    print(config_vit)
-    net = ResNetV2_ASPP(block_units=config_vit.resnet.num_layers, width_factor=config_vit.resnet.width_factor)
-    print(config_vit.resnet.width_factor)
-    # net = VisionTransformer(config_vit, img_size=img_size, num_classes=1)
-    summary(net, input_size=(2, 3, 256, 256))
+    model = get_transNet(n_classes=2, img_size=512)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model.to(device)
+    # t=torch.rand(2,3, 512, 512)
+    # x=model.transformer(t)
+    # print(x.shape)
+    summary(model, input_size=(2, 3, 512, 512))
     # summary(VisionTransformer(config_vit, img_size=img_size, num_classes=1),input_size=(2,3,256,256))
-    print(VisionTransformer(config_vit, img_size=img_size, num_classes=1))
+    # print(model.transformer)
+
 
 
 def count_pos():
@@ -209,8 +204,8 @@ def ob_weight():
     print("\n\033[1;33;44m温馨提示，head部分没有载入是正常现象，Backbone部分没有载入是错误的。\033[0m")
 
 if __name__ == '__main__':
-    # observe()
+    observe()
     # main()
     #txt()
     #count_pos()
-    ob_weight()
+    #ob_weight()

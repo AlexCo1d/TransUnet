@@ -262,3 +262,37 @@ class ResNetV2_ASPP(ResNetV2):
                 [('ASPP_unit9', ASPP(in_channels=width * 16, out_channels=width * 16, atrous_rates=(6, 12, 18)))]
             ))),
         ]))
+
+
+class ResNetV2_ASPP_1(ResNetV2):
+    def __init__(self, block_units, width_factor):
+        super(ResNetV2_ASPP, self).__init__(block_units, width_factor)
+        width = int(64 * width_factor)
+        self.width = width
+
+        self.root = nn.Sequential(OrderedDict([
+            ('conv', StdConv2d(3, width, kernel_size=7, stride=2, bias=False, padding=3)),
+            ('gn', nn.GroupNorm(32, width, eps=1e-6)),
+            ('relu', nn.ReLU(inplace=True)),
+            # ('pool', nn.MaxPool2d(kernel_size=3, stride=2, padding=0))
+        ]))
+
+        self.body = nn.Sequential(OrderedDict([
+            ('block1', nn.Sequential(OrderedDict(
+                [('unit1', PreActBottleneck(cin=width, cout=width * 4, cmid=width))] +
+                [(f'unit{i:d}', PreActBottleneck(cin=width * 4, cout=width * 4, cmid=width)) for i in
+                 range(2, block_units[0] + 1)],
+            ))),
+            ('block2', nn.Sequential(OrderedDict(
+                [('unit1', PreActBottleneck(cin=width * 4, cout=width * 8, cmid=width * 2, stride=2))] +
+                [(f'unit{i:d}', PreActBottleneck(cin=width * 8, cout=width * 8, cmid=width * 2)) for i in
+                 range(2, block_units[1] + 1)],
+            ))),
+            ('block3', nn.Sequential(OrderedDict(
+                [('unit1', PreActBottleneck(cin=width * 8, cout=width * 16, cmid=width * 4, stride=2))] +
+                [(f'unit{i:d}', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4)) for i in
+                 range(2, block_units[2])-1] +
+                [('ASPP_unit8', ASPP(in_channels=width * 16, out_channels=width * 16, atrous_rates=(6, 12, 18)))]+
+                [(f'unit9', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4))]
+            ))),
+        ]))
