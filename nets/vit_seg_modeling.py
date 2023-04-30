@@ -494,10 +494,10 @@ class Vit_CGM(VisionTransformer):
             nn.Sigmoid())
 
     def dotProduct(self, seg, cls):
-        # print('!!!',seg.size(),cls.size())
         B, N, H, W = seg.size()
         seg = seg.reshape(B, N, H * W)
-        final = torch.einsum("ijk,ij->ijk", seg, cls)
+        # print('!!!',seg.size(),cls.size())
+        final = torch.einsum("ijk,ic->ijk", seg, cls)
         final = final.view(B, N, H, W)
         return final
 
@@ -518,11 +518,13 @@ class Vit_CGM(VisionTransformer):
         # CGM module
         cls_branch = self.cls(x1).squeeze(3).squeeze(2)  # (B,C,H,W)->(B,2,1,1)->(B,N)
         cls_branch_max = cls_branch.argmax(dim=1)
+        # print(f'clsbm1!{cls_branch_max.size()}')
         cls_branch_max = cls_branch_max[:, np.newaxis].float()
+        # print(f'clsbm2!{cls_branch_max.size()}')
 
         # decoder
         x = self.decoder(x, features)
 
         logits = self.segmentation_head(x)
         logits = self.dotProduct(logits, cls_branch_max)
-        return logits
+        return torch.sigmoid(logits)

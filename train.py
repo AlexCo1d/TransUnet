@@ -344,6 +344,8 @@ if __name__ == "__main__":
         # 解冻需要训练的的模块，一般包括上采样部分和改动的网络
         for name, child in model.named_children():
             if name in frozen_modules:
+                if local_rank==0:
+                    print(f'find block {name}! set rg!')
                 for param in child.parameters():
                     param.requires_grad = True
             # else:
