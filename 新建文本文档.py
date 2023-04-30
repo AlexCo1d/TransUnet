@@ -494,9 +494,9 @@ def observe():
     # t=torch.rand(2,3, 512, 512)
     # x=model.transformer(t)
     # print(x.shape)
-    summary(model, input_size=(2, 3, 512, 512))
+    #summary(model, input_size=(2, 3, 512, 512))
     # summary(VisionTransformer(config_vit, img_size=img_size, num_classes=1),input_size=(2,3,256,256))
-    # print(model.transformer)
+    print(model)
 
 
 
