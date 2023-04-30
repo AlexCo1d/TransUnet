@@ -13,7 +13,7 @@ from nets.TransUnet import get_transNet
 from torch.utils.data import DataLoader
 from dataloader import unetDataset, unet_dataset_collate
 from utils.Loss_utils import get_loss_weight, LossHistory, get_lr_scheduler, set_optimizer_lr
-from utils.init_weight import init_weights
+from utils.init_weight import init_weights, traverse_unfreeze_block
 from utils.metrics import CE_Loss, Dice_loss, Focal_Loss, f_score
 
 
@@ -342,15 +342,7 @@ if __name__ == "__main__":
             param.requires_grad = False
 
         # 解冻需要训练的的模块，一般包括上采样部分和改动的网络
-        for name, child in model.named_children():
-            if name in frozen_modules:
-                if local_rank==0:
-                    print(f'find block {name}! set rg!')
-                for param in child.parameters():
-                    param.requires_grad = True
-            # else:
-            #     for param in child.parameters():
-            #         param.requires_grad = False
+        traverse_unfreeze_block(model,frozen_modules,local_rank)
 
     # ----------------------#
     #   记录Loss
