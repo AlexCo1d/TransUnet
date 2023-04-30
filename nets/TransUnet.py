@@ -14,8 +14,8 @@ def get_transNet(n_classes,img_size=256):
     config_vit.n_skip = 3
     if vit_name.find('R50') != -1:
         config_vit.patches.grid = (int(img_size / vit_patches_size), int(img_size / vit_patches_size))
-    net = ViT_seg(config_vit, img_size=img_size, num_classes=n_classes)
-    # net = Vit_CGM(config_vit, img_size=img_size, num_classes=n_classes)
+    # net = ViT_seg(config_vit, img_size=img_size, num_classes=n_classes)
+    net = Vit_CGM(config_vit, img_size=img_size, num_classes=n_classes)
     return net
 
 
