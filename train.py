@@ -249,6 +249,7 @@ if __name__ == "__main__":
     focal_loss = True
     cls_weights = True
     dice_loss = DiceLoss(NUM_CLASSES)
+    init_weights(dice_loss, init_type='kaiming')
     if focal_loss:
         ce_loss= Focal_Loss
     else:
@@ -393,7 +394,7 @@ if __name__ == "__main__":
         # --------------#
         # BATCH_SIZE
         # --------------#
-        Batch_size = 12
+        Batch_size = 6
 
         # set opt
         # ------------------------------------------------------------------#
