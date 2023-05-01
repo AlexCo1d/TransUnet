@@ -8,7 +8,7 @@ import logging
 import math
 
 from os.path import join as pjoin
-
+import torch.nn.functional as F
 import torch
 import torch.nn as nn
 import numpy as np
@@ -139,7 +139,7 @@ class Embeddings(nn.Module):
             self.hybrid = False
 
         if self.hybrid:
-            self.hybrid_model = ResNetV2_ASPP(block_units=config.resnet.num_layers,
+            self.hybrid_model = ResNetV2_ASPP_1(block_units=config.resnet.num_layers,
                                               width_factor=config.resnet.width_factor)
             in_channels = self.hybrid_model.width * 16
         self.patch_embeddings = Conv2d(in_channels=in_channels,
@@ -316,7 +316,8 @@ class DecoderBlock(nn.Module):
             padding=1,
             use_batchnorm=use_batchnorm,
         )
-        self.up = nn.UpsamplingBilinear2d(scale_factor=2)
+        # self.up = nn.UpsamplingBilinear2d(scale_factor=2)
+        self.up = F.interpolate(scale_factor=2, mode='bilinear')
 
     def forward(self, x, skip=None):
         x = self.up(x)
@@ -331,7 +332,8 @@ class SegmentationHead(nn.Sequential):
 
     def __init__(self, in_channels, out_channels, kernel_size=3, upsampling=1):
         conv2d = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, padding=kernel_size // 2)
-        upsampling = nn.UpsamplingBilinear2d(scale_factor=upsampling) if upsampling > 1 else nn.Identity()
+        # upsampling = nn.UpsamplingBilinear2d(scale_factor=upsampling) if upsampling > 1 else nn.Identity()
+        upsampling = F.interpolate(scale_factor=upsampling, mode='bilinear') if upsampling > 1 else nn.Identity()
         super().__init__(conv2d, upsampling)
 
 

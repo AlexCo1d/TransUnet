@@ -189,7 +189,7 @@ class ASPP(nn.Module):
 
         image_features = self.mean(x)
         image_features = self.conv(image_features)
-        image_features = F.upsample(image_features, size=size, mode='bilinear')
+        image_features = F.interpolate(input=image_features, size=size, mode='bilinear')
 
         atrous_block1 = self.atrous_block1(x)
 
