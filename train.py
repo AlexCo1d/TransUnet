@@ -109,7 +109,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
             outputs = model_train(imgs)
             loss1 = ce_loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
             # loss = CE_Loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
-            main_dice = Dice_loss(outputs, pngs, weight=cls_weights, softmax=True)
+            main_dice = dice_loss(outputs, pngs, weight=cls_weights, softmax=True)
             loss = 0.5 * loss1 + 0.5 * main_dice
 
         with torch.no_grad():
@@ -175,9 +175,9 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
                     val_toal_loss = val_toal_loss + aux_dice + main_dice
             else:
                 outputs = model_train(imgs)
-                loss1=ce_loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
+                loss1 = ce_loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
                 # loss = CE_Loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
-                main_dice = Dice_loss(outputs, pngs,weight=cls_weights,softmax=True)
+                main_dice = dice_loss(outputs, pngs, weight=cls_weights, softmax=True)
                 loss = 0.5 * loss1 + 0.5 * main_dice
             # -------------------------------#
             #   计算f_score
@@ -327,7 +327,7 @@ if __name__ == "__main__":
         # ------------------------------------------------------#
         #  注意！！将改动过的模块名字都列出来，为冻结训练作准备！
         # ------------------------------------------------------#
-        frozen_modules = ["cbam", "decoder", 'ASPP_unit9', 'segmentation_head', ]  # 'cls'
+        frozen_modules = ["cbam", "decoder", 'ASPP_unit8', 'segmentation_head', ]  # 'cls'
         # 将所有模块的requires_grad属性设置为False
         for param in model.parameters():
             param.requires_grad = False
