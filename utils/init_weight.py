@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.nn import init
@@ -74,3 +75,33 @@ def traverse_unfreeze_block(model,freeze_block,local_rank=0):
 
         # 继续递归遍历子模块的子模块
         traverse_unfreeze_block(child,freeze_block=freeze_block,local_rank=local_rank)
+
+def load_pretrained_weights(model,model_path,no_load_dict,local_rank):
+    # 加快模型训练的效率
+    print('Loading weights into state dict...')
+    model_dict = model.state_dict()
+    device = torch.device("cuda", local_rank)
+    pretrained_dict = torch.load(model_path, map_location=device)
+
+    load_key, no_load_key, temp_dict = [], [], {}
+    for k, v in pretrained_dict.items():
+        if k in model_dict.keys() and np.shape(model_dict[k]) == np.shape(v):
+            if k not in no_load_dict:
+                temp_dict[k] = v
+                load_key.append(k)
+        else:
+            no_load_key.append(k)
+    model_dict.update(temp_dict)
+    model.load_state_dict(model_dict)
+    # ------------------------------------------------------#
+    #   显示没有匹配上的Key
+    # ------------------------------------------------------#
+    if local_rank == 0:
+        print("\nSuccessful Load Key Num:", len(load_key))
+        for key in load_key:
+            print(key)
+        print("\nFail To Load Key num:", len(no_load_key))
+        for key in no_load_key:
+            print(key)
+        # print("\n\033[1;33;44m温馨提示，head部分没有载入是正常现象，Backbone部分没有载入是错误的。\033[0m")
+        # 定义需要冻结的模块名称

@@ -13,7 +13,7 @@ from nets.TransUnet import get_transNet
 from torch.utils.data import DataLoader
 from dataloader import unetDataset, unet_dataset_collate
 from utils.Loss_utils import get_loss_weight, LossHistory, get_lr_scheduler, set_optimizer_lr
-from utils.init_weight import init_weights, traverse_unfreeze_block
+from utils.init_weight import *
 from utils.metrics import CE_Loss, Dice_loss, Focal_Loss, f_score
 
 
@@ -310,28 +310,9 @@ if __name__ == "__main__":
     # -------------------------------------------#
     if pretrained:
         model_path = './model_data/pretrained_weight.pth'
-        # 加快模型训练的效率
-        print('Loading weights into state dict...')
-        model_dict = model.state_dict()
-        pretrained_dict = torch.load(model_path, map_location=device)
-        load_key, no_load_key, temp_dict = [], [], {}
-        for k, v in pretrained_dict.items():
-            if k in model_dict.keys() and np.shape(model_dict[k]) == np.shape(v):
-                temp_dict[k] = v
-                load_key.append(k)
-            else:
-                no_load_key.append(k)
-        model_dict.update(temp_dict)
-        model.load_state_dict(model_dict)
+        no_load_dict=['decoder','segmentation_head']
 
-        # ------------------------------------------------------#
-        #   显示没有匹配上的Key
-        # ------------------------------------------------------#
-        if local_rank == 0:
-            print("\nSuccessful Load Key:", str(load_key)[:500], "……\nSuccessful Load Key Num:", len(load_key))
-            print("\nFail To Load Key:", str(no_load_key)[:500], "……\nFail To Load Key num:", len(no_load_key))
-            # print("\n\033[1;33;44m温馨提示，head部分没有载入是正常现象，Backbone部分没有载入是错误的。\033[0m")
-            # 定义需要冻结的模块名称
+        load_pretrained_weights(model,model_path,no_load_dict,local_rank)
 
         # ------------------------------------------------------#
         #  注意！！将改动过的模块名字都列出来，为冻结训练作准备！
