@@ -178,59 +178,6 @@ class ASPPConv(nn.Sequential):
         super(ASPPConv, self).__init__(*modules)
 
 
-# 池化 -> 1*1 卷积 -> 上采样
-class ASPPPooling(nn.Sequential):
-    def __init__(self, in_channels, out_channels):
-        super(ASPPPooling, self).__init__(
-            # nn.AdaptiveAvgPool2d(1),  # 自适应均值池化
-            nn.Conv2d(in_channels, out_channels, 1, bias=False),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU())
-
-    def forward(self, x):
-        size = x.shape[-2:]
-        for mod in self:
-            x = mod(x)
-        # 上采样
-        return F.interpolate(x, size=size, mode='bilinear', align_corners=False)
-
-
-# 整个 ASPP 架构
-class ASPP(nn.Module):
-    def __init__(self, in_channels, atrous_rates, out_channels=256):
-        super(ASPP, self).__init__()
-        modules = []
-        # 1*1 卷积
-        modules.append(nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, 1, bias=False),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU()))
-
-        # 多尺度空洞卷积
-        rates = tuple(atrous_rates)
-        for rate in rates:
-            modules.append(ASPPConv(in_channels, out_channels, rate))
-
-        # 池化
-        modules.append(ASPPPooling(in_channels, out_channels))
-
-        self.convs = nn.ModuleList(modules)
-
-        # 拼接后的卷积
-        self.project = nn.Sequential(
-            nn.Conv2d(len(self.convs) * out_channels, out_channels, 1, bias=False),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(),
-            nn.Dropout(0.5))
-
-    def forward(self, x):
-        res = []
-        for conv in self.convs:
-            res.append(conv(x))
-        res = torch.cat(res, dim=1)
-        return self.project(res)
-
-
 class ASPP(nn.Module):
     def __init__(self, in_channels, atrous_rates, out_channels=256):
         super(ASPP, self).__init__()
@@ -239,9 +186,9 @@ class ASPP(nn.Module):
         self.conv = nn.Conv2d(in_channels, out_channels, 1, 1)
         # k=1 s=1 no pad
         self.atrous_block1 = nn.Conv2d(in_channels, out_channels, 1, 1)
-        self.atrous_block6 = nn.Conv2d(in_channels, out_channels, 3, 1, padding=6, dilation=6)
-        self.atrous_block12 = nn.Conv2d(in_channels, out_channels, 3, 1, padding=12, dilation=12)
-        self.atrous_block18 = nn.Conv2d(in_channels, out_channels, 3, 1, padding=18, dilation=18)
+        self.atrous_block6 = nn.Conv2d(in_channels, out_channels, 3, 1, padding=atrous_rates[0], dilation=atrous_rates[0])
+        self.atrous_block12 = nn.Conv2d(in_channels, out_channels, 3, 1, padding=atrous_rates[1], dilation=atrous_rates[1])
+        self.atrous_block18 = nn.Conv2d(in_channels, out_channels, 3, 1, padding=atrous_rates[2], dilation=atrous_rates[2])
 
         self.conv_1x1_output = nn.Conv2d(out_channels * 5, out_channels, 1, 1)
 
@@ -269,15 +216,6 @@ class ResNetV2_ASPP(ResNetV2):
     def __init__(self, block_units, width_factor):
         super(ResNetV2_ASPP, self).__init__(block_units, width_factor)
         width = int(64 * width_factor)
-        self.width = width
-
-        self.root = nn.Sequential(OrderedDict([
-            ('conv', StdConv2d(3, width, kernel_size=7, stride=2, bias=False, padding=3)),
-            ('gn', nn.GroupNorm(32, width, eps=1e-6)),
-            ('relu', nn.ReLU(inplace=True)),
-            # ('pool', nn.MaxPool2d(kernel_size=3, stride=2, padding=0))
-        ]))
-
         self.body = nn.Sequential(OrderedDict([
             ('block1', nn.Sequential(OrderedDict(
                 [('unit1', PreActBottleneck(cin=width, cout=width * 4, cmid=width))] +
@@ -293,7 +231,7 @@ class ResNetV2_ASPP(ResNetV2):
                 [('unit1', PreActBottleneck(cin=width * 8, cout=width * 16, cmid=width * 4, stride=2))] +
                 [(f'unit{i:d}', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4)) for i in
                  range(2, block_units[2])] +
-                [('ASPP_unit9', ASPP(in_channels=width * 16, out_channels=width * 16, atrous_rates=(6, 12, 18)))]
+                [('ASPP_unit9', ASPP(in_channels=width * 16, out_channels=width * 16, atrous_rates=(6, 12, 18)))],
             ))),
         ]))
 
@@ -303,14 +241,68 @@ class ResNetV2_ASPP_1(ResNetV2):
         super(ResNetV2_ASPP_1, self).__init__(block_units, width_factor)
         width = int(64 * width_factor)
         self.width = width
-
-        self.root = nn.Sequential(OrderedDict([
-            ('conv', StdConv2d(3, width, kernel_size=7, stride=2, bias=False, padding=3)),
-            ('gn', nn.GroupNorm(32, width, eps=1e-6)),
-            ('relu', nn.ReLU(inplace=True)),
-            # ('pool', nn.MaxPool2d(kernel_size=3, stride=2, padding=0))
+        self.body = nn.Sequential(OrderedDict([
+            ('block1', nn.Sequential(OrderedDict(
+                [('unit1', PreActBottleneck(cin=width, cout=width * 4, cmid=width))] +
+                [(f'unit{i:d}', PreActBottleneck(cin=width * 4, cout=width * 4, cmid=width)) for i in
+                 range(2, block_units[0] + 1)],
+            ))),
+            ('block2', nn.Sequential(OrderedDict(
+                [('unit1', PreActBottleneck(cin=width * 4, cout=width * 8, cmid=width * 2, stride=2))] +
+                [(f'unit{i:d}', PreActBottleneck(cin=width * 8, cout=width * 8, cmid=width * 2)) for i in
+                 range(2, block_units[1] + 1)],
+            ))),
+            ('block3', nn.Sequential(OrderedDict(
+                [('unit1', PreActBottleneck(cin=width * 8, cout=width * 16, cmid=width * 4, stride=2))] +
+                [(f'unit{i:d}', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4)) for i in
+                 range(2, block_units[2] - 1)] +
+                [('ASPP_unit8', ASPP(in_channels=width * 16, out_channels=width * 16, atrous_rates=(6, 12, 18)))] +
+                [(f'unit9', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4))],
+            ))),
         ]))
 
+class CBAMLayer(nn.Module):
+    def __init__(self, channel, reduction=16, spatial_kernel=7):
+        super(CBAMLayer, self).__init__()
+        # channel attention 压缩H,W为1
+        self.max_pool = nn.AdaptiveMaxPool2d(1)
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        # shared MLP
+        self.mlp = nn.Sequential(
+            # Conv2d比Linear方便操作
+            # nn.Linear(channel, channel // reduction, bias=False)
+            nn.Conv2d(channel, channel // reduction, 1, bias=False),
+            # inplace=True直接替换，节省内存
+            nn.ReLU(inplace=True),
+            # nn.Linear(channel // reduction, channel,bias=False)
+            nn.Conv2d(channel // reduction, channel, 1, bias=False)
+        )
+        # spatial attention
+        self.conv = nn.Conv2d(2, 1, kernel_size=spatial_kernel,
+                              padding=spatial_kernel // 2, bias=False)
+        self.sigmoid = nn.Sigmoid()
+    def forward(self, x):
+        max_out = self.mlp(self.max_pool(x))
+        avg_out = self.mlp(self.avg_pool(x))
+        channel_out = self.sigmoid(max_out + avg_out)
+        x = channel_out * x
+        max_out, _ = torch.max(x, dim=1, keepdim=True)
+        # print('max_out:',max_out.shape)
+        avg_out = torch.mean(x, dim=1, keepdim=True)
+        # print('avg_out:',avg_out.shape)
+        a=torch.cat([max_out, avg_out], dim=1)
+        # print('a:',a.shape)
+        spatial_out = self.sigmoid(self.conv(torch.cat([max_out, avg_out], dim=1)))
+        # print('spatial:',spatial_out.shape)
+        x = spatial_out * x
+        # print('x:',x.shape)
+        return x
+
+class ResNetV2_ASPP_CBAM(ResNetV2):
+    def __init__(self, block_units, width_factor):
+        super(ResNetV2_ASPP_1, self).__init__(block_units, width_factor)
+        width = int(64 * width_factor)
+        self.width = width
         self.body = nn.Sequential(OrderedDict([
             ('block1', nn.Sequential(OrderedDict(
                 [('unit1', PreActBottleneck(cin=width, cout=width * 4, cmid=width))] +
