@@ -575,6 +575,6 @@ class Vit_CGM(VisionTransformer):
         logits = self.segmentation_head(x)
 
         if self.if_cgm:
-            logits = self.dotProduct(logits, cls_branch_max)
+            logits = torch.sigmoid(self.dotProduct(logits, cls_branch_max))
 
-        return torch.sigmoid(logits)
+        return logits
