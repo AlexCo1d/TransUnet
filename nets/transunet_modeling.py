@@ -317,7 +317,7 @@ class DecoderBlock(nn.Module):
             use_batchnorm=use_batchnorm,
         )
         # self.up = nn.UpsamplingBilinear2d(scale_factor=2)
-        self.up = F.interpolate(scale_factor=2, mode='bilinear')
+        self.up = interpolate(scale_factor=2, mode='bilinear')
 
     def forward(self, x, skip=None):
         x = self.up(x)
@@ -328,12 +328,23 @@ class DecoderBlock(nn.Module):
         return x
 
 
+class interpolate(nn.Module):
+    def __init__(self, scale_factor, mode='bilinear', align_corners=False):
+        super(interpolate, self).__init__()
+        self.scale_factor = scale_factor
+        self.mode = mode
+        self.align_corners = align_corners
+
+    def forward(self, x):
+        return F.interpolate(x, scale_factor=self.scale_factor, mode=self.mode, align_corners=self.align_corners)
+
+
 class SegmentationHead(nn.Sequential):
 
     def __init__(self, in_channels, out_channels, kernel_size=3, upsampling=1):
         conv2d = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, padding=kernel_size // 2)
         # upsampling = nn.UpsamplingBilinear2d(scale_factor=upsampling) if upsampling > 1 else nn.Identity()
-        upsampling = F.interpolate(scale_factor=upsampling, mode='bilinear') if upsampling > 1 else nn.Identity()
+        upsampling = interpolate(scale_factor=upsampling, mode='bilinear') if upsampling > 1 else nn.Identity()
         super().__init__(conv2d, upsampling)
 
 
