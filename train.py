@@ -107,7 +107,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
             #     main_dice = Dice_loss(outputs, labels)
             #     loss = 0.5 * loss + 0.5 * main_dice
             outputs = model_train(imgs)
-            loss1 = CE_Loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
+            loss1 = ce_loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
             # loss = CE_Loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
             main_dice = Dice_loss(outputs, pngs, weight=cls_weights, softmax=True)
             loss = 0.5 * loss1 + 0.5 * main_dice
@@ -175,7 +175,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
                     val_toal_loss = val_toal_loss + aux_dice + main_dice
             else:
                 outputs = model_train(imgs)
-                loss1=ce_loss()
+                loss1=ce_loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
                 # loss = CE_Loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
                 main_dice = Dice_loss(outputs, pngs,weight=cls_weights,softmax=True)
                 loss = 0.5 * loss1 + 0.5 * main_dice
@@ -245,14 +245,14 @@ if __name__ == "__main__":
     #   种类多（十几类）时，如果batch_size比较大（10以上），那么设置为True
     #   种类多（十几类）时，如果batch_size比较小（10以下），那么设置为False
     # ---------------------------------------------------------------------#
-    dice_loss = True
+    # (focal or ce) + dice
     focal_loss = True
     cls_weights = True
     dice_loss = DiceLoss(NUM_CLASSES)
     if focal_loss:
-        ce_loss= Focal_Loss()
+        ce_loss= Focal_Loss
     else:
-        ce_loss = CrossEntropyLoss()
+        ce_loss = CE_Loss
     # -------------------------------#
     #   主干网络预训练权重的使用
     #
