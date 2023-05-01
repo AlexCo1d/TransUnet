@@ -493,7 +493,7 @@ def observe_model():
     # model.to(device)
     t=torch.rand(2,64, 512, 512)
     # x=model(t)
-    print(x.shape)
+    # print(x.shape)
     #summary(model, input_size=(2, 3, 512, 512))
     # summary(VisionTransformer(config_vit, img_size=img_size, num_classes=1),input_size=(2,3,256,256))
     #print(model)
@@ -529,7 +529,7 @@ def ob_weight():
     model = get_transNet(n_classes=2, img_size=512).train()
     # original_weights = model.state_dict()
     model_path = './model_data/pretrained_weight.pth'
-    pretrained_dict = torch.load(model_path)
+    # pretrained_dict = torch.load(model_path)
     # # 加快模型训练的效率
     # print('Loading weights into state dict...')
     #
@@ -539,29 +539,36 @@ def ob_weight():
     # loaded_weights = model.state_dict()
     # changed_weights = []
     # unchanged_weights = []
-
+    for param in model.parameters():
+        param.requires_grad = False
+    print('first')
     # 观察权值矩阵！
-    # def traverse_children(model, prefix=''):
-    #     for name, child in model.named_children():
-    #         # 如果需要，可以在此处对子模块执行某些操作
-    #         print(f"{prefix}{name}")
-    #
-    #         # 继续递归遍历子模块的子模块
-    #         traverse_children(child, prefix=prefix + '  ')
-    #
-    # # 使用这个函数遍历模型的所有子模块
-    # traverse_children(model)
+    def print_requires_grad(module, prefix=''):
+        for name, child in module.named_children():
+            new_prefix = f"{prefix}.{name}" if prefix else name
+            print_requires_grad(child, new_prefix)
 
-    load_key, no_load_key, temp_dict = [], [], {}
-    for k, v in pretrained_dict.items():
-        print(k)
-        if k in model_dict.keys() and np.shape(model_dict[k]) == np.shape(v):
-            load_key.append(k)
-        else:
-            no_load_key.append(k)
+        for name, param in module.named_parameters(prefix=prefix):
+            print(f"{name}: {param.requires_grad}")
 
-    model_dict.update(temp_dict)
-    model.load_state_dict(model_dict)
+    # 使用这个函数遍历模型的所有子模块
+    print_requires_grad(model)
+    print('second check')
+    traverse_unfreeze_block(model,["cbam", "decoder", 'ASPP_unit9', 'segmentation_head', ] )
+    for param in model.parameters():
+        param.requires_grad = True
+    print_requires_grad(model)
+    #
+    # load_key, no_load_key, temp_dict = [], [], {}
+    # for k, v in pretrained_dict.items():
+    #     print(k)
+    #     if k in model_dict.keys() and np.shape(model_dict[k]) == np.shape(v):
+    #         load_key.append(k)
+    #     else:
+    #         no_load_key.append(k)
+    #
+    # model_dict.update(temp_dict)
+    # model.load_state_dict(model_dict)
     # for k in no_load_key:
     #     print(k)
     #
@@ -577,8 +584,8 @@ def ob_weight():
 
 
 if __name__ == '__main__':
-    observe_model()
+    # observe_model()
     # main()
     #txt()
     #count_pos()
-    # ob_weight()
+    ob_weight()

@@ -76,6 +76,7 @@ def traverse_unfreeze_block(model,freeze_block,local_rank=0):
         # 继续递归遍历子模块的子模块
         traverse_unfreeze_block(child,freeze_block=freeze_block,local_rank=local_rank)
 
+
 def load_pretrained_weights(model,model_path,no_load_dict,local_rank):
     # 加快模型训练的效率
     print('Loading weights into state dict...')
