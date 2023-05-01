@@ -41,7 +41,7 @@ label_path='./VOCdevkit/VOC2007/SegmentationClass'
 def show_image():
     from unet import uNet
     uNet = uNet()
-
+    uNet.net.eval()
 
     with open(txt_path, "r") as file:
         lines = file.readlines()
@@ -59,7 +59,7 @@ def show_image():
 def transfer_image():
     from unet import uNet
     unet = uNet()
-
+    unet.net.eval()
     with open(txt_path, "r") as file:
         lines = file.readlines()
 
