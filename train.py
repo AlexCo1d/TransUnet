@@ -310,6 +310,7 @@ if __name__ == "__main__":
     # -------------------------------------------#
     if pretrained:
         model_path = './model_data/pretrained_weight.pth'
+        # no_load_dict,加载预训练时不加载解码器部分
         no_load_dict=['decoder','segmentation_head']
 
         load_pretrained_weights(model,model_path,no_load_dict,local_rank)
@@ -378,13 +379,13 @@ if __name__ == "__main__":
         """
         # lr = 1e-3
         Init_Epoch = 0
-        Interval_Epoch = 100
+        Interval_Epoch = 120
         # 设置冻结的epoch
         Freeze_Epoch = 40
         # --------------#
         # BATCH_SIZE
         # --------------#
-        Batch_size = 6
+        Batch_size = 12
 
         # set opt
         # ------------------------------------------------------------------#
