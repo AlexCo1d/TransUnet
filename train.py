@@ -397,9 +397,9 @@ if __name__ == "__main__":
         """
         # lr = 1e-3
         Init_Epoch = 0
-        Interval_Epoch = 150
+        Interval_Epoch = 100
         # 设置冻结的epoch
-        Freeze_Epoch = 50
+        Freeze_Epoch = 40
         # --------------#
         # BATCH_SIZE
         # --------------#
