@@ -301,7 +301,7 @@ if __name__ == "__main__":
     # -------------------------------------------#
     # 得到model,并进行初始化，可以选择!
     # -------------------------------------------#
-    model = get_transNet(n_classes=NUM_CLASSES, img_size=inputs_size[0]).train()
+    model = get_transNet(n_classes=NUM_CLASSES, img_size=inputs_size[0],cgm=False).train()
     init_weights(model, init_type='kaiming')
 
     # -------------------------------------------#
@@ -397,9 +397,9 @@ if __name__ == "__main__":
         """
         # lr = 1e-3
         Init_Epoch = 0
-        Interval_Epoch = 100
+        Interval_Epoch = 150
         # 设置冻结的epoch
-        Freeze_Epoch = 40
+        Freeze_Epoch = 50
         # --------------#
         # BATCH_SIZE
         # --------------#

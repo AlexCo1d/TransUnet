@@ -27,6 +27,7 @@ class uNet(object):
         "downsample_factor": 16,
         "num_classes": 2,
         "cuda": True,
+        "cgm":False
         # --------------------------------#
     }
 
@@ -42,7 +43,7 @@ class uNet(object):
     # ---------------------------------------------------#
     def generate(self):
         os.environ["CUDA_VISIBLE_DEVICES"] = '0'
-        self.net = get_transNet(n_classes=self.num_classes, img_size=self.model_image_size[0])
+        self.net = get_transNet(n_classes=self.num_classes, img_size=self.model_image_size[0],cgm=self.cgm)
         self.net = self.net.eval()
 
         state_dict = torch.load(self.model_path)
