@@ -518,9 +518,6 @@ class ReducedBinaryClassifier(nn.Module):
         return x
 
 
-model = ReducedBinaryClassifier()
-
-
 class Vit_CGM(VisionTransformer):
     def __init__(self, config, img_size=256, num_classes=21843, zero_head=False, vis=False, cgm=True):
         super(Vit_CGM, self).__init__(config, img_size, num_classes, zero_head, vis)
