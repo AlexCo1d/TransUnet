@@ -575,4 +575,4 @@ class Vit_CGM(VisionTransformer):
         if self.if_cgm:
             logits = self.dotProduct(logits, cls_branch_max)
 
-        return logits
+        return torch.sigmoid(logits)
