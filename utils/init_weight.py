@@ -87,9 +87,16 @@ def load_pretrained_weights(model,model_path,no_load_dict,local_rank):
     load_key, no_load_key, temp_dict = [], [], {}
     for k, v in pretrained_dict.items():
         if k in model_dict.keys() and np.shape(model_dict[k]) == np.shape(v):
-            if k not in no_load_dict:
+            flag=False
+            for prefix in no_load_dict:
+                if k.startswith(prefix):
+                    flag=True
+            if flag:
+                no_load_key.append(k)
+            else:
                 temp_dict[k] = v
                 load_key.append(k)
+
         else:
             no_load_key.append(k)
     model_dict.update(temp_dict)
