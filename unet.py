@@ -86,7 +86,7 @@ class uNet(object):
     # ---------------------------------------------------#
     def detect_image(self, image, mix=0):
         self.mix = mix
-
+        self.net.eval()
         old_img = copy.deepcopy(image)
         orininal_h = np.array(image).shape[0]
         orininal_w = np.array(image).shape[1]
