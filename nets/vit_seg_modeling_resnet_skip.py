@@ -167,17 +167,6 @@ class ResNetV2(nn.Module):
         return x, features[::-1]
 
 
-# 空洞卷积
-class ASPPConv(nn.Sequential):
-    def __init__(self, in_channels, out_channels, dilation):
-        modules = [
-            nn.Conv2d(in_channels, out_channels, 3, padding=dilation, dilation=dilation, bias=False),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU()
-        ]
-        super(ASPPConv, self).__init__(*modules)
-
-
 class ASPP(nn.Module):
     def __init__(self, in_channels, atrous_rates, out_channels=256):
         super(ASPP, self).__init__()
@@ -186,9 +175,12 @@ class ASPP(nn.Module):
         self.conv = nn.Conv2d(in_channels, out_channels, 1, 1)
         # k=1 s=1 no pad
         self.atrous_block1 = nn.Conv2d(in_channels, out_channels, 1, 1)
-        self.atrous_block6 = nn.Conv2d(in_channels, out_channels, 3, 1, padding=atrous_rates[0], dilation=atrous_rates[0])
-        self.atrous_block12 = nn.Conv2d(in_channels, out_channels, 3, 1, padding=atrous_rates[1], dilation=atrous_rates[1])
-        self.atrous_block18 = nn.Conv2d(in_channels, out_channels, 3, 1, padding=atrous_rates[2], dilation=atrous_rates[2])
+        self.atrous_block6 = nn.Conv2d(in_channels, out_channels, 3, 1, padding=atrous_rates[0],
+                                       dilation=atrous_rates[0])
+        self.atrous_block12 = nn.Conv2d(in_channels, out_channels, 3, 1, padding=atrous_rates[1],
+                                        dilation=atrous_rates[1])
+        self.atrous_block18 = nn.Conv2d(in_channels, out_channels, 3, 1, padding=atrous_rates[2],
+                                        dilation=atrous_rates[2])
 
         self.conv_1x1_output = nn.Conv2d(out_channels * 5, out_channels, 1, 1)
 
@@ -261,6 +253,7 @@ class ResNetV2_ASPP_1(ResNetV2):
             ))),
         ]))
 
+
 class CBAMLayer(nn.Module):
     def __init__(self, channel, reduction=16, spatial_kernel=7):
         super(CBAMLayer, self).__init__()
@@ -281,6 +274,7 @@ class CBAMLayer(nn.Module):
         self.conv = nn.Conv2d(2, 1, kernel_size=spatial_kernel,
                               padding=spatial_kernel // 2, bias=False)
         self.sigmoid = nn.Sigmoid()
+
     def forward(self, x):
         max_out = self.mlp(self.max_pool(x))
         avg_out = self.mlp(self.avg_pool(x))
@@ -290,7 +284,7 @@ class CBAMLayer(nn.Module):
         # print('max_out:',max_out.shape)
         avg_out = torch.mean(x, dim=1, keepdim=True)
         # print('avg_out:',avg_out.shape)
-        a=torch.cat([max_out, avg_out], dim=1)
+        a = torch.cat([max_out, avg_out], dim=1)
         # print('a:',a.shape)
         spatial_out = self.sigmoid(self.conv(torch.cat([max_out, avg_out], dim=1)))
         # print('spatial:',spatial_out.shape)
@@ -298,27 +292,64 @@ class CBAMLayer(nn.Module):
         # print('x:',x.shape)
         return x
 
+
+class PreActBottleneck_CBAM(PreActBottleneck):
+    """Pre-activation (v2) bottleneck block.
+    """
+    def __init__(self, cin, cout=None, cmid=None, stride=1):
+        super().__init__(cin, cout, cmid, stride)
+        cout = cout or cin
+        cmid = cmid or cout // 4
+
+        self.gn1 = nn.GroupNorm(32, cmid, eps=1e-6)
+        self.conv1 = conv1x1(cin, cmid, bias=False)
+        self.gn2 = nn.GroupNorm(32, cmid, eps=1e-6)
+        self.conv2 = conv3x3(cmid, cmid, stride, bias=False)  # Original code has it on conv1!!
+        self.gn3 = nn.GroupNorm(32, cout, eps=1e-6)
+        self.conv3 = conv1x1(cmid, cout, bias=False)
+        self.relu = nn.ReLU(inplace=True)
+        self.cbam = CBAMLayer(cout)
+        if (stride != 1 or cin != cout):
+            # Projection also with pre-activation according to paper.
+            self.downsample = conv1x1(cin, cout, stride, bias=False)
+            self.gn_proj = nn.GroupNorm(cout, cout)
+
+    def forward(self, x):
+
+        # Residual branch
+        residual = x
+        if hasattr(self, 'downsample'):
+            residual = self.downsample(x)
+            residual = self.gn_proj(residual)
+
+        # Unit's branch
+        y = self.relu(self.gn1(self.conv1(x)))
+        y = self.relu(self.gn2(self.conv2(y)))
+        y = self.gn3(self.conv3(y))
+        y = self.cbam(y)
+        y = self.relu(residual + y)
+        return y
+
+
 class ResNetV2_ASPP_CBAM(ResNetV2):
     def __init__(self, block_units, width_factor):
-        super(ResNetV2_ASPP_1, self).__init__(block_units, width_factor)
+        super(ResNetV2_ASPP_CBAM, self).__init__(block_units, width_factor)
         width = int(64 * width_factor)
         self.width = width
         self.body = nn.Sequential(OrderedDict([
             ('block1', nn.Sequential(OrderedDict(
-                [('unit1', PreActBottleneck(cin=width, cout=width * 4, cmid=width))] +
-                [(f'unit{i:d}', PreActBottleneck(cin=width * 4, cout=width * 4, cmid=width)) for i in
+                [('unit1', PreActBottleneck_CBAM(cin=width, cout=width * 4, cmid=width))] +
+                [(f'unit{i:d}', PreActBottleneck_CBAM(cin=width * 4, cout=width * 4, cmid=width)) for i in
                  range(2, block_units[0] + 1)],
             ))),
             ('block2', nn.Sequential(OrderedDict(
-                [('unit1', PreActBottleneck(cin=width * 4, cout=width * 8, cmid=width * 2, stride=2))] +
-                [(f'unit{i:d}', PreActBottleneck(cin=width * 8, cout=width * 8, cmid=width * 2)) for i in
+                [('unit1', PreActBottleneck_CBAM(cin=width * 4, cout=width * 8, cmid=width * 2, stride=2))] +
+                [(f'unit{i:d}', PreActBottleneck_CBAM(cin=width * 8, cout=width * 8, cmid=width * 2)) for i in
                  range(2, block_units[1] + 1)],
             ))),
             ('block3', nn.Sequential(OrderedDict(
-                [('unit1', PreActBottleneck(cin=width * 8, cout=width * 16, cmid=width * 4, stride=2))] +
-                [(f'unit{i:d}', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4)) for i in
-                 range(2, block_units[2] - 1)] +
-                [('ASPP_unit8', ASPP(in_channels=width * 16, out_channels=width * 16, atrous_rates=(6, 12, 18)))] +
-                [(f'unit9', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4))],
+                [('unit1', PreActBottleneck_CBAM(cin=width * 8, cout=width * 16, cmid=width * 4, stride=2))] +
+                [(f'unit{i:d}', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4)) for i in
+                 range(2, block_units[2] + 1)],
             ))),
         ]))
