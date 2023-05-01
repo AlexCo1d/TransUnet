@@ -7,6 +7,7 @@ import torch
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
 from torch.autograd import Variable
+from torch.nn import CrossEntropyLoss
 from tqdm import tqdm
 
 from nets.TransUnet import get_transNet
@@ -14,7 +15,7 @@ from torch.utils.data import DataLoader
 from dataloader import unetDataset, unet_dataset_collate
 from utils.Loss_utils import get_loss_weight, LossHistory, get_lr_scheduler, set_optimizer_lr
 from utils.init_weight import *
-from utils.metrics import CE_Loss, Dice_loss, Focal_Loss, f_score
+from utils.metrics import *
 
 
 def get_lr(optimizer):
@@ -23,7 +24,7 @@ def get_lr(optimizer):
 
 
 def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size, epoch_size_val, gen, genval, Epoch,
-                  cuda, aux_branch, num_classes, dice_loss, focal_loss, local_rank=0, cls_weights=True):
+                  cuda, aux_branch, num_classes, dice_loss, ce_loss, local_rank=0, cls_weights=True):
     """
 
     Args:
@@ -92,19 +93,24 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
             main_loss = CE_Loss(outputs, pngs, num_classes=num_classes)
             loss = aux_loss + main_loss
             if dice_loss:
-                aux_dice = Dice_loss(aux_outputs, labels)
-                main_dice = Dice_loss(outputs, labels)
+                aux_dice = dice_loss(aux_outputs, labels)
+                main_dice = dice_loss(outputs, labels)
                 loss = loss + aux_dice + main_dice
 
         else:
+            # outputs = model_train(imgs)
+            # if focal_loss:
+            #     loss = Focal_Loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
+            # else:
+            #     loss = CE_Loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
+            # if dice_loss:
+            #     main_dice = Dice_loss(outputs, labels)
+            #     loss = 0.5 * loss + 0.5 * main_dice
             outputs = model_train(imgs)
-            if focal_loss:
-                loss = Focal_Loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
-            else:
-                loss = CE_Loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
-            if dice_loss:
-                main_dice = Dice_loss(outputs, labels)
-                loss = 0.5 * loss + 0.5 * main_dice
+            loss1 = CE_Loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
+            # loss = CE_Loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
+            main_dice = Dice_loss(outputs, pngs, weight=cls_weights, softmax=True)
+            loss = 0.5 * loss1 + 0.5 * main_dice
 
         with torch.no_grad():
             # -------------------------------#
@@ -169,13 +175,10 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
                     val_toal_loss = val_toal_loss + aux_dice + main_dice
             else:
                 outputs = model_train(imgs)
-                if focal_loss:
-                    loss = Focal_Loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
-                else:
-                    loss = CE_Loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
-                if dice_loss:
-                    main_dice = Dice_loss(outputs, labels)
-                    loss = 0.5 * loss + 0.5 * main_dice
+                loss1=ce_loss()
+                # loss = CE_Loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
+                main_dice = Dice_loss(outputs, pngs,weight=cls_weights,softmax=True)
+                loss = 0.5 * loss1 + 0.5 * main_dice
             # -------------------------------#
             #   计算f_score
             # -------------------------------#
@@ -245,6 +248,11 @@ if __name__ == "__main__":
     dice_loss = True
     focal_loss = True
     cls_weights = True
+    dice_loss = DiceLoss(NUM_CLASSES)
+    if focal_loss:
+        ce_loss= Focal_Loss()
+    else:
+        ce_loss = CrossEntropyLoss()
     # -------------------------------#
     #   主干网络预训练权重的使用
     #
@@ -474,7 +482,7 @@ if __name__ == "__main__":
             set_optimizer_lr(optimizer, lr_scheduler_func, epoch)
 
             fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size, epoch_size_val, gen, gen_val,
-                          Interval_Epoch, Cuda, aux_branch, num_classes=NUM_CLASSES, focal_loss=focal_loss,
+                          Interval_Epoch, Cuda, aux_branch, num_classes=NUM_CLASSES, ce_loss=ce_loss,
                           dice_loss=dice_loss, cls_weights=cls_weights, local_rank=local_rank)
             # lr_scheduler.step()
 

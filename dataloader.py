@@ -162,7 +162,9 @@ class unetDataset(Dataset):
 
         # 归一化和维度交换
         jpg = np.transpose(np.array(jpg), [2, 0, 1]) / 255
-
+        # jpg image,
+        # png label ,
+        # seg_labels: one-hot encoded label
         return jpg, png, seg_labels
 
 
