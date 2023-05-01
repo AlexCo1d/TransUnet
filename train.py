@@ -109,7 +109,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
             outputs = model_train(imgs)
             loss1 = ce_loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
             # loss = CE_Loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
-            main_dice = dice_loss(outputs, pngs, weight=cls_weights, softmax=True)
+            main_dice = dice_loss(outputs, pngs, softmax=True)
             loss = 0.5 * loss1 + 0.5 * main_dice
 
         with torch.no_grad():
@@ -177,7 +177,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
                 outputs = model_train(imgs)
                 loss1 = ce_loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
                 # loss = CE_Loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
-                main_dice = dice_loss(outputs, pngs, weight=cls_weights, softmax=True)
+                main_dice = dice_loss(outputs, pngs, softmax=True)
                 loss = 0.5 * loss1 + 0.5 * main_dice
             # -------------------------------#
             #   计算f_score
