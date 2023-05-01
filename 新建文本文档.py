@@ -528,40 +528,40 @@ def ob_weight():
     #     -------------------------------------------#
     model = get_transNet(n_classes=2, img_size=512).train()
     # original_weights = model.state_dict()
-    # model_path = './model_data/pretrained_weight.pth'
+    model_path = './model_data/pretrained_weight.pth'
+    pretrained_dict = torch.load(model_path)
     # # 加快模型训练的效率
     # print('Loading weights into state dict...')
     #
-    # model_dict = model.state_dict()
-    # pretrained_dict = torch.load(model_path)
+    model_dict = model.state_dict()
+
     # model.load_from(pretrained_dict)
     # loaded_weights = model.state_dict()
     # changed_weights = []
     # unchanged_weights = []
 
     # 观察权值矩阵！
-    def traverse_children(model, prefix=''):
-        for name, child in model.named_children():
-            # 如果需要，可以在此处对子模块执行某些操作
-            print(f"{prefix}{name}")
-
-            # 继续递归遍历子模块的子模块
-            traverse_children(child, prefix=prefix + '  ')
-
-    # 使用这个函数遍历模型的所有子模块
-    traverse_children(model)
-
-    # load_key, no_load_key, temp_dict = [], [], {}
-    # for k, v in pretrained_dict.items():
-    #     #print(k)
-    #     if k in model_dict.keys() and np.shape(model_dict[k]) == np.shape(v):
+    # def traverse_children(model, prefix=''):
+    #     for name, child in model.named_children():
+    #         # 如果需要，可以在此处对子模块执行某些操作
+    #         print(f"{prefix}{name}")
     #
-    #         load_key.append(k)
-    #     else:
-    #         no_load_key.append(k)
+    #         # 继续递归遍历子模块的子模块
+    #         traverse_children(child, prefix=prefix + '  ')
     #
-    # model_dict.update(temp_dict)
-    # model.load_state_dict(model_dict)
+    # # 使用这个函数遍历模型的所有子模块
+    # traverse_children(model)
+
+    load_key, no_load_key, temp_dict = [], [], {}
+    for k, v in pretrained_dict.items():
+        print(k)
+        if k in model_dict.keys() and np.shape(model_dict[k]) == np.shape(v):
+            load_key.append(k)
+        else:
+            no_load_key.append(k)
+
+    model_dict.update(temp_dict)
+    model.load_state_dict(model_dict)
     # for k in no_load_key:
     #     print(k)
     #
