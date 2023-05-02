@@ -157,44 +157,6 @@ class Transformer(nn.Module):
         return encoded, attn_weights, features
 
 
-class DecoderBlock_CBAM(DecoderBlock):
-    def __init__(
-            self,
-            in_channels,
-            out_channels,
-            skip_channels=0,
-            use_batchnorm=True,
-    ):
-        super().__init__(in_channels,
-                         out_channels,
-                         skip_channels,
-                         use_batchnorm)
-        self.conv1 = Conv2dReLU(
-            in_channels + skip_channels,
-            out_channels,
-            kernel_size=3,
-            padding=1,
-            use_batchnorm=use_batchnorm,
-        )
-        self.conv2 = Conv2dReLU(
-            out_channels,
-            out_channels,
-            kernel_size=3,
-            padding=1,
-            use_batchnorm=use_batchnorm,
-        )
-        # self.up = nn.UpsamplingBilinear2d(scale_factor=2)
-        self.up = interpolate(scale_factor=2, mode='bilinear')
-
-    def forward(self, x, skip=None):
-        x = self.up(x)
-        if skip is not None:
-            x = torch.cat([x, skip], dim=1)
-        x = self.conv1(x)
-        x = self.conv2(x)
-        return x
-
-
 class DecoderCup_CBAM(DecoderCup):
     def __init__(self, config):
         super().__init__(config)
@@ -220,7 +182,7 @@ class DecoderCup_CBAM(DecoderCup):
             skip_channels = [0, 0, 0, 0]
 
         blocks = [
-            DecoderBlock(in_ch, out_ch, sk_ch) for in_ch, out_ch, sk_ch in zip(in_channels, out_channels, skip_channels)
+            DecoderBlock_CBAM(in_ch, out_ch, sk_ch) for in_ch, out_ch, sk_ch in zip(in_channels, out_channels, skip_channels)
         ]
         self.blocks = nn.ModuleList(blocks)
 
@@ -266,3 +228,40 @@ class Vit_CBAM_CGM(Vit_CGM):
             nn.Sigmoid())
 
         self.BinaryClassifier = ReducedBinaryClassifier(config.hidden_size, num_classes)
+
+
+class DecoderBlock_CBAM(nn.Module):
+    def __init__(
+            self,
+            in_channels,
+            out_channels,
+            skip_channels=0,
+            use_batchnorm=True,
+    ):
+        super(DecoderBlock_CBAM).__init__()
+        self.conv1 = Conv2dReLU(
+            in_channels + skip_channels,
+            out_channels,
+            kernel_size=3,
+            padding=1,
+            use_batchnorm=use_batchnorm,
+        )
+        self.conv2 = Conv2dReLU(
+            out_channels,
+            out_channels,
+            kernel_size=3,
+            padding=1,
+            use_batchnorm=use_batchnorm,
+        )
+        # self.up = nn.UpsamplingBilinear2d(scale_factor=2)
+        self.up = interpolate(scale_factor=2, mode='bilinear')
+        self.cbam=CBAMLayer(out_channels)
+
+    def forward(self, x, skip=None):
+        x = self.up(x)
+        if skip is not None:
+            x = torch.cat([x, skip], dim=1)
+        x = self.conv1(x)
+        x = self.conv2(x)
+        x = self.cbam(x)
+        return x

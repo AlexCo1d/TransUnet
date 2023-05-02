@@ -251,7 +251,7 @@ if __name__ == "__main__":
     dice_loss = DiceLoss(NUM_CLASSES)
     init_weights(dice_loss, init_type='kaiming')
     if focal_loss:
-        ce_loss= Focal_Loss
+        ce_loss = Focal_Loss
     else:
         ce_loss = CE_Loss
     # -------------------------------#
@@ -310,7 +310,7 @@ if __name__ == "__main__":
     # -------------------------------------------#
     # 得到model,并进行初始化，可以选择!
     # -------------------------------------------#
-    model = get_transNet(n_classes=NUM_CLASSES, img_size=inputs_size[0], cgm=False).train()
+    model = get_transNet(n_classes=NUM_CLASSES, img_size=inputs_size[0], cgm=True).train()
     init_weights(model, init_type='kaiming')
 
     # -------------------------------------------#
@@ -320,9 +320,9 @@ if __name__ == "__main__":
     if pretrained:
         model_path = './model_data/pretrained_weight.pth'
         # no_load_dict,加载预训练时不加载解码器部分
-        no_load_dict=['decoder','segmentation_head']
+        no_load_dict = ['decoder', 'segmentation_head']
 
-        load_pretrained_weights(model,model_path,no_load_dict,local_rank)
+        load_pretrained_weights(model, model_path, no_load_dict, local_rank)
 
         # ------------------------------------------------------#
         #  注意！！将改动过的模块名字都列出来，为冻结训练作准备！

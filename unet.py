@@ -27,7 +27,7 @@ class uNet(object):
         "downsample_factor": 16,
         "num_classes": 2,
         "cuda": True,
-        "cgm":False
+        "cgm":True
         # --------------------------------#
     }
 
