@@ -1,6 +1,7 @@
 class Config:
     def __init__(self):
         self.inputs_size = [256, 256, 3]
+        self.image_type = '.png'  # image is jpg or png
         self.log_dir = "logs/"
         # ---------------------#
         #   分类个数+1
