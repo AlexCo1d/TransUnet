@@ -11,6 +11,8 @@ import os
 
 from PIL import Image
 
+from model_config import Config
+
 """ 
 混淆矩阵
 P\L     P    N 
@@ -130,14 +132,14 @@ def dice(confusionMatrix):
     dice = np.nanmean(dice)
     return dice
 
-
+config= Config()
 #################################################################
 #  标签图像文件夹
 LabelPath = r"miou_pr_dir copy"
 #  预测图像文件夹
 PredictPath = r"miou_pr_dir"
 #  类别数目(包括背景)
-classNum = 2
+classNum = config.NUM_CLASSES
 #################################################################
 
 #  获取类别颜色字典

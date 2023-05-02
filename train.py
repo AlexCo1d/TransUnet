@@ -10,6 +10,7 @@ from torch.autograd import Variable
 from torch.nn import CrossEntropyLoss
 from tqdm import tqdm
 
+from model_config import *
 from nets.TransUnet import get_transNet
 from torch.utils.data import DataLoader
 from dataloader import unetDataset, unet_dataset_collate
@@ -235,13 +236,14 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
 
 
 if __name__ == "__main__":
-    inputs_size = [512, 512, 3]
-    log_dir = "logs/"
+    config=Config()
+    inputs_size = config.inputs_size
+    log_dir = config.log_dir
     # ---------------------#
     #   分类个数+1
     #   2+1
     # ---------------------#
-    NUM_CLASSES = 2
+    NUM_CLASSES = config.NUM_CLASSES
     # --------------------------------------------------------------------#
     #   建议选项：
     #   种类少（几类）时，设置为True
@@ -249,8 +251,9 @@ if __name__ == "__main__":
     #   种类多（十几类）时，如果batch_size比较小（10以下），那么设置为False
     # ---------------------------------------------------------------------#
     # (focal or ce) + dice
-    focal_loss = True
-    cls_weights = True
+    focal_loss = config.focal_loss
+    # whether use weighted loss or not
+    cls_weights = config.cls_weights
     dice_loss = DiceLoss(NUM_CLASSES)
     if focal_loss:
         ce_loss = Focal_Loss
@@ -260,7 +263,7 @@ if __name__ == "__main__":
     #   主干网络预训练权重的使用
     #
     # -------------------------------#
-    pretrained = True
+    pretrained = config.pretrained
     # backbone = "ECAresnet"
     # ---------------------#
     #   是否使用辅助分支
@@ -271,11 +274,11 @@ if __name__ == "__main__":
     #   下采样的倍数
     #   8和16
     # ---------------------#
-    downsample_factor = 16
+    downsample_factor = config.downsample_factor
     # -------------------------------#
     #   Cuda的使用
     # -------------------------------#
-    Cuda = True
+    Cuda = config.Cuda
     # ---------------------------------------------------------------------#
     #   distributed     用于指定是否使用单机多卡分布式运行
     #                   终端指令仅支持Ubuntu。CUDA_VISIBLE_DEVICES用于在Ubuntu下指定显卡。
@@ -287,11 +290,11 @@ if __name__ == "__main__":
     #       设置            distributed = True
     #       在终端中输入    CUDA_VISIBLE_DEVICES=0,1 python -m torch.distributed.launch --nproc_per_node=2 train.py
     # ---------------------------------------------------------------------#
-    distributed = True
+    distributed = config.distributed
     # ---------------------------------------------------------------------#
     #   sync_bn     是否使用sync_bn，DDP模式多卡可用
     # ---------------------------------------------------------------------#
-    sync_bn = True
+    sync_bn = config.sync_bn
     # ------------------------------------------------------#
     #   设置用到的显卡
     # ------------------------------------------------------#
@@ -320,9 +323,9 @@ if __name__ == "__main__":
     #   权值和主干特征提取网络一定要对应
     # -------------------------------------------#
     if pretrained:
-        model_path = './model_data/pretrained_weight.pth'
+        model_path = config.model_path
         # no_load_dict,加载预训练时不加载解码器部分
-        no_load_dict = ['decoder', 'segmentation_head']
+        no_load_dict = config.no_load_dict
 
         load_pretrained_weights(model, model_path, no_load_dict, local_rank)
 
@@ -333,15 +336,14 @@ if __name__ == "__main__":
         for param in model.parameters():
             param.requires_grad = False
 
-        frozen_modules = ["cbam", "decoder", 'ASPP_unit1', 'ASPP_unit2', 'ASPP_unit3', 'segmentation_head',
-                          'cls']  # removed: cls
+        frozen_modules = config.frozen_modules  # removed: cls
         # 解冻需要训练的的模块，一般包括上采样部分和改动的网络
         traverse_unfreeze_block(model, frozen_modules, local_rank)
 
     # ----------------------#
     #   记录Loss
     # ----------------------#
-    save_dir = 'logs'
+    save_dir = config.save_dir
     if local_rank == 0:
         time_str = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H_%M_%S')
         log_dir = os.path.join(save_dir, "loss_" + str(time_str))
@@ -390,14 +392,14 @@ if __name__ == "__main__":
         important parameter
         """
         # lr = 1e-3
-        Init_Epoch = 0
-        Interval_Epoch = 120
+        Init_Epoch = config.Init_Epoch
+        Interval_Epoch = config.Interval_Epoch
         # 设置冻结的epoch
-        Freeze_Epoch = 40
+        Freeze_Epoch = config.Freeze_Epoch
         # --------------#
         # BATCH_SIZE
         # --------------#
-        Batch_size = 6
+        Batch_size = config.Batch_size
 
         # set opt
         # ------------------------------------------------------------------#

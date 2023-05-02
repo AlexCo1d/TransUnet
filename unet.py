@@ -1,5 +1,7 @@
 import cv2
 from numpy.core.numeric import False_, True_
+
+from model_config import Config
 from nets.TransUnet import get_transNet
 from torch import nn
 from PIL import Image
@@ -13,7 +15,7 @@ import os
 
 from utils.visualization import blend_images
 
-
+config= Config()
 class uNet(object):
     # -----------------------------------------#
     #   注意修改model_path、num_classes
@@ -22,11 +24,11 @@ class uNet(object):
     # -----------------------------------------#
     _defaults = {
         "model_path": './logs/best_epoch_weights.pth',
-        "model_image_size": (512, 512, 3),
+        "model_image_size": config.inputs_size,
         "backbone": "ECAresnet",
-        "downsample_factor": 16,
-        "num_classes": 2,
-        "cuda": True,
+        "downsample_factor": config.downsample_factor,
+        "num_classes": config.NUM_CLASSES,
+        "cuda": config.Cuda,
         # --------------------------------#
     }
 

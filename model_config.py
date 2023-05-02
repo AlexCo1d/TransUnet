@@ -57,6 +57,12 @@ class Config:
         #   sync_bn     是否使用sync_bn，DDP模式多卡可用
         # ---------------------------------------------------------------------#
         self.sync_bn = True
+        self.model_path = './model_data/pretrained_weight.pth'
+        # no_load_dict,加载预训练时不加载解码器部分
+        self.no_load_dict = ['decoder', 'segmentation_head']
+        self.frozen_modules = ["cbam", "decoder", 'ASPP_unit1', 'ASPP_unit2', 'ASPP_unit3', 'segmentation_head',
+                          'cls']  # removed: cls
+
         # ----------------------#
         #   记录Loss
         # ----------------------#
