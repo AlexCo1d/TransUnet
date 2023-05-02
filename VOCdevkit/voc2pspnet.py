@@ -28,7 +28,7 @@ ftrain = open(os.path.join(saveBasePath,'train.txt'), 'w')
 fval = open(os.path.join(saveBasePath,'val.txt'), 'w')  
  
 for i in list:
-    name=total_seg[i]+'\n'
+    name=total_seg[i].split('.')[0]+'\n'
     if i in trainval:  
         ftrainval.write(name)  
         if i in train:  
