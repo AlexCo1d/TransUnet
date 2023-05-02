@@ -10,7 +10,7 @@ from torch.autograd import Variable
 from torch.nn import CrossEntropyLoss
 from tqdm import tqdm
 
-from model_config import *
+from train_config import *
 from nets.TransUnet import get_transNet
 from torch.utils.data import DataLoader
 from dataloader import unetDataset, unet_dataset_collate

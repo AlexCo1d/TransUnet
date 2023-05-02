@@ -11,7 +11,7 @@ import os
 
 from PIL import Image
 
-from model_config import Config
+from train_config import Config
 
 """ 
 混淆矩阵

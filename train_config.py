@@ -1,6 +1,6 @@
 class Config:
     def __init__(self):
-        self.inputs_size = [512, 512, 3]
+        self.inputs_size = [256, 256, 3]
         self.log_dir = "logs/"
         # ---------------------#
         #   分类个数+1
@@ -61,14 +61,13 @@ class Config:
         # no_load_dict,加载预训练时不加载解码器部分
         self.no_load_dict = ['decoder', 'segmentation_head']
         self.frozen_modules = ["cbam", "decoder", 'ASPP_unit1', 'ASPP_unit2', 'ASPP_unit3', 'segmentation_head',
-                          'cls']  # removed: cls
+                               'cls']  # removed: 'cls','ASPP_unit1', 'ASPP_unit2'
 
         # ----------------------#
         #   记录Loss
         # ----------------------#
         self.save_dir = 'logs'
         self.Init_Epoch = 0
-        self.Interval_Epoch = 120
+        self.Interval_Epoch = 150
         # 设置冻结的epoch
         self.Freeze_Epoch = 40
-

@@ -59,7 +59,7 @@ class unetDataset(Dataset):
         # crop image or not
         if rand() < .6:
             height, width, _ = np.array(image).shape
-            pc = rand(1, 1.5)
+            pc = rand(0.8, 1)
             crop_height = min(int(pc * input_shape[0]), height)
             crop_width = min(int(pc * input_shape[0]), width)
             left = random.randint(0, width - crop_width)
