@@ -254,7 +254,7 @@ class DecoderBlock_CBAM(nn.Module):
             use_batchnorm=use_batchnorm,
         )
         # self.up = nn.UpsamplingBilinear2d(scale_factor=2)
-        self.up = interpolate(scale_factor=2, mode='bilinear')
+        self.up = interpolate(scale_factor=2, mode='bilinear',align_corners=True)
         self.cbam=CBAMLayer(out_channels)
 
     def forward(self, x, skip=None):
