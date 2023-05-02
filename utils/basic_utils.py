@@ -11,6 +11,7 @@ import cv2
 from torch.nn import functional as F
 
 def _one_hot_encoder(pngs,num_classes):
+    print(pngs.size())
     b,c,h,w=pngs.size()
     temp=pngs.cpu().numpy()
     seg_labels = np.eye(num_classes + 1)[temp.reshape([-1])]
