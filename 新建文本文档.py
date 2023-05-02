@@ -580,14 +580,47 @@ def ob_weight():
     # print("\n\033[1;33;44m温馨提示，head部分没有载入是正常现象，Backbone部分没有载入是错误的。\033[0m")
 
 def preprocess():
-    path=r'D:\learning\UNNC 科研\data\DDTI\label'
-    ipath=r'D:\learning\UNNC 科研\data\DDTI\image'
-    for index,label in enumerate(os.listdir(path)):
-        label_image=np.array(Image.open(os.path.join(path,label)))
-        image=Image.open(os.path.join(ipath,label))
-        label_image[label_image!=0]=1
-        Image.fromarray(label_image).save(os.path.join(path.replace('label','la'),f'{index}.png'))
-        image.save(os.path.join(ipath.replace('image','im'),f'{index}.png'))
+    setlabel=2
+    folder='malignant'  # benign:1, 'malignant':2
+    path=os.path.join(r'D:\learning\UNNC 科研\data\BUSI\Dataset_BUSI_with_GT',folder)
+    image_path=os.path.join(r'D:\learning\UNNC 科研\data\BUSI\Dataset_BUSI_with_GT\output','image')
+    label_path=os.path.join(r'D:\learning\UNNC 科研\data\BUSI\Dataset_BUSI_with_GT\output','label')
+    output_image_path=os.path.join(r'D:\learning\UNNC 科研\data\BUSI\Dataset_BUSI_with_GT','image')
+    output_label_path=os.path.join(r'D:\learning\UNNC 科研\data\BUSI\Dataset_BUSI_with_GT','label')
+    #
+    # image_list=[]
+    # for index,label in enumerate(os.listdir(path)):
+    #     if label.endswith(').png'):
+    #         image_list.append(label)
+    for image in os.listdir(image_path):
+        # # 寻找label并且合并他们
+        # img=Image.open(os.path.join(path,image))
+        # image_name=image.split('.')[0]
+        # label_name=image_name+'_mask.png'
+        # label=np.array(Image.open(os.path.join(path,label_name))).astype(np.uint8)*setlabel
+        # if os.path.exists(os.path.join(path,label_name.replace('mask','mask_1'))):
+        #     label1=np.array(Image.open(os.path.join(path,label_name).replace('mask','mask_1'))).astype(np.uint8)
+        #     if len(label1.shape)!=2:
+        #         label1=label1[:,:,0]
+        #         label1[label1==255]=setlabel
+        #     else:
+        #         label1 = label1 * setlabel
+        #
+        #     label= label + label1
+        # if os.path.exists(os.path.join(path, label_name.replace('mask', 'mask_2'))):
+        #     label2 = np.array(Image.open(os.path.join(path, label_name).replace('mask', 'mask_2'))).astype(np.uint8)
+        #     if len(label2.shape)!=2:
+        #         label2=label2[:,:,0]
+        #         label2[label2==255]=setlabel
+        #     else:
+        #         label2=label2*setlabel
+        #
+        #     label = label + label2
+        # Image.fromarray(label).save(os.path.join(output_label_path,image))
+        shutil.copy(os.path.join(image_path,image),os.path.join(output_image_path,image))
+        shutil.copy(os.path.join(label_path, image), os.path.join(output_label_path, image))
+
+
 
 
 
