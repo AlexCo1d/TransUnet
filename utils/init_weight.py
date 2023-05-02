@@ -67,7 +67,7 @@ def init_weights(net, init_type='normal'):
 def traverse_unfreeze_block(model,freeze_block,local_rank=0):
     for name, child in model.named_children():
         # 如果需要，可以在此处对子模块执行某些操作
-        print(name)
+        # print(name)
         if name in freeze_block:
             if local_rank==0:
                 print(f'find block {name}! set rg TRUE!')
