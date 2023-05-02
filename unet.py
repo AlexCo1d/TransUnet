@@ -1,7 +1,7 @@
 import cv2
 from numpy.core.numeric import False_, True_
 
-from model_config import Config
+from train_config import Config
 from nets.TransUnet import get_transNet
 from torch import nn
 from PIL import Image
