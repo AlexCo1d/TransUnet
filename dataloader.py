@@ -13,6 +13,9 @@ from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
 import torchvision.transforms as transforms
 import cv2
 
+from train_config import Config
+
+config= Config()
 
 def letterbox_image(image, label, size):
     label = Image.fromarray(np.array(label))
@@ -142,7 +145,7 @@ class unetDataset(Dataset):
         annotation_line = self.train_lines[index]
         name = annotation_line.split()[0]
         # 从文件中读取图像
-        jpg = Image.open(r"./VOCdevkit/VOC2007/JPEGImages" + '/' + name + ".jpg").convert('RGB')
+        jpg = Image.open(r"./VOCdevkit/VOC2007/JPEGImages" + '/' + name + config.image_type).convert('RGB')
         png = Image.open(r"./VOCdevkit/VOC2007/SegmentationClass" + '/' + name + ".png").convert('L')
 
         if self.random_data:

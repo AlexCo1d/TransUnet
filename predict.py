@@ -10,6 +10,8 @@ import torch.nn.functional as F
 import numpy as np
 import torch
 
+from train_config import Config
+
 txt_path = "./VOCdevkit/VOC2007/ImageSets/Segmentation/val.txt"
 image_path='./VOCdevkit/VOC2007/JPEGImages'
 label_path='./VOCdevkit/VOC2007/SegmentationClass'
@@ -37,7 +39,8 @@ label_path='./VOCdevkit/VOC2007/SegmentationClass'
 #
 #         return image
 
-
+config = Config()
+type=config.image_type
 def show_image():
     from unet import uNet
     uNet = uNet()
@@ -47,7 +50,7 @@ def show_image():
         lines = file.readlines()
 
     for jpg in lines:
-        jpg=jpg.split()[0]+'.jpg'
+        jpg=jpg.split()[0]+type
         img = Image.open(os.path.join(image_path,jpg)).convert('RGB')
         start_time = time.time()
         image = uNet.detect_image(img,mix=2)
@@ -65,8 +68,8 @@ def transfer_image():
 
     for image_name in lines:
         # 测试集原标签
-        image_name=image_name.split()[0]+'.jpg'
-        label_name=image_name.replace('.jpg','.png')
+        image_name=image_name.split()[0]+type
+        label_name=image_name.replace(type,'.png')
 
         label = Image.open(os.path.join(label_path, label_name))
 
