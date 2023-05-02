@@ -9,6 +9,10 @@ from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
 from PIL import Image
 import cv2
 from torch.nn import functional as F
+'''
+    git config --global --unset https.proxy
+    git config --global --unset http.proxy
+'''
 
 def _one_hot_encoder(pngs,num_classes):
     c,h,w=pngs.size()
