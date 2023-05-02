@@ -226,6 +226,22 @@ def dice_coefficient(y_true, y_pred):
     intersection = np.sum(y_true * y_pred)
     return (2. * intersection) / (np.sum(y_true) + np.sum(y_pred))
 
+def cal_dice(seg, gt, classes=2, background_id=0):
+    channel_dice = []
+    for i in range(classes):
+        if i == background_id:
+            continue
+        cond = i ** 2
+        # 计算相交部分
+        inter = len(np.where(seg * gt == cond)[0])
+        total_pix = len(np.where(seg == i)[0]) + len(np.where(gt == i)[0])
+        if total_pix == 0:
+            dice = 0
+        else:
+            dice = (2 * inter) / total_pix
+        channel_dice.append(dice)
+    res = np.array(channel_dice).mean()
+    return res
 
 def compute_dice(label_folder,prediction_folder):
     label_list = sorted(os.listdir(label_folder))
@@ -248,40 +264,42 @@ def compute_dice(label_folder,prediction_folder):
         if len(np.unique(label_img))==1:
             pass
         else:
-            dice_val = dice_coefficient(label_img, prediction_img)
+            # dice_val = dice_coefficient(label_img, prediction_img)
+            dice_val=cal_dice(prediction_img,label_img,classes=classNum,background_id=0)
             dice_values.append(dice_val)
+
     print(len(dice_values))
     mean_dice_value = np.nanmean(dice_values)
     print(f'mean_dice: {mean_dice_value}')
 
 
-def compute_conf_matrix(label_folder,prediction_folder,num):
-    label_list = sorted(os.listdir(label_folder))
-    prediction_list = sorted(os.listdir(prediction_folder))
-
-    # 初始化混淆矩阵
-    num_classes = num  # 根据您的任务更改类别数量
-    conf_mat = np.zeros((num_classes, num_classes), dtype=np.int64)
-
-    for label_file, prediction_file in zip(label_list, prediction_list):
-        label_path = os.path.join(label_folder, label_file)
-        prediction_path = os.path.join(prediction_folder, prediction_file)
-
-        label_img = cv2.imread(label_path, cv2.IMREAD_GRAYSCALE)
-        prediction_img = cv2.imread(prediction_path, cv2.IMREAD_GRAYSCALE)
-        #
-        label_img[label_img != 0] = 1
-        prediction_img[prediction_img!=0]=1
-
-        # 如果需要，您可以在此处将图像值映射到类标签（例如，将像素值从0-255映射到0-1）
-
-        # 计算单个图像的混淆矩阵
-        single_conf_mat = confusion_matrix(label_img.flatten(), prediction_img.flatten())
-
-        # 将单个混淆矩阵累加到总混淆矩阵
-        conf_mat += single_conf_mat
-
-    print("混淆矩阵：\n", conf_mat)
+# def compute_conf_matrix(label_folder,prediction_folder,num):
+#     label_list = sorted(os.listdir(label_folder))
+#     prediction_list = sorted(os.listdir(prediction_folder))
+#
+#     # 初始化混淆矩阵
+#     num_classes = num  # 根据您的任务更改类别数量
+#     conf_mat = np.zeros((num_classes, num_classes), dtype=np.int64)
+#
+#     for label_file, prediction_file in zip(label_list, prediction_list):
+#         label_path = os.path.join(label_folder, label_file)
+#         prediction_path = os.path.join(prediction_folder, prediction_file)
+#
+#         label_img = cv2.imread(label_path, cv2.IMREAD_GRAYSCALE)
+#         prediction_img = cv2.imread(prediction_path, cv2.IMREAD_GRAYSCALE)
+#         #
+#         label_img[label_img != 0] = 1
+#         prediction_img[prediction_img!=0]=1
+#
+#         # 如果需要，您可以在此处将图像值映射到类标签（例如，将像素值从0-255映射到0-1）
+#
+#         # 计算单个图像的混淆矩阵
+#         single_conf_mat = confusion_matrix(label_img.flatten(), prediction_img.flatten())
+#
+#         # 将单个混淆矩阵累加到总混淆矩阵
+#         conf_mat += single_conf_mat
+#
+#     print("混淆矩阵：\n", conf_mat)
 
 from sklearn.metrics import confusion_matrix
 compute_dice("./miou_pr_dir copy","./miou_pr_dir")
