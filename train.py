@@ -327,7 +327,7 @@ if __name__ == "__main__":
         # ------------------------------------------------------#
         #  注意！！将改动过的模块名字都列出来，为冻结训练作准备！
         # ------------------------------------------------------#
-        frozen_modules = ["cbam", "decoder", 'ASPP_unit8', 'segmentation_head', ]  # 'cls'
+        frozen_modules = ["cbam", "decoder", 'ASPP_unit8', 'segmentation_head', 'cls']
         # 将所有模块的requires_grad属性设置为False
         for param in model.parameters():
             param.requires_grad = False
