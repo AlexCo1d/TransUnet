@@ -155,17 +155,12 @@ class unetDataset(Dataset):
         png = np.array(png)
         png[png >= self.num_classes] = self.num_classes
 
-        # 转化成one_hot的形式
-        seg_labels = np.eye(self.num_classes + 1)[png.reshape([-1])]
-        #print(f'seg_labels{seg_labels.shape}')
-        seg_labels = seg_labels.reshape((int(self.image_size[1]), int(self.image_size[0]), self.num_classes + 1))
-
         # 归一化和维度交换
         jpg = np.transpose(np.array(jpg), [2, 0, 1]) / 255
         # jpg image,
         # png label ,
         # seg_labels: one-hot encoded label
-        return jpg, png, seg_labels
+        return jpg, png
 
 
 # DataLoader中collate_fn使用

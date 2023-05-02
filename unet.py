@@ -106,7 +106,7 @@ class uNet(object):
             #   将灰条部分截取掉
             # --------------------------------------#
             pr = pre[int((self.model_image_size[0] - nh) // 2):int((self.model_image_size[0] - nh) // 2 + nh),
-                 int((self.model_image_size[1] - nw) // 2):int((self.model_image_size[1] - nw) // 2 + nw)]
+                     int((self.model_image_size[1] - nw) // 2):int((self.model_image_size[1] - nw) // 2 + nw)]
             # ---------------------------------------------------#
             #   进行图片的resize
             # ---------------------------------------------------#
