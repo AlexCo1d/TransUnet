@@ -91,6 +91,16 @@ class Attention(nn.Module):
         attention_output = self.proj_dropout(attention_output)
         return attention_output, weights
 
+class interpolate(nn.Module):
+    def __init__(self, scale_factor, mode='bilinear', align_corners=False):
+        super(interpolate, self).__init__()
+        self.scale_factor = scale_factor
+        self.mode = mode
+        self.align_corners = align_corners
+
+    def forward(self, x):
+        return F.interpolate(x, scale_factor=self.scale_factor, mode=self.mode, align_corners=self.align_corners)
+
 
 class Mlp(nn.Module):
     def __init__(self, config):
@@ -326,17 +336,6 @@ class DecoderBlock(nn.Module):
         x = self.conv1(x)
         x = self.conv2(x)
         return x
-
-
-class interpolate(nn.Module):
-    def __init__(self, scale_factor, mode='bilinear', align_corners=False):
-        super(interpolate, self).__init__()
-        self.scale_factor = scale_factor
-        self.mode = mode
-        self.align_corners = align_corners
-
-    def forward(self, x):
-        return F.interpolate(x, scale_factor=self.scale_factor, mode=self.mode, align_corners=self.align_corners)
 
 
 class SegmentationHead(nn.Sequential):
