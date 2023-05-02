@@ -10,10 +10,10 @@ from PIL import Image
 import cv2
 from torch.nn import functional as F
 
-def _one_hot_encoder(num_classes,input_tensor):
-    tensor_list = []
-    for i in range(num_classes):
-        temp_prob = input_tensor == i  # * torch.ones_like(input_tensor)
-        tensor_list.append(temp_prob.unsqueeze(1))
-    output_tensor = torch.cat(tensor_list, dim=1)
-    return output_tensor.float()
+def _one_hot_encoder(pngs,num_classes):
+    b,c,h,w=pngs.size()
+    temp=pngs.cpu().numpy()
+    seg_labels = np.eye(num_classes + 1)[temp.reshape([-1])]
+    # print(f'seg_labels{seg_labels.shape}')
+    seg_labels = seg_labels.reshape((int(h), int(w), num_classes + 1))
+    return seg_labels.float()
