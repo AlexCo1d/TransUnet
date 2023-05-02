@@ -61,7 +61,7 @@ class Config:
         self.model_path = './model_data/pretrained_weight.pth'
         # no_load_dict,加载预训练时不加载解码器部分
         self.no_load_dict = ['decoder', 'segmentation_head']
-        self.frozen_modules = ["cbam", "decoder", 'ASPP_unit1', 'ASPP_unit2', 'ASPP_unit3', 'segmentation_head', 'position_embeddings',
+        self.frozen_modules = ["cbam", "decoder", 'ASPP_unit1', 'ASPP_unit2', 'ASPP_unit3', 'segmentation_head',
                                'cls']  # removed: 'cls','ASPP_unit1', 'ASPP_unit2'
 
         # ----------------------#

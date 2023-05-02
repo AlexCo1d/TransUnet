@@ -525,7 +525,7 @@ def ob_weight():
     #       权值文件的下载请看README
     #       权值和主干特征提取网络一定要对应
     #     -------------------------------------------#
-    model = get_transNet(n_classes=2, img_size=512).train()
+    model = get_transNet(n_classes=2, img_size=256).train()
     # original_weights = model.state_dict()
     model_path = './model_data/pretrained_weight.pth'
     # pretrained_dict = torch.load(model_path)
@@ -551,12 +551,12 @@ def ob_weight():
             print(f"{name}: {param.requires_grad}")
 
     # 使用这个函数遍历模型的所有子模块
-    print_requires_grad(model)
+    # print_requires_grad(model)
     print('second check')
-    traverse_unfreeze_block(model,["cbam", "decoder", 'ASPP_unit9', 'segmentation_head', ] )
-    for param in model.parameters():
-        param.requires_grad = True
-    print_requires_grad(model)
+    traverse_unfreeze_block(model,["cbam", "decoder", 'ASPP_unit3', 'segmentation_head'] )
+    # for param in model.parameters():
+    #     param.requires_grad = True
+    # print_requires_grad(model)
     #
     # load_key, no_load_key, temp_dict = [], [], {}
     # for k, v in pretrained_dict.items():
@@ -631,5 +631,5 @@ if __name__ == '__main__':
     # main()
     #txt()
     # count_pos()
-    # ob_weight()
-    preprocess()
+    ob_weight()
+    # preprocess()
