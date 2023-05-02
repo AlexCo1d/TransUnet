@@ -64,12 +64,12 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
     for iteration, batch in enumerate(gen):
         if iteration >= epoch_size:
             break
-        imgs, pngs= batch
+        imgs, pngs, labels= batch
 
         with torch.no_grad():
             imgs = Variable(torch.from_numpy(imgs).type(torch.FloatTensor))
             pngs = Variable(torch.from_numpy(pngs).type(torch.FloatTensor)).long()
-            # labels = Variable(torch.from_numpy(labels).type(torch.FloatTensor))
+            labels = Variable(torch.from_numpy(labels).type(torch.FloatTensor))
 
             if cls_weights is False:
                 # 类别均衡
@@ -80,7 +80,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
             if cuda:
                 imgs = imgs.cuda(local_rank)
                 pngs = pngs.cuda(local_rank)
-                # labels = labels.cuda(local_rank)
+                labels = labels.cuda(local_rank)
                 cls_weights = torch.tensor(cls_weights).cuda(local_rank)
 
         optimizer.zero_grad()
@@ -118,7 +118,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
             # -------------------------------#
             #   计算f_score
             # -------------------------------#
-            _f_score = f_score(outputs, _one_hot_encoder(num_classes=num_classes,pngs=pngs))
+            _f_score = f_score(outputs, labels)
 
         loss.backward()
         optimizer.step()
@@ -147,11 +147,11 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
     for iteration, batch in enumerate(genval):
         if iteration >= epoch_size_val:
             break
-        imgs, pngs = batch
+        imgs, pngs, labels = batch
         with torch.no_grad():
             imgs = Variable(torch.from_numpy(imgs).type(torch.FloatTensor))
             pngs = Variable(torch.from_numpy(pngs).type(torch.FloatTensor)).long()
-            # labels = Variable(torch.from_numpy(labels).type(torch.FloatTensor))
+            labels = Variable(torch.from_numpy(labels).type(torch.FloatTensor))
             if cls_weights is False:
                 # 类别均衡
                 cls_weights = np.ones([num_classes], np.float32)
@@ -161,7 +161,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
             if cuda:
                 imgs = imgs.cuda(local_rank)
                 pngs = pngs.cuda(local_rank)
-                # labels = labels.cuda(local_rank)
+                labels = labels.cuda(local_rank)
                 cls_weights = torch.tensor(cls_weights).cuda(local_rank)
             # -------------------------------#
             #   判断是否使用辅助分支 not use
@@ -185,7 +185,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
             # -------------------------------#
             #   计算f_score
             # -------------------------------#
-            _f_score = f_score(outputs, _one_hot_encoder(num_classes=num_classes,input_tensor=pngs))
+            _f_score = f_score(outputs, labels)
 
             val_toal_loss += loss.item()
             val_total_f_score += _f_score.item()
