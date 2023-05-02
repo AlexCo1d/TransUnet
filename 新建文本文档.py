@@ -1,5 +1,4 @@
 import numpy as np
-import torch
 from PIL import Image
 import matplotlib.pyplot as plt
 import os
@@ -7,7 +6,7 @@ import sys
 import shutil
 import random
 from torchinfo import summary
-
+import torch
 from nets.TransUnet import get_transNet
 from nets.transunet_modeling import *
 from nets.vit_seg_modeling_resnet_skip import *
@@ -501,7 +500,7 @@ def observe_model():
 
 
 def count_pos():
-    path = './for_test/label'
+    path = r'D:\learning\UNNC 科研\data\DDTI\label'
     count = 0
     l = []
     for image in os.listdir(path):
@@ -580,6 +579,17 @@ def ob_weight():
     # print("\nFail To Load Key:", str(no_load_key)[:500], "……\nFail To Load Key num:", len(no_load_key))
     # print("\n\033[1;33;44m温馨提示，head部分没有载入是正常现象，Backbone部分没有载入是错误的。\033[0m")
 
+def preprocess():
+    path=r'D:\learning\UNNC 科研\data\DDTI\label'
+    ipath=r'D:\learning\UNNC 科研\data\DDTI\image'
+    for index,label in enumerate(os.listdir(path)):
+        label_image=np.array(Image.open(os.path.join(path,label)))
+        image=Image.open(os.path.join(ipath,label))
+        label_image[label_image!=0]=1
+        Image.fromarray(label_image).save(os.path.join(path.replace('label','la'),f'{index}.png'))
+        image.save(os.path.join(ipath.replace('image','im'),f'{index}.png'))
+
+
 
 
 
@@ -587,5 +597,6 @@ if __name__ == '__main__':
     # observe_model()
     # main()
     #txt()
-    #count_pos()
-    ob_weight()
+    # count_pos()
+    # ob_weight()
+    preprocess()

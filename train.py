@@ -14,6 +14,7 @@ from nets.TransUnet import get_transNet
 from torch.utils.data import DataLoader
 from dataloader import unetDataset, unet_dataset_collate
 from utils.Loss_utils import get_loss_weight, LossHistory, get_lr_scheduler, set_optimizer_lr
+from utils.basic_utils import _one_hot_encoder
 from utils.init_weight import *
 from utils.metrics import *
 
@@ -63,12 +64,12 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
     for iteration, batch in enumerate(gen):
         if iteration >= epoch_size:
             break
-        imgs, pngs, labels = batch
+        imgs, pngs= batch
 
         with torch.no_grad():
             imgs = Variable(torch.from_numpy(imgs).type(torch.FloatTensor))
             pngs = Variable(torch.from_numpy(pngs).type(torch.FloatTensor)).long()
-            labels = Variable(torch.from_numpy(labels).type(torch.FloatTensor))
+            # labels = Variable(torch.from_numpy(labels).type(torch.FloatTensor))
 
             if cls_weights is False:
                 # 类别均衡
@@ -79,7 +80,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
             if cuda:
                 imgs = imgs.cuda(local_rank)
                 pngs = pngs.cuda(local_rank)
-                labels = labels.cuda(local_rank)
+                # labels = labels.cuda(local_rank)
                 cls_weights = torch.tensor(cls_weights).cuda(local_rank)
 
         optimizer.zero_grad()
@@ -88,14 +89,15 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
         # -------------------------------#
         # not use now
         if aux_branch:
-            aux_outputs, outputs = model_train(imgs)
-            aux_loss = CE_Loss(aux_outputs, pngs, num_classes=num_classes)
-            main_loss = CE_Loss(outputs, pngs, num_classes=num_classes)
-            loss = aux_loss + main_loss
-            if dice_loss:
-                aux_dice = dice_loss(aux_outputs, labels)
-                main_dice = dice_loss(outputs, labels)
-                loss = loss + aux_dice + main_dice
+            pass
+            # aux_outputs, outputs = model_train(imgs)
+            # aux_loss = CE_Loss(aux_outputs, pngs, num_classes=num_classes)
+            # main_loss = CE_Loss(outputs, pngs, num_classes=num_classes)
+            # loss = aux_loss + main_loss
+            # if dice_loss:
+            #     aux_dice = dice_loss(aux_outputs, labels)
+            #     main_dice = dice_loss(outputs, labels)
+            #     loss = loss + aux_dice + main_dice
 
         else:
             # outputs = model_train(imgs)
@@ -116,7 +118,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
             # -------------------------------#
             #   计算f_score
             # -------------------------------#
-            _f_score = f_score(outputs, labels)
+            _f_score = f_score(outputs, _one_hot_encoder(pngs))
 
         loss.backward()
         optimizer.step()
@@ -145,11 +147,11 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
     for iteration, batch in enumerate(genval):
         if iteration >= epoch_size_val:
             break
-        imgs, pngs, labels = batch
+        imgs, pngs = batch
         with torch.no_grad():
             imgs = Variable(torch.from_numpy(imgs).type(torch.FloatTensor))
             pngs = Variable(torch.from_numpy(pngs).type(torch.FloatTensor)).long()
-            labels = Variable(torch.from_numpy(labels).type(torch.FloatTensor))
+            # labels = Variable(torch.from_numpy(labels).type(torch.FloatTensor))
             if cls_weights is False:
                 # 类别均衡
                 cls_weights = np.ones([num_classes], np.float32)
@@ -159,20 +161,21 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
             if cuda:
                 imgs = imgs.cuda(local_rank)
                 pngs = pngs.cuda(local_rank)
-                labels = labels.cuda(local_rank)
+                # labels = labels.cuda(local_rank)
                 cls_weights = torch.tensor(cls_weights).cuda(local_rank)
             # -------------------------------#
             #   判断是否使用辅助分支 not use
             # -------------------------------#
             if aux_branch:
-                aux_outputs, outputs = model_train(imgs)
-                aux_loss = CE_Loss(aux_outputs, pngs, num_classes=num_classes)
-                main_loss = CE_Loss(outputs, pngs, num_classes=num_classes)
-                val_toal_loss = aux_loss + main_loss
-                if dice_loss:
-                    aux_dice = Dice_loss(aux_outputs, labels)
-                    main_dice = Dice_loss(outputs, labels)
-                    val_toal_loss = val_toal_loss + aux_dice + main_dice
+                pass
+                # aux_outputs, outputs = model_train(imgs)
+                # aux_loss = CE_Loss(aux_outputs, pngs, num_classes=num_classes)
+                # main_loss = CE_Loss(outputs, pngs, num_classes=num_classes)
+                # val_toal_loss = aux_loss + main_loss
+                # if dice_loss:
+                #     aux_dice = Dice_loss(aux_outputs, labels)
+                #     main_dice = Dice_loss(outputs, labels)
+                #     val_toal_loss = val_toal_loss + aux_dice + main_dice
             else:
                 outputs = model_train(imgs)
                 loss1 = ce_loss(outputs, pngs, cls_weights=cls_weights, num_classes=num_classes)
@@ -182,7 +185,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
             # -------------------------------#
             #   计算f_score
             # -------------------------------#
-            _f_score = f_score(outputs, labels)
+            _f_score = f_score(outputs, _one_hot_encoder(pngs))
 
             val_toal_loss += loss.item()
             val_total_f_score += _f_score.item()
@@ -249,7 +252,6 @@ if __name__ == "__main__":
     focal_loss = True
     cls_weights = True
     dice_loss = DiceLoss(NUM_CLASSES)
-    init_weights(dice_loss, init_type='kaiming')
     if focal_loss:
         ce_loss = Focal_Loss
     else:
@@ -327,11 +329,12 @@ if __name__ == "__main__":
         # ------------------------------------------------------#
         #  注意！！将改动过的模块名字都列出来，为冻结训练作准备！
         # ------------------------------------------------------#
-        frozen_modules = ["cbam", "decoder", 'ASPP_unit10', 'segmentation_head', 'cls']  # removed: cls
         # 将所有模块的requires_grad属性设置为False
         for param in model.parameters():
             param.requires_grad = False
 
+        frozen_modules = ["cbam", "decoder", 'ASPP_unit1', 'ASPP_unit2', 'ASPP_unit3', 'segmentation_head',
+                          'cls']  # removed: cls
         # 解冻需要训练的的模块，一般包括上采样部分和改动的网络
         traverse_unfreeze_block(model, frozen_modules, local_rank)
 
