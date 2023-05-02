@@ -10,9 +10,9 @@ from PIL import Image
 import cv2
 from torch.nn import functional as F
 
-def _one_hot_encoder(self, input_tensor):
+def _one_hot_encoder(num_classes,input_tensor):
     tensor_list = []
-    for i in range(self.n_classes):
+    for i in range(num_classes):
         temp_prob = input_tensor == i  # * torch.ones_like(input_tensor)
         tensor_list.append(temp_prob.unsqueeze(1))
     output_tensor = torch.cat(tensor_list, dim=1)

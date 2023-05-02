@@ -118,7 +118,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
             # -------------------------------#
             #   计算f_score
             # -------------------------------#
-            _f_score = f_score(outputs, _one_hot_encoder(pngs))
+            _f_score = f_score(outputs, _one_hot_encoder(num_classes=num_classes,input_tensor=pngs))
 
         loss.backward()
         optimizer.step()
@@ -185,7 +185,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
             # -------------------------------#
             #   计算f_score
             # -------------------------------#
-            _f_score = f_score(outputs, _one_hot_encoder(pngs))
+            _f_score = f_score(outputs, _one_hot_encoder(num_classes=num_classes,input_tensor=pngs))
 
             val_toal_loss += loss.item()
             val_total_f_score += _f_score.item()
