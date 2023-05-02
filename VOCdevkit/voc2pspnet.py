@@ -5,7 +5,7 @@ segfilepath='./VOCdevkit/VOC2007/SegmentationClass'
 saveBasePath="./VOCdevkit/VOC2007/ImageSets/Segmentation"
  
 trainval_percent=1
-train_percent=0.9
+train_percent=0.8
 
 temp_seg = os.listdir(segfilepath)
 total_seg = []
@@ -27,8 +27,8 @@ ftest = open(os.path.join(saveBasePath,'test.txt'), 'w')
 ftrain = open(os.path.join(saveBasePath,'train.txt'), 'w')  
 fval = open(os.path.join(saveBasePath,'val.txt'), 'w')  
  
-for i  in list:  
-    name=total_seg[i][:-4]+'\n'  
+for i in list:
+    name=total_seg[i]+'\n'
     if i in trainval:  
         ftrainval.write(name)  
         if i in train:  
