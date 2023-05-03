@@ -200,7 +200,7 @@ class DecoderBlock_CBAM(nn.Module):
 
 class DecoderCup_CBAM(DecoderCup):
     def __init__(self, config):
-        super().__init__(config)
+        super(DecoderCup_CBAM).__init__(config)
         self.config = config
         head_channels = 512
         self.conv_more = Conv2dReLU(
