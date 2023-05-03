@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import math
+from imgaug import augmenters as iaa
 import torch.nn.functional as F
 from PIL import Image, ImageFilter, ImageEnhance
 from torch.autograd import Variable
@@ -15,7 +16,8 @@ import cv2
 
 from train_config import Config
 
-config= Config()
+config = Config()
+
 
 def letterbox_image(image, label, size):
     label = Image.fromarray(np.array(label))
@@ -34,7 +36,7 @@ def letterbox_image(image, label, size):
     new_label = Image.new('L', size, (0))
     new_label.paste(label, ((w - nw) // 2, (h - nh) // 2))
 
-    return new_image, new_label
+    return np.array(new_image, np.uint8), np.array(new_label, np.uint8)
 
 
 def rand(a=0, b=1):
@@ -100,41 +102,74 @@ class unetDataset(Dataset):
         label = new_label
 
         # flip image or not
-        if rand() < .5:
+        if rand() < .6:
             image = image.transpose(Image.FLIP_LEFT_RIGHT)
             label = label.transpose(Image.FLIP_LEFT_RIGHT)
-        if rand() < .5:
+        if rand() < .6:
             image = image.transpose(Image.FLIP_TOP_BOTTOM)
             label = label.transpose(Image.FLIP_TOP_BOTTOM)
 
-        # gaussian filter and sharpen filter
-        if rand() < .2:
-            radius = np.random.uniform(1 - fil, 1)
-            image = image.filter(ImageFilter.GaussianBlur(radius))
-        if rand() < .2:
-            factor = np.random.uniform(1, 1 + fil)
-            enhancer = ImageEnhance.Sharpness(image)
-            image = enhancer.enhance(factor)
+        # rotate image:
+        if rand() < .4:
+            angle = np.random.uniform(3, 20)
+            image = image.rotate(angle, resample=Image.BICUBIC, expand=False, fillcolor=(128, 128, 128))
+            label = label.rotate(angle, resample=Image.BICUBIC, expand=False, fillcolor=0)
 
-        #mix up image
+        # gaussian filter and sharpen filter choose one
+        if rand() < .4:
+            if rand() < .5:
+                radius = np.random.uniform(1 - fil, 1)
+                image = image.filter(ImageFilter.GaussianBlur(radius))
+            else:
+                factor = np.random.uniform(1, 1 + fil)
+                enhancer = ImageEnhance.Sharpness(image)
+                image = enhancer.enhance(factor)
 
+        image_data = np.array(image, np.uint8)
+        label = np.array(label, np.uint8)
 
-        # distort image
-        image_data = image
-        if rand() < .7:
-            hue = rand(-hue, hue)
-            sat = rand(1, sat) if rand() < .5 else 1 / rand(1, sat)
-            val = rand(1, val) if rand() < .5 else 1 / rand(1, val)
-            x = cv2.cvtColor(np.array(image, np.float32) / 255, cv2.COLOR_RGB2HSV)
-            x[..., 0] += hue * 360
-            x[..., 0][x[..., 0] > 1] -= 1
-            x[..., 0][x[..., 0] < 0] += 1
-            x[..., 1] *= sat
-            x[..., 2] *= val
-            x[x[:, :, 0] > 360, 0] = 360
-            x[:, :, 1:][x[:, :, 1:] > 1] = 1
-            x[x < 0] = 0
-            image_data = cv2.cvtColor(x, cv2.COLOR_HSV2RGB) * 255
+        # distort image slightly
+        if rand() < .3:
+            augmenter = iaa.ElasticTransformation(alpha=10, sigma=5)
+            image_data, label = augmenter(images=[image_data, label])
+
+        # ---------------------------------#
+        #   对图像进行色域变换
+        #   计算色域变换的参数
+        # ---------------------------------#
+        if rand() < .6:
+            r = np.random.uniform(-1, 1, 3) * [hue, sat, val] + 1
+            # ---------------------------------#
+            #   将图像转到HSV上
+            # ---------------------------------#
+            hue, sat, val = cv2.split(cv2.cvtColor(image_data, cv2.COLOR_RGB2HSV))
+            dtype = image_data.dtype
+            # ---------------------------------#
+            #   应用变换
+            # ---------------------------------#
+            x = np.arange(0, 256, dtype=r.dtype)
+            lut_hue = ((x * r[0]) % 180).astype(dtype)
+            lut_sat = np.clip(x * r[1], 0, 255).astype(dtype)
+            lut_val = np.clip(x * r[2], 0, 255).astype(dtype)
+
+            image_data = cv2.merge((cv2.LUT(hue, lut_hue), cv2.LUT(sat, lut_sat), cv2.LUT(val, lut_val)))
+            image_data = cv2.cvtColor(image_data, cv2.COLOR_HSV2RGB)
+
+        # image_data = image
+        # if rand() < .7:
+        #     hue = rand(-hue, hue)
+        #     sat = rand(1, sat) if rand() < .5 else 1 / rand(1, sat)
+        #     val = rand(1, val) if rand() < .5 else 1 / rand(1, val)
+        #     x = cv2.cvtColor(np.array(image, np.float32) / 255, cv2.COLOR_RGB2HSV)
+        #     x[..., 0] += hue * 360
+        #     x[..., 0][x[..., 0] > 1] -= 1
+        #     x[..., 0][x[..., 0] < 0] += 1
+        #     x[..., 1] *= sat
+        #     x[..., 2] *= val
+        #     x[x[:, :, 0] > 360, 0] = 360
+        #     x[:, :, 1:][x[:, :, 1:] > 1] = 1
+        #     x[x < 0] = 0
+        #     image_data = cv2.cvtColor(x, cv2.COLOR_HSV2RGB) * 255
 
         return image_data, label
 
@@ -150,17 +185,16 @@ class unetDataset(Dataset):
 
         if self.random_data:
             jpg, png = self.get_random_data(jpg, png, (int(self.image_size[1]), int(self.image_size[0])))
-            #print('!!', np.array(jpg).shape, np.array(png).shape)
+            # print('!!', np.array(jpg).shape, np.array(png).shape)
         else:
             jpg, png = letterbox_image(jpg, png, (int(self.image_size[1]), int(self.image_size[0])))
 
         # 从文件中读取图像
-        png = np.array(png)
         png[png >= self.num_classes] = self.num_classes
 
         # 转化成one_hot的形式
         seg_labels = np.eye(self.num_classes + 1)[png.reshape([-1])]
-        #print(f'seg_labels{seg_labels.shape}')
+        # print(f'seg_labels{seg_labels.shape}')
         seg_labels = seg_labels.reshape((int(self.image_size[1]), int(self.image_size[0]), self.num_classes + 1))
 
         # 归一化和维度交换

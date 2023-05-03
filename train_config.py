@@ -71,6 +71,7 @@ class Config:
     Interval_Epoch = 150
     # 设置冻结的epoch
     Freeze_Epoch = 40
+    Freeze_Batch_Size=4
 
     # ----------------------#
     # 输出图像的形式
