@@ -627,9 +627,29 @@ def preprocess():
 
 
 if __name__ == '__main__':
-    observe_model()
+    # observe_model()
     # main()
     #txt()
     # count_pos()
     # ob_weight()
     # preprocess()
+
+    import cv2
+    import numpy as np
+    from imgaug import augmenters as iaa
+    from PIL import Image
+    image = Image.open(r"D:\learning\UNNC 科研\TransUnet\VOCdevkit\VOC2007\JPEGImages\0.jpg")
+    image_np = np.array(image)
+
+    # 创建ElasticTransformation增强器
+    augmenter = iaa.ElasticTransformation(alpha=10, sigma=5)
+
+    # 应用Elastic Transformation
+    transformed_image_np = augmenter(image=image_np)
+
+    # 将NumPy数组转换回PIL Image对象
+    transformed_image = Image.fromarray(transformed_image_np)
+
+    # 显示变换后的图像
+    transformed_image.show()
+

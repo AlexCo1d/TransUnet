@@ -399,7 +399,7 @@ if __name__ == "__main__":
         # --------------#
         # BATCH_SIZE
         # --------------#
-        Batch_size = config.Batch_size
+        Batch_size = config.Batch_size if Freeze_Epoch<=0 else config.Freeze_Batch_Size
 
         # set opt
         # ------------------------------------------------------------------#
@@ -481,6 +481,24 @@ if __name__ == "__main__":
                 # 解冻!!
                 for param in model.parameters():
                     param.requires_grad = True
+                # 调整batch_size
+                Batch_size=config.Batch_size
+
+                # 根据batch_size 调整学习率
+                nbs = 16
+                lr_limit_max = 1e-4 if optimizer_type == 'adam' else 1e-1
+                lr_limit_min = 1e-4 if optimizer_type == 'adam' else 5e-4
+                Init_lr_fit = min(max(Batch_size / nbs * Init_lr, lr_limit_min), lr_limit_max)
+                Min_lr_fit = min(max(Batch_size / nbs * Min_lr, lr_limit_min * 1e-2), lr_limit_max * 1e-2)
+
+                gen = DataLoader(train_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
+                                 drop_last=True, collate_fn=unet_dataset_collate, sampler=train_sampler)
+                gen_val = DataLoader(val_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
+                                     drop_last=True, collate_fn=unet_dataset_collate, sampler=val_sampler)
+
+                epoch_size = max(1, len(train_lines) // Batch_size)
+                epoch_size_val = max(1, len(val_lines) // Batch_size)
+                lr_scheduler_func = get_lr_scheduler(lr_decay_type, Init_lr_fit, Min_lr_fit, Interval_Epoch)
 
             if distributed:
                 train_sampler.set_epoch(epoch)
