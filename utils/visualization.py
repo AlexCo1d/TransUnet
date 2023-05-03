@@ -53,7 +53,8 @@ def blend_images(image1: Image.Image, image2: Image.Image, alpha: float) -> Imag
     # 将PIL.Image转换为numpy数组
     image1_np = np.array(image1)
     image2_np = np.array(image2)
-
+    if len(image2_np.shape)==2:
+        image2_np = np.stack((image2_np,) * 3, axis=-1)
     # 创建一个空白的输出图像（与输入图像大小相同）
     blended_np = np.zeros_like(image1_np)
 
