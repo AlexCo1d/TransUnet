@@ -193,8 +193,8 @@ class DecoderBlock_CBAM(nn.Module):
         if skip is not None:
             x = torch.cat([x, skip], dim=1)
         x = self.conv1(x)
-        x = self.conv2(x)
         x = self.cbam(x)
+        x = self.conv2(x)
         return x
 
 
@@ -255,7 +255,7 @@ class Vit_CBAM(VisionTransformer):
         self.zero_head = zero_head
         self.classifier = config.classifier
         self.transformer = Transformer(config, img_size, vis)
-        self.decoder = DecoderCup(config)
+        self.decoder = DecoderCup_CBAM(config)
         self.segmentation_head = SegmentationHead(
             in_channels=config['decoder_channels'][-1],
             out_channels=config['n_classes'],

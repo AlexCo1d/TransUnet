@@ -347,11 +347,11 @@ class ResNetV2_ASPP_CBAM(ResNetV2):
                 [('unit1', PreActBottleneck(cin=width * 4, cout=width * 8, cmid=width * 2, stride=2))] +
                 [(f'unit{i:d}', PreActBottleneck(cin=width * 8, cout=width * 8, cmid=width * 2)) for i in
                  range(2, block_units[1])] +
-                [(f'unit4', PreActBottleneck_CBAM(cin=width * 8, cout=width * 8, cmid=width * 2))],
+                [(f'unit4', PreActBottleneck(cin=width * 8, cout=width * 8, cmid=width * 2))],
             ))),
             ('block3', nn.Sequential(OrderedDict(
                 [('unit1', PreActBottleneck_CBAM(cin=width * 8, cout=width * 16, cmid=width * 4, stride=2))] +
-                [(f'unit{i:d}', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4)) for i in
+                [(f'unit{i:d}', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4)) for i in
                  range(2, block_units[2]-1)] +
                 [('ASPP_unit3', ASPP(in_channels=width * 16, out_channels=width * 16, atrous_rates=(6, 12, 18)))] +
                 [(f'unit9', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))],
