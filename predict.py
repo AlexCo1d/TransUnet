@@ -78,7 +78,7 @@ def transfer_image():
 
         # 测试集生成标签
         image = Image.open(os.path.join(image_path, image_name))
-        label = unet.detect_image(image,mix=config.output_type)
+        label = unet.detect_image(image,mix=0)
 
         # image = image.resize((512, 512))
         label.save(f"miou_pr_dir/{label_name}")
