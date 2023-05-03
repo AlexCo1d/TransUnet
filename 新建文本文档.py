@@ -635,6 +635,31 @@ if __name__ == '__main__':
     # preprocess()
 
     import SimpleITK as sitk
+
+    def show_all_image(src: str, dst: str):
+        '''
+        从nii文件可视化
+        Args:
+            src:
+            dst:
+
+        Returns:
+
+        '''
+        if not os.path.exists(dst):
+            os.makedirs(dst)
+
+        src_list = os.listdir(src)
+
+        for nii_file in src_list:
+            if nii_file.endswith('.nii.gz'):
+                cur_addr = os.path.join(src, nii_file)
+                nii = sitk.ReadImage(cur_addr)
+                img = sitk.GetArrayFromImage(nii).squeeze()
+                # img = (img - img.min()) / (img.max() - img.min())
+                # img *= 255
+                Image.fromarray(img).save(os.path.join(dst, nii_file.replace('.nii.gz', '.png')))
+
     image_path='./cervical_visualization/for_test/image'
     image_list = os.listdir(image_path)
     for file_name in image_list:
@@ -649,5 +674,7 @@ if __name__ == '__main__':
         cur_image_nii = sitk.GetImageFromArray(cur_image)
         cur_image_nii.SetSpacing(list(spac)[::-1])
         sitk.WriteImage(cur_image_nii, os.path.join('./cervical_visualization/for_test/', 'nii',cur_image_name))
+
+
 
 
