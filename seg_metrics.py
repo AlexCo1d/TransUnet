@@ -257,13 +257,13 @@ def compute_dice(label_folder,prediction_folder):
 
         label_img = np.array(Image.open(label_path))
         prediction_img = np.array(Image.open(prediction_path))
-
+        prediction_img[prediction_img!=0]=1
         # for i in range(colorDict_GRAY.shape[0]):
         #     label_img[label_img == colorDict_GRAY[i][0]] = i
         #     prediction_img[prediction_img == colorDict_GRAY[i][0]] = i
 
         # 如果需要，您可以在此处将图像值映射到类标签（例如，将像素值从0-255映射到0-4）
-        if len(np.unique(label_img))==1:
+        if len(np.unique(prediction_img))==1:
             pass
         else:
             # dice_val = dice_coefficient(label_img, prediction_img)
@@ -304,4 +304,4 @@ def compute_dice(label_folder,prediction_folder):
 #     print("混淆矩阵：\n", conf_mat)
 
 from sklearn.metrics import confusion_matrix
-compute_dice("./miou_pr_dir copy","./miou_pr_dir")
+compute_dice(LabelPath,PredictPath)
