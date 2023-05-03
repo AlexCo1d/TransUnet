@@ -7,6 +7,9 @@ import numpy as np
 #参数
 #------------------
 from PIL import Image
+
+from train_config import Config
+
 txt_path="./VOCdevkit/VOC2007/ImageSets/Segmentation/val.txt"
 image_path='./VOCdevkit/VOC2007/JPEGImages'
 label_path='./VOCdevkit/VOC2007/SegmentationClass'
@@ -18,7 +21,8 @@ color_map = [(0, 0, 0), (0, 255, 0), (0, 128, 0), (128, 128, 0), (128, 0, 128), 
                (0, 64, 128), (128, 64, 12)]
 alpha=0.5
 
-
+config=Config()
+type=config.image_type
 def main():
     blend_raw_images(label_path,image_path,output_path,color_map,alpha)
 
@@ -76,7 +80,7 @@ def blend_raw_images(label_path,image_path,output_path,color_map,alpha=0.5):
     for label_name in os.listdir(label_path):
         label=np.array(Image.open(os.path.join(label_path,label_name)))
         label=convert_to_rgb(label,colormap=color_map)
-        image=np.array(Image.open(os.path.join(image_path,label_name.replace('.png','.jpg'))))
+        image=np.array(Image.open(os.path.join(image_path,label_name.replace('.png',type))))
         blend_image=blend_images(Image.fromarray(label),Image.fromarray(image),alpha)
         blend_image.save(os.path.join(output_path,label_name).replace('.png','.jpg'))
 
