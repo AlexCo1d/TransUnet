@@ -31,6 +31,7 @@ FC_1 = "MlpBlock_3/Dense_1"
 ATTENTION_NORM = "LayerNorm_0"
 MLP_NORM = "LayerNorm_2"
 
+
 class CBAMLayer(nn.Module):
     def __init__(self, channel, reduction=16, spatial_kernel=7):
         super(CBAMLayer, self).__init__()
@@ -51,6 +52,7 @@ class CBAMLayer(nn.Module):
         self.conv = nn.Conv2d(2, 1, kernel_size=spatial_kernel,
                               padding=spatial_kernel // 2, bias=False)
         self.sigmoid = nn.Sigmoid()
+
     def forward(self, x):
         max_out = self.mlp(self.max_pool(x))
         avg_out = self.mlp(self.avg_pool(x))
@@ -60,13 +62,14 @@ class CBAMLayer(nn.Module):
         # print('max_out:',max_out.shape)
         avg_out = torch.mean(x, dim=1, keepdim=True)
         # print('avg_out:',avg_out.shape)
-        a=torch.cat([max_out, avg_out], dim=1)
+        a = torch.cat([max_out, avg_out], dim=1)
         # print('a:',a.shape)
         spatial_out = self.sigmoid(self.conv(torch.cat([max_out, avg_out], dim=1)))
         # print('spatial:',spatial_out.shape)
         x = spatial_out * x
         # print('x:',x.shape)
         return x
+
 
 class Embeddings(nn.Module):
     """Construct the embeddings from patch, position embeddings.
@@ -91,7 +94,7 @@ class Embeddings(nn.Module):
 
         if self.hybrid:
             self.hybrid_model = ResNetV2_ASPP_CBAM(block_units=config.resnet.num_layers,
-                                              width_factor=config.resnet.width_factor)
+                                                   width_factor=config.resnet.width_factor)
             in_channels = self.hybrid_model.width * 16
         self.patch_embeddings = Conv2d(in_channels=in_channels,
                                        out_channels=config.hidden_size,
@@ -157,6 +160,44 @@ class Transformer(nn.Module):
         return encoded, attn_weights, features
 
 
+# DecoderBlock_CBAM
+class DecoderBlock_CBAM(nn.Module):
+    def __init__(
+            self,
+            in_channels,
+            out_channels,
+            skip_channels=0,
+            use_batchnorm=True,
+    ):
+        super(DecoderBlock_CBAM).__init__()
+        self.conv1 = Conv2dReLU(
+            in_channels + skip_channels,
+            out_channels,
+            kernel_size=3,
+            padding=1,
+            use_batchnorm=use_batchnorm,
+        )
+        self.conv2 = Conv2dReLU(
+            out_channels,
+            out_channels,
+            kernel_size=3,
+            padding=1,
+            use_batchnorm=use_batchnorm,
+        )
+        # self.up = nn.UpsamplingBilinear2d(scale_factor=2)
+        self.up = interpolate(scale_factor=2, mode='bilinear', align_corners=True)
+        self.cbam = CBAMLayer(out_channels)
+
+    def forward(self, x, skip=None):
+        x = self.up(x)
+        if skip is not None:
+            x = torch.cat([x, skip], dim=1)
+        x = self.conv1(x)
+        x = self.conv2(x)
+        x = self.cbam(x)
+        return x
+
+
 class DecoderCup_CBAM(DecoderCup):
     def __init__(self, config):
         super().__init__(config)
@@ -182,7 +223,8 @@ class DecoderCup_CBAM(DecoderCup):
             skip_channels = [0, 0, 0, 0]
 
         blocks = [
-            DecoderBlock_CBAM(in_ch, out_ch, sk_ch) for in_ch, out_ch, sk_ch in zip(in_channels, out_channels, skip_channels)
+            DecoderBlock_CBAM(in_ch, out_ch, sk_ch) for in_ch, out_ch, sk_ch in
+            zip(in_channels, out_channels, skip_channels)
         ]
         self.blocks = nn.ModuleList(blocks)
 
@@ -229,39 +271,5 @@ class Vit_CBAM_CGM(Vit_CGM):
 
         # self.BinaryClassifier = ReducedBinaryClassifier(config.hidden_size, num_classes)
 
-# DecoderBlock_CBAM
-class DecoderBlock_CBAM(nn.Module):
-    def __init__(
-            self,
-            in_channels,
-            out_channels,
-            skip_channels=0,
-            use_batchnorm=True,
-    ):
-        super(DecoderBlock_CBAM).__init__()
-        self.conv1 = Conv2dReLU(
-            in_channels + skip_channels,
-            out_channels,
-            kernel_size=3,
-            padding=1,
-            use_batchnorm=use_batchnorm,
-        )
-        self.conv2 = Conv2dReLU(
-            out_channels,
-            out_channels,
-            kernel_size=3,
-            padding=1,
-            use_batchnorm=use_batchnorm,
-        )
-        # self.up = nn.UpsamplingBilinear2d(scale_factor=2)
-        self.up = interpolate(scale_factor=2, mode='bilinear',align_corners=True)
-        self.cbam=CBAMLayer(out_channels)
 
-    def forward(self, x, skip=None):
-        x = self.up(x)
-        if skip is not None:
-            x = torch.cat([x, skip], dim=1)
-        x = self.conv1(x)
-        x = self.conv2(x)
-        x = self.cbam(x)
-        return x
+
