@@ -254,6 +254,24 @@ class ResNetV2_ASPP_1(ResNetV2):
         ]))
 
 
+class SELayer(nn.Module):
+    def __init__(self, channel, reduction=16):
+        super(SELayer, self).__init__()
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)  # 全局平均池化，输入BCHW -> 输出 B*C*1*1
+        self.fc = nn.Sequential(
+            nn.Linear(channel, channel // reduction, bias=False),  # 可以看到channel得被reduction整除，否则可能出问题
+            nn.ReLU(inplace=True),
+            nn.Linear(channel // reduction, channel, bias=False),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        b, c, _, _ = x.size()
+        y = self.avg_pool(x).view(b, c)  # 得到B*C*1*1,然后转成B*C，才能送入到FC层中。
+        y = self.fc(y).view(b, c, 1, 1)  # 得到B*C的向量，C个值就表示C个通道的权重。把B*C变为B*C*1*1是为了与四维的x运算。
+        return x * y.expand_as(x)  # 先把B*C*1*1变成B*C*H*W大小，其中每个通道上的H*W个值都相等。*表示对应位置相乘
+
+
 class CBAMLayer(nn.Module):
     def __init__(self, channel, reduction=16, spatial_kernel=7):
         super(CBAMLayer, self).__init__()
@@ -331,6 +349,43 @@ class PreActBottleneck_CBAM(PreActBottleneck):
         return y
 
 
+class PreActBottleneck_SE(PreActBottleneck):
+    """Pre-activation (v2) bottleneck block.
+    """
+    def __init__(self, cin, cout=None, cmid=None, stride=1):
+        super().__init__(cin, cout, cmid, stride)
+        cout = cout or cin
+        cmid = cmid or cout // 4
+
+        self.gn1 = nn.GroupNorm(32, cmid, eps=1e-6)
+        self.conv1 = conv1x1(cin, cmid, bias=False)
+        self.gn2 = nn.GroupNorm(32, cmid, eps=1e-6)
+        self.conv2 = conv3x3(cmid, cmid, stride, bias=False)  # Original code has it on conv1!!
+        self.gn3 = nn.GroupNorm(32, cout, eps=1e-6)
+        self.conv3 = conv1x1(cmid, cout, bias=False)
+        self.relu = nn.ReLU(inplace=True)
+        self.se=SELayer(cmid)
+        if (stride != 1 or cin != cout):
+            # Projection also with pre-activation according to paper.
+            self.downsample = conv1x1(cin, cout, stride, bias=False)
+            self.gn_proj = nn.GroupNorm(cout, cout)
+
+    def forward(self, x):
+
+        # Residual branch
+        residual = x
+        if hasattr(self, 'downsample'):
+            residual = self.downsample(x)
+            residual = self.gn_proj(residual)
+
+        # Unit's branch
+        y = self.relu(self.gn1(self.conv1(x)))
+        y = self.relu(self.gn2(self.conv2(y)))
+        y = self.cbam(y)
+        y = self.gn3(self.conv3(y))
+        y = self.relu(residual + y)
+        return y
+
 class ResNetV2_ASPP_CBAM(ResNetV2):
     def __init__(self, block_units, width_factor):
         super(ResNetV2_ASPP_CBAM, self).__init__(block_units, width_factor)
@@ -345,15 +400,53 @@ class ResNetV2_ASPP_CBAM(ResNetV2):
             ))),
             ('block2', nn.Sequential(OrderedDict(
                 [('unit1', PreActBottleneck(cin=width * 4, cout=width * 8, cmid=width * 2, stride=2))] +
-                [(f'unit{i:d}', PreActBottleneck(cin=width * 8, cout=width * 8, cmid=width * 2)) for i in
-                 range(2, block_units[1])] +
-                [(f'unit4', PreActBottleneck(cin=width * 8, cout=width * 8, cmid=width * 2))],
+                [(f'unit2', PreActBottleneck(cin=width * 8, cout=width * 8, cmid=width * 2))] +
+                [(f'unit3', PreActBottleneck(cin=width * 8, cout=width * 8, cmid=width * 2))] +
+                [(f'unit4', PreActBottleneck_CBAM(cin=width * 8, cout=width * 8, cmid=width * 2))],
             ))),
             ('block3', nn.Sequential(OrderedDict(
-                [('unit1', PreActBottleneck_CBAM(cin=width * 8, cout=width * 16, cmid=width * 4, stride=2))] +
-                [(f'unit{i:d}', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4)) for i in
-                 range(2, block_units[2]-1)] +
+                [('unit1', PreActBottleneck(cin=width * 8, cout=width * 16, cmid=width * 4, stride=2))] +
+                [(f'unit2', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit3', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit4', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit5', PreActBottleneckCBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit6', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit7', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                # [(f'unit8', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
                 [('ASPP_unit3', ASPP(in_channels=width * 16, out_channels=width * 16, atrous_rates=(6, 12, 18)))] +
                 [(f'unit9', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))],
+            ))),
+        ]))
+
+
+class ResNetV2_ASPP_SE(ResNetV2):
+    def __init__(self, block_units, width_factor):
+        super().__init__(block_units, width_factor)
+        width = int(64 * width_factor)
+        self.width = width
+        self.body = nn.Sequential(OrderedDict([
+            ('block1', nn.Sequential(OrderedDict(
+                [('unit1', PreActBottleneck(cin=width, cout=width * 4, cmid=width))] +
+                [(f'unit2', PreActBottleneck(cin=width * 4, cout=width * 4, cmid=width))] +
+                [(f'unit3', PreActBottleneck(cin=width * 4, cout=width * 4, cmid=width))]
+
+            ))),
+            ('block2', nn.Sequential(OrderedDict(
+                [('unit1', PreActBottleneck_SE(cin=width * 4, cout=width * 8, cmid=width * 2, stride=2))] +
+                [(f'unit2', PreActBottleneck_SE(cin=width * 8, cout=width * 8, cmid=width * 2))] +
+                [(f'unit3', PreActBottleneck_SE(cin=width * 8, cout=width * 8, cmid=width * 2))] +
+                [(f'unit4', PreActBottleneck_SE(cin=width * 8, cout=width * 8, cmid=width * 2))],
+            ))),
+            ('block3', nn.Sequential(OrderedDict(
+                [('unit1', PreActBottleneck_SE(cin=width * 8, cout=width * 16, cmid=width * 4, stride=2))] +
+                [(f'unit2', PreActBottleneck_SE(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit3', PreActBottleneck_SE(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit4', PreActBottleneck_SE(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit5', PreActBottleneck_SE(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit6', PreActBottleneck_SE(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit7', PreActBottleneck_SE(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                # [(f'unit8', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [('ASPP_unit3', ASPP(in_channels=width * 16, out_channels=width * 16, atrous_rates=(6, 12, 18)))] +
+                [(f'unit9', PreActBottleneck_SE(cin=width * 16, cout=width * 16, cmid=width * 4))],
             ))),
         ]))
