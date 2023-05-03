@@ -16,9 +16,9 @@ import numpy as np
 from torch.nn import CrossEntropyLoss, Dropout, Softmax, Linear, Conv2d, LayerNorm
 from torch.nn.modules.utils import _pair
 from scipy import ndimage
-import vit_seg_configs as configs
-from transunet_modeling import *
-from vit_seg_modeling_resnet_skip import *
+from nets import vit_seg_configs as configs
+from nets.transunet_modeling import *
+from nets.vit_seg_modeling_resnet_skip import *
 
 logger = logging.getLogger(__name__)
 
@@ -227,7 +227,7 @@ class Vit_CBAM_CGM(Vit_CGM):
             nn.AdaptiveMaxPool2d(1),
             nn.Sigmoid())
 
-        self.BinaryClassifier = ReducedBinaryClassifier(config.hidden_size, num_classes)
+        # self.BinaryClassifier = ReducedBinaryClassifier(config.hidden_size, num_classes)
 
 
 class DecoderBlock_CBAM(nn.Module):

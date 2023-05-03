@@ -7,9 +7,9 @@ import numpy as np
 #参数
 #------------------
 from PIL import Image
-
-label_path='./for_test/label/'
-image_path='./for_test/image/'
+txt_path="./VOCdevkit/VOC2007/ImageSets/Segmentation/val.txt"
+image_path='./VOCdevkit/VOC2007/JPEGImages'
+label_path='./VOCdevkit/VOC2007/SegmentationClass'
 output_path='./for_test/visualization'
 color_map = [(0, 0, 0), (0, 255, 0), (0, 128, 0), (128, 128, 0), (128, 0, 128), (0, 128, 128),
                (128, 128, 128), (64, 0, 0), (192, 0, 0), (64, 128, 0), (192, 128, 0), (64, 0, 128),
@@ -71,6 +71,8 @@ def blend_raw_images(label_path,image_path,output_path,color_map,alpha=0.5):
     if not os.path.exists(output_path):
         os.makedirs(output_path)
     # 将2个文件夹的图像融合输出进新文件夹
+    with open(txt_path, "r") as file:
+        lines = file.readlines()
     for label_name in os.listdir(label_path):
         label=np.array(Image.open(os.path.join(label_path,label_name)))
         label=convert_to_rgb(label,colormap=color_map)
