@@ -315,22 +315,22 @@ class SE_ASPP(nn.Module):
     def __init__(self, dim_in, dim_out, rate=1, bn_mom=0.1):
         super(SE_ASPP, self).__init__()
         self.branch1 = nn.Sequential(
-            nn.Conv2d(dim_in, dim_out, 1, 1, padding=0, dilation=rate, bias=True),
+            nn.Conv2d(dim_in, dim_out, 1, 1, padding=0, dilation=1, bias=True),
             nn.BatchNorm2d(dim_out, momentum=bn_mom),
             nn.ReLU(inplace=True),
         )
         self.branch2 = nn.Sequential(
-            nn.Conv2d(dim_in, dim_out, 3, 1, padding=6 * rate, dilation=6 * rate, bias=True),
+            nn.Conv2d(dim_in, dim_out, 3, 1, padding=atrous_rates[0], dilation=atrous_rates[0], bias=True),
             nn.BatchNorm2d(dim_out, momentum=bn_mom),
             nn.ReLU(inplace=True),
         )
         self.branch3 = nn.Sequential(
-            nn.Conv2d(dim_in, dim_out, 3, 1, padding=12 * rate, dilation=12 * rate, bias=True),
+            nn.Conv2d(dim_in, dim_out, 3, 1, padding=atrous_rates[1], dilation=atrous_rates[1], bias=True),
             nn.BatchNorm2d(dim_out, momentum=bn_mom),
             nn.ReLU(inplace=True),
         )
         self.branch4 = nn.Sequential(
-            nn.Conv2d(dim_in, dim_out, 3, 1, padding=18 * rate, dilation=18 * rate, bias=True),
+            nn.Conv2d(dim_in, dim_out, 3, 1, padding=atrous_rates[2], dilation=atrous_rates[2], bias=True),
             nn.BatchNorm2d(dim_out, momentum=bn_mom),
             nn.ReLU(inplace=True),
         )
@@ -371,24 +371,24 @@ class SE_ASPP(nn.Module):
 
 
 class CBAM_ASPP(nn.Module):
-    def __init__(self, dim_in, dim_out, rate=1, bn_mom=0.1):
+    def __init__(self, dim_in, dim_out, atrous_rates, bn_mom=0.1):
         self.branch1 = nn.Sequential(
-            nn.Conv2d(dim_in, dim_out, 1, 1, padding=0, dilation=rate, bias=True),
+            nn.Conv2d(dim_in, dim_out, 1, 1, padding=0, dilation=1, bias=True),
             nn.BatchNorm2d(dim_out, momentum=bn_mom),
             nn.ReLU(inplace=True),
         )
         self.branch2 = nn.Sequential(
-            nn.Conv2d(dim_in, dim_out, 3, 1, padding=6 * rate, dilation=6 * rate, bias=True),
+            nn.Conv2d(dim_in, dim_out, 3, 1, padding=atrous_rates[0], dilation=atrous_rates[0], bias=True),
             nn.BatchNorm2d(dim_out, momentum=bn_mom),
             nn.ReLU(inplace=True),
         )
         self.branch3 = nn.Sequential(
-            nn.Conv2d(dim_in, dim_out, 3, 1, padding=12 * rate, dilation=12 * rate, bias=True),
+            nn.Conv2d(dim_in, dim_out, 3, 1, padding=atrous_rates[1], dilation=atrous_rates[1], bias=True),
             nn.BatchNorm2d(dim_out, momentum=bn_mom),
             nn.ReLU(inplace=True),
         )
         self.branch4 = nn.Sequential(
-            nn.Conv2d(dim_in, dim_out, 3, 1, padding=18 * rate, dilation=18 * rate, bias=True),
+            nn.Conv2d(dim_in, dim_out, 3, 1, padding=atrous_rates[2], dilation=atrous_rates[2], bias=True),
             nn.BatchNorm2d(dim_out, momentum=bn_mom),
             nn.ReLU(inplace=True),
         )
@@ -563,5 +563,71 @@ class ResNetV2_ASPP_SE(ResNetV2):
                 # [(f'unit8', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
                 [('ASPP_unit3', ASPP(in_channels=width * 16, out_channels=width * 16, atrous_rates=(6, 12, 18)))] +
                 [(f'unit9', PreActBottleneck_SE(cin=width * 16, cout=width * 16, cmid=width * 4))],
+            ))),
+        ]))
+
+
+class ResNetV2_SE_ASPP_SE(ResNetV2):
+    def __init__(self, block_units, width_factor):
+        super().__init__(block_units, width_factor)
+        width = int(64 * width_factor)
+        self.width = width
+        self.body = nn.Sequential(OrderedDict([
+            ('block1', nn.Sequential(OrderedDict(
+                [('unit1', PreActBottleneck(cin=width, cout=width * 4, cmid=width))] +
+                [(f'unit2', PreActBottleneck(cin=width * 4, cout=width * 4, cmid=width))] +
+                [(f'unit3', PreActBottleneck(cin=width * 4, cout=width * 4, cmid=width))]
+
+            ))),
+            ('block2', nn.Sequential(OrderedDict(
+                [('unit1', PreActBottleneck_SE(cin=width * 4, cout=width * 8, cmid=width * 2, stride=2))] +
+                [(f'unit2', PreActBottleneck_SE(cin=width * 8, cout=width * 8, cmid=width * 2))] +
+                [(f'unit3', PreActBottleneck_SE(cin=width * 8, cout=width * 8, cmid=width * 2))] +
+                [(f'unit4', PreActBottleneck_SE(cin=width * 8, cout=width * 8, cmid=width * 2))],
+            ))),
+            ('block3', nn.Sequential(OrderedDict(
+                [('unit1', PreActBottleneck_SE(cin=width * 8, cout=width * 16, cmid=width * 4, stride=2))] +
+                [(f'unit2', PreActBottleneck_SE(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit3', PreActBottleneck_SE(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit4', PreActBottleneck_SE(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit5', PreActBottleneck_SE(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit6', PreActBottleneck_SE(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit7', PreActBottleneck_SE(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                # [(f'unit8', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [('ASPP_unit3', SE_ASPP(in_channels=width * 16, out_channels=width * 16, atrous_rates=(6, 12, 18)))] +
+                [(f'unit9', PreActBottleneck_SE(cin=width * 16, cout=width * 16, cmid=width * 4))],
+            ))),
+        ]))
+
+
+class ResNetV2_CBAM_ASPP_CBAM(ResNetV2):
+    def __init__(self, block_units, width_factor):
+        super().__init__(block_units, width_factor)
+        width = int(64 * width_factor)
+        self.width = width
+        self.body = nn.Sequential(OrderedDict([
+            ('block1', nn.Sequential(OrderedDict(
+                [('unit1', PreActBottleneck(cin=width, cout=width * 4, cmid=width))] +
+                [(f'unit2', PreActBottleneck(cin=width * 4, cout=width * 4, cmid=width))] +
+                [(f'unit3', PreActBottleneck(cin=width * 4, cout=width * 4, cmid=width))]
+
+            ))),
+            ('block2', nn.Sequential(OrderedDict(
+                [('unit1', PreActBottleneck(cin=width * 4, cout=width * 8, cmid=width * 2, stride=2))] +
+                [(f'unit2', PreActBottleneck(cin=width * 8, cout=width * 8, cmid=width * 2))] +
+                [(f'unit3', PreActBottleneck(cin=width * 8, cout=width * 8, cmid=width * 2))] +
+                [(f'unit4', PreActBottleneck(cin=width * 8, cout=width * 8, cmid=width * 2))],
+            ))),
+            ('block3', nn.Sequential(OrderedDict(
+                [('unit1', PreActBottleneck_CBAM(cin=width * 8, cout=width * 16, cmid=width * 4, stride=2))] +
+                [(f'unit2', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit3', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit4', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit5', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit6', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit7', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                # [(f'unit8', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [('ASPP_unit3', CBAM_ASPP(in_channels=width * 16, out_channels=width * 16, atrous_rates=(6, 12, 18)))] +
+                [(f'unit9', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))],
             ))),
         ]))
