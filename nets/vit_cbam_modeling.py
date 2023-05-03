@@ -169,7 +169,7 @@ class DecoderBlock_CBAM(nn.Module):
             skip_channels=0,
             use_batchnorm=True,
     ):
-        super(DecoderBlock_CBAM).__init__()
+        super(DecoderBlock_CBAM,self).__init__()
         self.conv1 = Conv2dReLU(
             in_channels + skip_channels,
             out_channels,
@@ -200,7 +200,7 @@ class DecoderBlock_CBAM(nn.Module):
 
 class DecoderCup_CBAM(DecoderCup):
     def __init__(self, config):
-        super(DecoderCup_CBAM).__init__(config)
+        super(DecoderCup_CBAM).__init__()
         self.config = config
         head_channels = 512
         self.conv_more = Conv2dReLU(
@@ -255,7 +255,7 @@ class Vit_CBAM_CGM(Vit_CGM):
         self.zero_head = zero_head
         self.classifier = config.classifier
         self.transformer = Transformer(config, img_size, vis)
-        self.decoder = DecoderCup_CBAM(config)
+        self.decoder = DecoderCup(config)
         self.segmentation_head = SegmentationHead(
             in_channels=config['decoder_channels'][-1],
             out_channels=config['n_classes'],

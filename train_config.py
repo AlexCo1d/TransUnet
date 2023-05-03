@@ -18,7 +18,7 @@ class Config:
         # --------------#
         # BATCH_SIZE
         # --------------#
-        self.Batch_size = 6
+        self.Batch_size = 2
         # (focal or ce) + dice
         self.focal_loss = True
         self.cls_weights = True

@@ -455,7 +455,7 @@ if __name__ == "__main__":
         if distributed:
             train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset, shuffle=True, )
             val_sampler = torch.utils.data.distributed.DistributedSampler(val_dataset, shuffle=False, )
-            Batch_size = Batch_size // ngpus_per_node
+            # Batch_size = Batch_size // ngpus_per_node
             shuffle = False
         else:
             train_sampler = None
