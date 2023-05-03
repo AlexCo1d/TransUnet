@@ -32,6 +32,24 @@ ATTENTION_NORM = "LayerNorm_0"
 MLP_NORM = "LayerNorm_2"
 
 
+class SELayer(nn.Module):
+    def __init__(self, channel, reduction=16):
+        super(SELayer, self).__init__()
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)  # 全局平均池化，输入BCHW -> 输出 B*C*1*1
+        self.fc = nn.Sequential(
+            nn.Linear(channel, channel // reduction, bias=False),  # 可以看到channel得被reduction整除，否则可能出问题
+            nn.ReLU(inplace=True),
+            nn.Linear(channel // reduction, channel, bias=False),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        b, c, _, _ = x.size()
+        y = self.avg_pool(x).view(b, c)  # 得到B*C*1*1,然后转成B*C，才能送入到FC层中。
+        y = self.fc(y).view(b, c, 1, 1)  # 得到B*C的向量，C个值就表示C个通道的权重。把B*C变为B*C*1*1是为了与四维的x运算。
+        return x * y.expand_as(x)  # 先把B*C*1*1变成B*C*H*W大小，其中每个通道上的H*W个值都相等。*表示对应位置相乘
+
+
 class CBAMLayer(nn.Module):
     def __init__(self, channel, reduction=16, spatial_kernel=7):
         super(CBAMLayer, self).__init__()
@@ -93,7 +111,7 @@ class Embeddings(nn.Module):
             self.hybrid = False
 
         if self.hybrid:
-            self.hybrid_model = ResNetV2_ASPP_CBAM(block_units=config.resnet.num_layers,
+            self.hybrid_model = ResNetV2_ASPP_SE(block_units=config.resnet.num_layers,
                                                    width_factor=config.resnet.width_factor)
             in_channels = self.hybrid_model.width * 16
         self.patch_embeddings = Conv2d(in_channels=in_channels,
@@ -200,7 +218,7 @@ class DecoderBlock_CBAM(nn.Module):
 
 class DecoderCup_CBAM(DecoderCup):
     def __init__(self, config):
-        super(DecoderCup_CBAM).__init__()
+        super(DecoderCup_CBAM,self).__init__(config)
         self.config = config
         head_channels = 512
         self.conv_more = Conv2dReLU(
@@ -255,7 +273,7 @@ class Vit_CBAM(VisionTransformer):
         self.zero_head = zero_head
         self.classifier = config.classifier
         self.transformer = Transformer(config, img_size, vis)
-        self.decoder = DecoderCup_CBAM(config)
+        self.decoder = DecoderCup(config)
         self.segmentation_head = SegmentationHead(
             in_channels=config['decoder_channels'][-1],
             out_channels=config['n_classes'],
