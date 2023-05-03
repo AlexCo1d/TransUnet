@@ -338,14 +338,16 @@ class ResNetV2_ASPP_CBAM(ResNetV2):
         self.width = width
         self.body = nn.Sequential(OrderedDict([
             ('block1', nn.Sequential(OrderedDict(
-                [('unit1', PreActBottleneck_CBAM(cin=width, cout=width * 4, cmid=width))] +
-                [(f'unit{i:d}', PreActBottleneck_CBAM(cin=width * 4, cout=width * 4, cmid=width)) for i in
-                 range(2, block_units[0] + 1)],
+                [('unit1', PreActBottleneck(cin=width, cout=width * 4, cmid=width))] +
+                [(f'unit2', PreActBottleneck(cin=width * 4, cout=width * 4, cmid=width))] +
+                [(f'unit3', PreActBottleneck(cin=width * 4, cout=width * 4, cmid=width))]
+
             ))),
             ('block2', nn.Sequential(OrderedDict(
-                [('unit1', PreActBottleneck_CBAM(cin=width * 4, cout=width * 8, cmid=width * 2, stride=2))] +
-                [(f'unit{i:d}', PreActBottleneck_CBAM(cin=width * 8, cout=width * 8, cmid=width * 2)) for i in
-                 range(2, block_units[1] + 1)],
+                [('unit1', PreActBottleneck(cin=width * 4, cout=width * 8, cmid=width * 2, stride=2))] +
+                [(f'unit{i:d}', PreActBottleneck(cin=width * 8, cout=width * 8, cmid=width * 2)) for i in
+                 range(2, block_units[1])] +
+                [(f'unit4', PreActBottleneck_CBAM(cin=width * 8, cout=width * 8, cmid=width * 2))],
             ))),
             ('block3', nn.Sequential(OrderedDict(
                 [('unit1', PreActBottleneck_CBAM(cin=width * 8, cout=width * 16, cmid=width * 4, stride=2))] +
