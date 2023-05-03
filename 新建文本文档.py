@@ -634,46 +634,7 @@ if __name__ == '__main__':
     # ob_weight()
     # preprocess()
 
-    import SimpleITK as sitk
 
-    def show_all_image(src: str, dst: str):
-        '''
-        从nii文件可视化
-        Args:
-            src:
-            dst:
-
-        Returns:
-
-        '''
-        if not os.path.exists(dst):
-            os.makedirs(dst)
-
-        src_list = os.listdir(src)
-
-        for nii_file in src_list:
-            if nii_file.endswith('.nii.gz'):
-                cur_addr = os.path.join(src, nii_file)
-                nii = sitk.ReadImage(cur_addr)
-                img = sitk.GetArrayFromImage(nii).squeeze()
-                # img = (img - img.min()) / (img.max() - img.min())
-                # img *= 255
-                Image.fromarray(img).save(os.path.join(dst, nii_file.replace('.nii.gz', '.png')))
-
-    image_path='./cervical_visualization/for_test/image'
-    image_list = os.listdir(image_path)
-    for file_name in image_list:
-        # 读取文件并将其转为array
-        cur_image = np.array(Image.open(os.path.join(image_path, file_name)).convert('L'))
-        w, h = cur_image.shape
-        cur_image = cur_image.reshape(1, w, h)
-        cur_image_name = 'Cervical_' + file_name.replace('.jpg','') + '_0000.nii.gz'
-        # print(np.shape(cur_image))
-        spac = (999, 1, 1)
-        # 转化为ntfi格式存储进各自需要的路径
-        cur_image_nii = sitk.GetImageFromArray(cur_image)
-        cur_image_nii.SetSpacing(list(spac)[::-1])
-        sitk.WriteImage(cur_image_nii, os.path.join('./cervical_visualization/for_test/', 'nii',cur_image_name))
 
 
 
