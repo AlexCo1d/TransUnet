@@ -634,22 +634,20 @@ if __name__ == '__main__':
     # ob_weight()
     # preprocess()
 
-    import cv2
-    import numpy as np
-    from imgaug import augmenters as iaa
-    from PIL import Image
-    image = Image.open(r"D:\learning\UNNC 科研\TransUnet\VOCdevkit\VOC2007\JPEGImages\0.jpg")
-    image_np = np.array(image)
+    import SimpleITK as sitk
+    image_path='./cervical_visualization/for_test/image'
+    image_list = os.listdir(image_path)
+    for file_name in image_list:
+        # 读取文件并将其转为array
+        cur_image = np.array(Image.open(os.path.join(image_path, file_name)).convert('L'))
+        w, h = cur_image.shape
+        cur_image = cur_image.reshape(1, w, h)
+        cur_image_name = 'Cervical_' + file_name.replace('.jpg','') + '_0000.nii.gz'
+        # print(np.shape(cur_image))
+        spac = (999, 1, 1)
+        # 转化为ntfi格式存储进各自需要的路径
+        cur_image_nii = sitk.GetImageFromArray(cur_image)
+        cur_image_nii.SetSpacing(list(spac)[::-1])
+        sitk.WriteImage(cur_image_nii, os.path.join('./cervical_visualization/for_test/', 'nii',cur_image_name))
 
-    # 创建ElasticTransformation增强器
-    augmenter = iaa.ElasticTransformation(alpha=10, sigma=5)
-
-    # 应用Elastic Transformation
-    transformed_image_np = augmenter(image=image_np)
-
-    # 将NumPy数组转换回PIL Image对象
-    transformed_image = Image.fromarray(transformed_image_np)
-
-    # 显示变换后的图像
-    transformed_image.show()
 
