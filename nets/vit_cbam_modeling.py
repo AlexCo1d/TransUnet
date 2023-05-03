@@ -248,9 +248,9 @@ class DecoderCup_CBAM(DecoderCup):
         return x
 
 
-class Vit_CBAM_CGM(Vit_CGM):
+class Vit_CBAM(VisionTransformer):
     def __init__(self, config, img_size=256, num_classes=21843, zero_head=False, vis=False, cgm=True):
-        super(Vit_CBAM_CGM, self).__init__(config, img_size, num_classes, zero_head, vis, )
+        super(Vit_CBAM, self).__init__(config, img_size, num_classes, zero_head, vis, )
         self.num_classes = num_classes
         self.zero_head = zero_head
         self.classifier = config.classifier
@@ -263,11 +263,6 @@ class Vit_CBAM_CGM(Vit_CGM):
         )
         self.config = config
         self.if_cgm = cgm
-        self.cls = nn.Sequential(
-            nn.Dropout(p=0.5),
-            nn.Conv2d(config.hidden_size, 2, 1),
-            nn.AdaptiveMaxPool2d(1),
-            nn.Sigmoid())
 
         # self.BinaryClassifier = ReducedBinaryClassifier(config.hidden_size, num_classes)
 
