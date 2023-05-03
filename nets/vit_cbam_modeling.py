@@ -213,7 +213,7 @@ class Vit_CBAM_CGM(Vit_CGM):
         self.zero_head = zero_head
         self.classifier = config.classifier
         self.transformer = Transformer(config, img_size, vis)
-        self.decoder = DecoderCup(config)
+        self.decoder = DecoderCup_CBAM(config)
         self.segmentation_head = SegmentationHead(
             in_channels=config['decoder_channels'][-1],
             out_channels=config['n_classes'],
@@ -229,7 +229,7 @@ class Vit_CBAM_CGM(Vit_CGM):
 
         # self.BinaryClassifier = ReducedBinaryClassifier(config.hidden_size, num_classes)
 
-
+# DecoderBlock_CBAM
 class DecoderBlock_CBAM(nn.Module):
     def __init__(
             self,
