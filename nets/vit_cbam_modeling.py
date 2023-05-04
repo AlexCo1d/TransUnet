@@ -187,10 +187,7 @@ class DecoderBlock_CBAM(nn.Module):
             skip_channels=0,
             use_batchnorm=True,
     ):
-        super().__init__(in_channels,
-            out_channels,
-            skip_channels,
-            use_batchnorm)
+        super().__init__()
         self.conv1 = Conv2dReLU(
             in_channels + skip_channels,
             out_channels,
@@ -227,10 +224,7 @@ class DecoderBlock_SE(nn.Module):
             skip_channels=0,
             use_batchnorm=True,
     ):
-        super().__init__(in_channels,
-            out_channels,
-            skip_channels,
-            use_batchnorm)
+        super().__init__()
         self.conv1 = Conv2dReLU(
             in_channels + skip_channels,
             out_channels,
