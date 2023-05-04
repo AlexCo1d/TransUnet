@@ -226,7 +226,7 @@ print(dice)
 
 def dice_coefficient(y_true, y_pred):
     intersection = np.sum(y_true * y_pred)
-    return (2. * intersection) / (np.sum(y_true) + np.sum(y_pred))
+    return (2. * intersection) / ((np.sum(y_true) + np.sum(y_pred))+1e-6)
 
 def cal_dice(seg, gt, classes=2, background_id=0):
     channel_dice = []
@@ -249,8 +249,8 @@ def compute_dice(label_folder,prediction_folder):
     label_list = sorted(os.listdir(label_folder))
     prediction_list = sorted(os.listdir(prediction_folder))
 
-    dice_values = []
-
+    dice_values1 = []
+    dice_values2 = []
     for label_file, prediction_file in zip(label_list, prediction_list):
         label_path = os.path.join(label_folder, label_file)
         prediction_path = os.path.join(prediction_folder, prediction_file)
@@ -268,11 +268,13 @@ def compute_dice(label_folder,prediction_folder):
         else:
             # dice_val = dice_coefficient(label_img, prediction_img)
             dice_val=cal_dice(prediction_img,label_img,classes=classNum,background_id=0)
-            dice_values.append(dice_val)
+            dice_values1.append(dice_val)
+            dice_values2.append(dice_coefficient())
 
-    print(len(dice_values))
-    mean_dice_value = np.nanmean(dice_values)
+    print(len(dice_values1))
+    mean_dice_value = np.nanmean(dice_values1)
     print(f'mean_dice: {mean_dice_value}')
+    print(f'mean_dice: {np.nanmean(dice_values2)}')
 
 
 # def compute_conf_matrix(label_folder,prediction_folder,num):
