@@ -112,7 +112,7 @@ class Embeddings(nn.Module):
 
         if self.hybrid:
             self.hybrid_model = ResNetV2_ASPP_CBAM(block_units=config.resnet.num_layers,
-                                                        width_factor=config.resnet.width_factor)
+                                                   width_factor=config.resnet.width_factor)
             in_channels = self.hybrid_model.width * 16
         self.patch_embeddings = Conv2d(in_channels=in_channels,
                                        out_channels=config.hidden_size,
@@ -286,6 +286,27 @@ class DecoderCup_CBAM(DecoderCup):
         #     zip(in_channels, out_channels, skip_channels)
         # ]
         self.blocks = nn.ModuleList(blocks)
+        self.cbam_aspp = CBAM_ASPP(head_channels, head_channels)
+
+    def forward(self, hidden_states, features=None):
+        B, n_patch, hidden = hidden_states.size()  # reshape from (B, n_patch, hidden) to (B, h, w, hidden)
+        h, w = int(np.sqrt(n_patch)), int(np.sqrt(n_patch))
+        #####变矩阵###########3
+        # --------------------2,1024,768------2,512,32,32 if 512
+        # ------------------从transformer变成cnn
+        # ----------------------
+        x = hidden_states.permute(0, 2, 1)
+        x = x.contiguous().view(B, hidden, h, w)
+        x = self.conv_more(x)
+        x = self.cbam_aspp(x)
+        for i, decoder_block in enumerate(self.blocks):
+            if features is not None:
+                skip = features[i] if (i < self.config.n_skip) else None
+            else:
+                skip = None
+            x = decoder_block(x, skip=skip)
+
+        return x
 
 
 class DecoderCup_SE(DecoderCup):
@@ -367,7 +388,6 @@ class Vit_CBAM_ASPP(VisionTransformer):
         )
         self.config = config
         self.if_cgm = cgm
-        self.cbam_aspp = CBAM_ASPP(config.hidden_size, config.hidden_size)
 
         # self.BinaryClassifier = ReducedBinaryClassifier(config.hidden_size, num_classes)
 
@@ -375,7 +395,6 @@ class Vit_CBAM_ASPP(VisionTransformer):
         if x.size()[1] == 1:
             x = x.repeat(1, 3, 1, 1)
         x, attn_weights, features = self.transformer(x)  # (B, n_patch, hidden)
-        x = self.cbam_aspp(x)
         x = self.decoder(x, features)
 
         logits = self.segmentation_head(x)
