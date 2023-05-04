@@ -311,7 +311,7 @@ class CBAMLayer(nn.Module):
         return x
 
 
-class SE_ASPP(nn.Module):
+class ASPP_SE(nn.Module):
     def __init__(self, dim_in, dim_out, rate=1, bn_mom=0.1):
         super(SE_ASPP, self).__init__()
         self.branch1 = nn.Sequential(
@@ -345,7 +345,7 @@ class SE_ASPP(nn.Module):
         )
         # print('dim_in:',dim_in)
         # print('dim_out:',dim_out)
-        self.senet = SE_Block(in_planes=dim_out * 5)
+        self.se = SELayer(dim_out * 5)
 
     def forward(self, x):
         [b, c, row, col] = x.size()
@@ -362,7 +362,7 @@ class SE_ASPP(nn.Module):
 
         feature_cat = torch.cat([conv1x1, conv3x3_1, conv3x3_2, conv3x3_3, global_feature], dim=1)
         # print('feature:',feature_cat.shape)
-        seaspp1 = self.senet(feature_cat)  # 加入通道注意力机制
+        seaspp1 = self.se(feature_cat)  # 加入通道注意力机制
         # print('seaspp1:',seaspp1.shape)
         se_feature_cat = seaspp1 * feature_cat
         result = self.conv_cat(se_feature_cat)
@@ -441,7 +441,7 @@ class PreActBottleneck_CBAM(PreActBottleneck):
         self.gn3 = nn.GroupNorm(32, cout, eps=1e-6)
         self.conv3 = conv1x1(cmid, cout, bias=False)
         self.relu = nn.ReLU(inplace=True)
-        self.cbam = CBAMLayer(cout)
+        self.cbam = CBAMLayer(cmid)
         if (stride != 1 or cin != cout):
             # Projection also with pre-activation according to paper.
             self.downsample = conv1x1(cin, cout, stride, bias=False)
@@ -458,8 +458,8 @@ class PreActBottleneck_CBAM(PreActBottleneck):
         # Unit's branch
         y = self.relu(self.gn1(self.conv1(x)))
         y = self.relu(self.gn2(self.conv2(y)))
-        y = self.gn3(self.conv3(y))
         y = self.cbam(y)
+        y = self.gn3(self.conv3(y))
         y = self.relu(residual + y)
         return y
 
@@ -514,19 +514,19 @@ class ResNetV2_ASPP_CBAM(ResNetV2):
 
             ))),
             ('block2', nn.Sequential(OrderedDict(
-                [('unit1', PreActBottleneck(cin=width * 4, cout=width * 8, cmid=width * 2, stride=2))] +
-                [(f'unit2', PreActBottleneck(cin=width * 8, cout=width * 8, cmid=width * 2))] +
-                [(f'unit3', PreActBottleneck(cin=width * 8, cout=width * 8, cmid=width * 2))] +
+                [('unit1', PreActBottleneck_CBAM(cin=width * 4, cout=width * 8, cmid=width * 2, stride=2))] +
+                [(f'unit2', PreActBottleneck_CBAM(cin=width * 8, cout=width * 8, cmid=width * 2))] +
+                [(f'unit3', PreActBottleneck_CBAM(cin=width * 8, cout=width * 8, cmid=width * 2))] +
                 [(f'unit4', PreActBottleneck_CBAM(cin=width * 8, cout=width * 8, cmid=width * 2))],
             ))),
             ('block3', nn.Sequential(OrderedDict(
-                [('unit1', PreActBottleneck(cin=width * 8, cout=width * 16, cmid=width * 4, stride=2))] +
-                [(f'unit2', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4))] +
-                [(f'unit3', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4))] +
-                [(f'unit4', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4))] +
-                [(f'unit5', PreActBottleneckCBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
-                [(f'unit6', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4))] +
-                [(f'unit7', PreActBottleneck(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [('unit1', PreActBottleneck_CBAM(cin=width * 8, cout=width * 16, cmid=width * 4, stride=2))] +
+                [(f'unit2', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit3', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit4', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit5', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit6', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
+                [(f'unit7', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
                 # [(f'unit8', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
                 [('ASPP_unit3', ASPP(in_channels=width * 16, out_channels=width * 16, atrous_rates=(6, 12, 18)))] +
                 [(f'unit9', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))],
