@@ -269,7 +269,7 @@ def compute_dice(label_folder,prediction_folder):
             # dice_val = dice_coefficient(label_img, prediction_img)
             dice_val=cal_dice(prediction_img,label_img,classes=classNum,background_id=0)
             dice_values1.append(dice_val)
-            dice_values2.append(dice_coefficient())
+            dice_values2.append(dice_coefficient(label_img, prediction_img))
 
     print(len(dice_values1))
     mean_dice_value = np.nanmean(dice_values1)
