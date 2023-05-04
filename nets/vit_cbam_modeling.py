@@ -286,7 +286,7 @@ class DecoderCup_CBAM(DecoderCup):
         #     zip(in_channels, out_channels, skip_channels)
         # ]
         self.blocks = nn.ModuleList(blocks)
-        self.cbam_aspp = ASPP_SE(head_channels, head_channels)
+        self.cbam_aspp = CBAM_ASPP(head_channels, head_channels)
 
     def forward(self, hidden_states, features=None):
         B, n_patch, hidden = hidden_states.size()  # reshape from (B, n_patch, hidden) to (B, h, w, hidden)
@@ -342,7 +342,28 @@ class DecoderCup_SE(DecoderCup):
         #     zip(in_channels, out_channels, skip_channels)
         # ]
         self.blocks = nn.ModuleList(blocks)
+        self.se_aspp = ASPP_SE(head_channels, head_channels)
 
+
+    def forward(self, hidden_states, features=None):
+        B, n_patch, hidden = hidden_states.size()  # reshape from (B, n_patch, hidden) to (B, h, w, hidden)
+        h, w = int(np.sqrt(n_patch)), int(np.sqrt(n_patch))
+        #####变矩阵###########3
+        # --------------------2,1024,768------2,512,32,32 if 512
+        # ------------------从transformer变成cnn
+        # ----------------------
+        x = hidden_states.permute(0, 2, 1)
+        x = x.contiguous().view(B, hidden, h, w)
+        x = self.conv_more(x)
+        x = self.se_aspp(x)
+        for i, decoder_block in enumerate(self.blocks):
+            if features is not None:
+                skip = features[i] if (i < self.config.n_skip) else None
+            else:
+                skip = None
+            x = decoder_block(x, skip=skip)
+
+        return x
 
 class Vit_CBAM(VisionTransformer):
     def __init__(self, config, img_size=256, num_classes=21843, zero_head=False, vis=False, cgm=True):
@@ -364,7 +385,7 @@ class Vit_CBAM(VisionTransformer):
 
     def forward(self, x):
         if x.size()[1] == 1:
-            x = x.repeat(1, 3, 1, 1) #
+            x = x.repeat(1, 3, 1, 1)
         x, attn_weights, features = self.transformer(x)  # (B, n_patch, hidden)
         x = self.decoder(x, features)
 
@@ -380,7 +401,7 @@ class Vit_CBAM_ASPP(VisionTransformer):
         self.zero_head = zero_head
         self.classifier = config.classifier
         self.transformer = Transformer(config, img_size, vis)
-        self.decoder = DecoderCup_CBAM(config)
+        self.decoder = DecoderCup_SE(config)
         self.segmentation_head = SegmentationHead(
             in_channels=config['decoder_channels'][-1],
             out_channels=config['n_classes'],
