@@ -423,7 +423,7 @@ class CBAM_ASPP(nn.Module):
         # print('feature:',feature_cat.shape)
         # 加入cbam注意力机制
         cbamaspp = self.cbam(feature_cat)
-        result1 = self.conv_cat(cbamaspp)
+        result = self.conv_cat(cbamaspp)
         return result
 
 
