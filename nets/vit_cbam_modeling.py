@@ -111,8 +111,8 @@ class Embeddings(nn.Module):
             self.hybrid = False
 
         if self.hybrid:
-            self.hybrid_model = ResNetV2_CBAM_ASPP_CBAM(block_units=config.resnet.num_layers,
-                                                   width_factor=config.resnet.width_factor)
+            self.hybrid_model = ResNetV2_ASPP_CBAM(block_units=config.resnet.num_layers,
+                                                        width_factor=config.resnet.width_factor)
             in_channels = self.hybrid_model.width * 16
         self.patch_embeddings = Conv2d(in_channels=in_channels,
                                        out_channels=config.hidden_size,
@@ -276,10 +276,10 @@ class DecoderCup_CBAM(DecoderCup):
 
         else:
             skip_channels = [0, 0, 0, 0]
-        blocks=[]
+        blocks = []
 
         for i in range(len(in_channels)):
-            blocks.append(DecoderBlock_CBAM(in_channels[i],out_channels[i],skip_channels[i]))
+            blocks.append(DecoderBlock_CBAM(in_channels[i], out_channels[i], skip_channels[i]))
 
         # blocks = [
         #     DecoderBlock_CBAM(in_ch, out_ch, sk_ch) for in_ch, out_ch, sk_ch in
@@ -341,5 +341,43 @@ class Vit_CBAM(VisionTransformer):
 
         # self.BinaryClassifier = ReducedBinaryClassifier(config.hidden_size, num_classes)
 
+    def forward(self, x):
+        if x.size()[1] == 1:
+            x = x.repeat(1, 3, 1, 1)
+        x, attn_weights, features = self.transformer(x)  # (B, n_patch, hidden)
+        x = self.decoder(x, features)
+
+        logits = self.segmentation_head(x)
+
+        return logits
 
 
+class Vit_CBAM_ASPP(VisionTransformer):
+    def __init__(self, config, img_size=256, num_classes=21843, zero_head=False, vis=False, cgm=True):
+        super().__init__(config, img_size, num_classes, zero_head, vis, )
+        self.num_classes = num_classes
+        self.zero_head = zero_head
+        self.classifier = config.classifier
+        self.transformer = Transformer(config, img_size, vis)
+        self.decoder = DecoderCup_CBAM(config)
+        self.segmentation_head = SegmentationHead(
+            in_channels=config['decoder_channels'][-1],
+            out_channels=config['n_classes'],
+            kernel_size=3,
+        )
+        self.config = config
+        self.if_cgm = cgm
+        self.cbam_aspp = CBAM_ASPP(config.hidden_size, config.hidden_size)
+
+        # self.BinaryClassifier = ReducedBinaryClassifier(config.hidden_size, num_classes)
+
+    def forward(self, x):
+        if x.size()[1] == 1:
+            x = x.repeat(1, 3, 1, 1)
+        x, attn_weights, features = self.transformer(x)  # (B, n_patch, hidden)
+        x = self.cbam_aspp(x)
+        x = self.decoder(x, features)
+
+        logits = self.segmentation_head(x)
+
+        return logits
