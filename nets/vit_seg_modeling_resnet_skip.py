@@ -541,9 +541,9 @@ class ResNetV2_ASPP_SE(ResNetV2):
         self.width = width
         self.body = nn.Sequential(OrderedDict([
             ('block1', nn.Sequential(OrderedDict(
-                [('unit1', PreActBottleneck(cin=width, cout=width * 4, cmid=width))] +
-                [(f'unit2', PreActBottleneck(cin=width * 4, cout=width * 4, cmid=width))] +
-                [(f'unit3', PreActBottleneck(cin=width * 4, cout=width * 4, cmid=width))]
+                [('unit1', PreActBottleneck_SE(cin=width, cout=width * 4, cmid=width))] +
+                [(f'unit2', PreActBottleneck_SE(cin=width * 4, cout=width * 4, cmid=width))] +
+                [(f'unit3', PreActBottleneck_SE(cin=width * 4, cout=width * 4, cmid=width))]
 
             ))),
             ('block2', nn.Sequential(OrderedDict(
