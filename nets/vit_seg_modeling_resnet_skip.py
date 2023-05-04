@@ -312,7 +312,7 @@ class CBAMLayer(nn.Module):
 
 
 class ASPP_SE(nn.Module):
-    def __init__(self, dim_in, dim_out, rate=1, bn_mom=0.1):
+    def __init__(self, dim_in, dim_out, atrous_rates=(6,12,18), bn_mom=0.1):
         super().__init__()
         self.branch1 = nn.Sequential(
             nn.Conv2d(dim_in, dim_out, 1, 1, padding=0, dilation=1, bias=True),
@@ -371,7 +371,7 @@ class ASPP_SE(nn.Module):
 
 
 class CBAM_ASPP(nn.Module):
-    def __init__(self, dim_in, dim_out, atrous_rates, bn_mom=0.1):
+    def __init__(self, dim_in, dim_out, atrous_rates=(6,12,18), bn_mom=0.1):
         super().__init__()
         self.branch1 = nn.Sequential(
             nn.Conv2d(dim_in, dim_out, 1, 1, padding=0, dilation=1, bias=True),
