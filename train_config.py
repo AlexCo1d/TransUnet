@@ -85,3 +85,9 @@ class Config:
 class Config_Cervical:
     inputs_size = [512, 512, 3]
     image_type = '.jpg'  # image is jpg or png
+
+
+class Config_Breast:
+    inputs_size = [512, 512, 3]
+    image_type = '.png'  # image is jpg or png
+    NUM_CLASSES = 3
