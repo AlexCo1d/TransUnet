@@ -80,3 +80,8 @@ class Config:
     # 2：混合
     # -----------------------#
     output_type = 2
+
+
+class Config_Cervical:
+    inputs_size = [512, 512, 3]
+    image_type = '.jpg'  # image is jpg or png
