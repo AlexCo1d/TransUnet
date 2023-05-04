@@ -111,7 +111,7 @@ class Embeddings(nn.Module):
             self.hybrid = False
 
         if self.hybrid:
-            self.hybrid_model = ResNetV2_ASPP_SE(block_units=config.resnet.num_layers,
+            self.hybrid_model = ResNetV2_ASPP_CBAM(block_units=config.resnet.num_layers,
                                                    width_factor=config.resnet.width_factor)
             in_channels = self.hybrid_model.width * 16
         self.patch_embeddings = Conv2d(in_channels=in_channels,
@@ -330,7 +330,7 @@ class Vit_CBAM(VisionTransformer):
         self.zero_head = zero_head
         self.classifier = config.classifier
         self.transformer = Transformer(config, img_size, vis)
-        self.decoder = DecoderCup_SE(config)
+        self.decoder = DecoderCup_CBAM(config)
         self.segmentation_head = SegmentationHead(
             in_channels=config['decoder_channels'][-1],
             out_channels=config['n_classes'],
