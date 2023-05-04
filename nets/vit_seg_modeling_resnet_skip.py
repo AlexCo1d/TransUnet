@@ -594,7 +594,7 @@ class ResNetV2_SE_ASPP_SE(ResNetV2):
                 [(f'unit6', PreActBottleneck_SE(cin=width * 16, cout=width * 16, cmid=width * 4))] +
                 [(f'unit7', PreActBottleneck_SE(cin=width * 16, cout=width * 16, cmid=width * 4))] +
                 # [(f'unit8', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
-                [('ASPP_unit3', SE_ASPP(in_channels=width * 16, out_channels=width * 16, atrous_rates=(6, 12, 18)))] +
+                [('ASPP_unit3', SE_ASPP(width * 16, width * 16, atrous_rates=(6, 12, 18)))] +
                 [(f'unit9', PreActBottleneck_SE(cin=width * 16, cout=width * 16, cmid=width * 4))],
             ))),
         ]))
@@ -627,7 +627,7 @@ class ResNetV2_CBAM_ASPP_CBAM(ResNetV2):
                 [(f'unit6', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
                 [(f'unit7', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
                 # [(f'unit8', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
-                [('ASPP_unit3', CBAM_ASPP(in_channels=width * 16, out_channels=width * 16, atrous_rates=(6, 12, 18)))] +
+                [('ASPP_unit3', CBAM_ASPP(width * 16, width * 16, atrous_rates=(6, 12, 18)))] +
                 [(f'unit9', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))],
             ))),
         ]))
