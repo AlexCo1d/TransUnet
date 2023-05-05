@@ -620,15 +620,18 @@ def preprocess():
         shutil.copy(os.path.join(image_path,image),os.path.join(output_image_path,image))
         shutil.copy(os.path.join(label_path, image), os.path.join(output_label_path, image))
 
-
-
-
-
+def test():
+    path=r'D:\learning\UNNC 科研\DeepLabV3Plus-Pytorch\best_deeplabv3plus_mobilenet_voc_os16.pth'
+    pw=torch.load(path,map_location=torch.device('cpu'))['model_state']
+    load_key, no_load_key, temp_dict = [], [], {}
+    for k, v in pw.items():
+        print(k)
 
 
 if __name__ == '__main__':
-    observe_model()
+    # observe_model()
     # main()
+    test()
     #txt()
     # count_pos()
     # ob_weight()
