@@ -1,6 +1,6 @@
 class Config:
-    inputs_size = [256, 256, 3]
-    image_type = '.png'  # image is jpg or png
+    inputs_size = [512, 512, 3]
+    image_type = '.jpg'  # image is jpg or png
     log_dir = "logs/"
     # ---------------------#
     #   分类个数+1
