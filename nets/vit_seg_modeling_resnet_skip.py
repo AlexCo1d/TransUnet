@@ -548,7 +548,7 @@ class ResNetV2_CBAM(ResNetV2):
                 [(f'unit6', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
                 [(f'unit7', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
                 [(f'unit8', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
-                # [('ASPP_unit3', ASPP(in_channels=width * 16, out_channels=width * 16, atrous_rates=(6, 12, 18)))] +
+                # [('ASPP_unit3', ASPP(width * 16, width * 16, atrous_rates=(6, 12, 18)))] +
                 [(f'unit9', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))]
 
             ))),

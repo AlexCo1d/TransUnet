@@ -279,7 +279,7 @@ class DecoderCup_CBAM(DecoderCup):
         blocks = []
 
         for i in range(len(in_channels)):
-            blocks.append(DecoderBlock_CBAM(in_channels[i], out_channels[i], skip_channels[i]))
+            blocks.append(DecoderBlock(in_channels[i], out_channels[i], skip_channels[i]))
 
         # blocks = [
         #     DecoderBlock_CBAM(in_ch, out_ch, sk_ch) for in_ch, out_ch, sk_ch in

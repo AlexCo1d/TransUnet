@@ -23,6 +23,7 @@ alpha=0.5
 
 config=Config()
 type=config.image_type
+
 def main():
     blend_raw_images(label_path,image_path,output_path,color_map,alpha)
 
