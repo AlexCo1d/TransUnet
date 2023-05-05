@@ -254,20 +254,17 @@ def compute_dice(label_folder,prediction_folder):
     for label_file, prediction_file in zip(label_list, prediction_list):
         label_path = os.path.join(label_folder, label_file)
         prediction_path = os.path.join(prediction_folder, prediction_file)
-
         label_img = np.array(Image.open(label_path))
+        assert len(np.unique(label_img))<3,"label wrong"
         prediction_img = np.array(Image.open(prediction_path))
-        prediction_img[prediction_img!=0]=1
+        #label_img[prediction_img!=0]=1
         # for i in range(colorDict_GRAY.shape[0]):
         #     label_img[label_img == colorDict_GRAY[i][0]] = i
         #     prediction_img[prediction_img == colorDict_GRAY[i][0]] = i
 
         # 如果需要，您可以在此处将图像值映射到类标签（例如，将像素值从0-255映射到0-4）
-        if len(np.unique(prediction_img))==1:
-            pass
-        else:
-            # dice_val = dice_coefficient(label_img, prediction_img)
-            dice_val=cal_dice(prediction_img,label_img,classes=classNum,background_id=0)
+        dice_val=cal_dice(prediction_img,label_img,classes=classNum,background_id=0)
+        if dice_val!=0:
             dice_values1.append(dice_val)
             dice_values2.append(dice_coefficient(label_img, prediction_img))
 
