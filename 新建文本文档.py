@@ -627,11 +627,11 @@ def preprocess():
 
 
 if __name__ == '__main__':
-    # observe_model()
+    observe_model()
     # main()
     #txt()
     # count_pos()
-    ob_weight()
+    # ob_weight()
     # preprocess()
 
 

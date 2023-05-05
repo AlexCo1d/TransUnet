@@ -163,7 +163,7 @@ class ResNetV2(nn.Module):
                 feat = x
             features.append(feat)
         x = self.body[-1](x)
-
+        # print('features:',len(features))
         return x, features[::-1]
 
 
