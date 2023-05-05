@@ -111,7 +111,7 @@ class Embeddings(nn.Module):
             self.hybrid = False
 
         if self.hybrid:
-            self.hybrid_model = ResNetV2_CBAM_ASPP_CBAM(block_units=config.resnet.num_layers,
+            self.hybrid_model = ResNetV2_CBAM(block_units=config.resnet.num_layers,
                                                    width_factor=config.resnet.width_factor)
             in_channels = self.hybrid_model.width * 16
         self.patch_embeddings = Conv2d(in_channels=in_channels,
@@ -286,7 +286,7 @@ class DecoderCup_CBAM(DecoderCup):
         #     zip(in_channels, out_channels, skip_channels)
         # ]
         self.blocks = nn.ModuleList(blocks)
-        # self.cbam_aspp = CBAM_ASPP(head_channels, head_channels)
+        self.cbam_aspp = CBAM_ASPP(head_channels, head_channels)
 
     def forward(self, hidden_states, features=None):
         B, n_patch, hidden = hidden_states.size()  # reshape from (B, n_patch, hidden) to (B, h, w, hidden)
@@ -298,7 +298,7 @@ class DecoderCup_CBAM(DecoderCup):
         x = hidden_states.permute(0, 2, 1)
         x = x.contiguous().view(B, hidden, h, w)
         x = self.conv_more(x)
-        # x = self.cbam_aspp(x)
+        x = self.cbam_aspp(x)
         for i, decoder_block in enumerate(self.blocks):
             if features is not None:
                 skip = features[i] if (i < self.config.n_skip) else None
