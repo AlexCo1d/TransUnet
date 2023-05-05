@@ -622,10 +622,18 @@ def preprocess():
 
 def test():
     path=r'D:\learning\UNNC 科研\DeepLabV3Plus-Pytorch\best_deeplabv3plus_mobilenet_voc_os16.pth'
-    pw=torch.load(path,map_location=torch.device('cpu'))['model_state']
+    pw=torch.load(path,map_location=torch.device('cpu'))
     load_key, no_load_key, temp_dict = [], [], {}
-    for k, v in pw.items():
+    for k, v in pw['model_state'].items():
+        if not k.startswith('classifier'):
+            temp_dict[k]=v
+    pw['model_state']=temp_dict
+
+    for k, v in pw['model_state'].items():
         print(k)
+
+
+    pass
 
 
 if __name__ == '__main__':

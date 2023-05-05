@@ -639,6 +639,7 @@ class ResNetV2_CBAM_ASPP_CBAM(ResNetV2):
                 [(f'unit3', PreActBottleneck_CBAM(cin=width * 8, cout=width * 8, cmid=width * 2))] +
                 [(f'unit4', PreActBottleneck_CBAM(cin=width * 8, cout=width * 8, cmid=width * 2))],
             ))),
+            ('aspp_cbam', CBAM_ASPP(width * 8, width * 8)),
             ('block3', nn.Sequential(OrderedDict(
                 [('unit1', PreActBottleneck_CBAM(cin=width * 8, cout=width * 16, cmid=width * 4, stride=2))] +
                 [(f'unit2', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
@@ -649,7 +650,6 @@ class ResNetV2_CBAM_ASPP_CBAM(ResNetV2):
                 [(f'unit7', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
                 [(f'unit8', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
                 # [('ASPP_unit3', CBAM_ASPP(width * 16, width * 16, atrous_rates=(6, 12, 18)))] +
-                [(f'unit9', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
-                [('aspp_cbam', CBAM_ASPP(width * 16, width * 16))],
+                [(f'unit9', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))],
             ))),
         ]))
