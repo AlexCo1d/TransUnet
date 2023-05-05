@@ -201,7 +201,7 @@ class ASPP(nn.Module):
         )
         # print('dim_in:',dim_in)
         # print('dim_out:',dim_out)
-        self.cbam = CBAMLayer(channel=dim_out * 5)
+        # self.cbam = CBAMLayer(channel=dim_out * 5)
 
     def forward(self, x):
         [b, c, row, col] = x.size()
@@ -219,7 +219,7 @@ class ASPP(nn.Module):
         feature_cat = torch.cat([conv1x1, conv3x3_1, conv3x3_2, conv3x3_3, global_feature], dim=1)
         # print('feature:',feature_cat.shape)
         # 加入cbam注意力机制
-        result = self.conv_cat(cbamaspp)
+        result = self.conv_cat(feature_cat)
         return result
 
 
