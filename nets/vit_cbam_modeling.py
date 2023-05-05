@@ -342,7 +342,7 @@ class DecoderCup_SE(DecoderCup):
         #     zip(in_channels, out_channels, skip_channels)
         # ]
         self.blocks = nn.ModuleList(blocks)
-        self.se_aspp = ASPP_SE(head_channels, head_channels)
+        self.aspp = ASPP(head_channels, head_channels)
 
 
     def forward(self, hidden_states, features=None):
@@ -355,7 +355,7 @@ class DecoderCup_SE(DecoderCup):
         x = hidden_states.permute(0, 2, 1)
         x = x.contiguous().view(B, hidden, h, w)
         x = self.conv_more(x)
-        x = self.se_aspp(x)
+        x = self.aspp(x)
         for i, decoder_block in enumerate(self.blocks):
             if features is not None:
                 skip = features[i] if (i < self.config.n_skip) else None

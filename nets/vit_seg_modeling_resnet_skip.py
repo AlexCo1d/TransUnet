@@ -168,40 +168,59 @@ class ResNetV2(nn.Module):
 
 
 class ASPP(nn.Module):
-    def __init__(self, in_channels, atrous_rates, out_channels=256):
-        super(ASPP, self).__init__()
-        # global average pooling : init nn.AdaptiveAvgPool2d ;also forward torch.mean(,,keep_dim=True)
-        self.mean = nn.AdaptiveAvgPool2d((1, 1))
-        self.conv = nn.Conv2d(in_channels, out_channels, 1, 1)
-        # k=1 s=1 no pad
-        self.atrous_block1 = nn.Conv2d(in_channels, out_channels, 1, 1)
-        self.atrous_block6 = nn.Conv2d(in_channels, out_channels, 3, 1, padding=atrous_rates[0],
-                                       dilation=atrous_rates[0])
-        self.atrous_block12 = nn.Conv2d(in_channels, out_channels, 3, 1, padding=atrous_rates[1],
-                                        dilation=atrous_rates[1])
-        self.atrous_block18 = nn.Conv2d(in_channels, out_channels, 3, 1, padding=atrous_rates[2],
-                                        dilation=atrous_rates[2])
+    def __init__(self, dim_in, dim_out, atrous_rates=(6, 12, 18), bn_mom=0.1):
+        super().__init__()
+        self.branch1 = nn.Sequential(
+            nn.Conv2d(dim_in, dim_out, 1, 1, padding=0, dilation=1, bias=True),
+            nn.BatchNorm2d(dim_out, momentum=bn_mom),
+            nn.ReLU(inplace=True),
+        )
+        self.branch2 = nn.Sequential(
+            nn.Conv2d(dim_in, dim_out, 3, 1, padding=atrous_rates[0], dilation=atrous_rates[0], bias=True),
+            nn.BatchNorm2d(dim_out, momentum=bn_mom),
+            nn.ReLU(inplace=True),
+        )
+        self.branch3 = nn.Sequential(
+            nn.Conv2d(dim_in, dim_out, 3, 1, padding=atrous_rates[1], dilation=atrous_rates[1], bias=True),
+            nn.BatchNorm2d(dim_out, momentum=bn_mom),
+            nn.ReLU(inplace=True),
+        )
+        self.branch4 = nn.Sequential(
+            nn.Conv2d(dim_in, dim_out, 3, 1, padding=atrous_rates[2], dilation=atrous_rates[2], bias=True),
+            nn.BatchNorm2d(dim_out, momentum=bn_mom),
+            nn.ReLU(inplace=True),
+        )
+        self.branch5_conv = nn.Conv2d(dim_in, dim_out, 1, 1, 0, bias=True)
+        self.branch5_bn = nn.BatchNorm2d(dim_out, momentum=bn_mom)
+        self.branch5_relu = nn.ReLU(inplace=True)
 
-        self.conv_1x1_output = nn.Conv2d(out_channels * 5, out_channels, 1, 1)
+        self.conv_cat = nn.Sequential(
+            nn.Conv2d(dim_out * 5, dim_out, 1, 1, padding=0, bias=True),
+            nn.BatchNorm2d(dim_out, momentum=bn_mom),
+            nn.ReLU(inplace=True),
+        )
+        # print('dim_in:',dim_in)
+        # print('dim_out:',dim_out)
+        self.cbam = CBAMLayer(channel=dim_out * 5)
 
     def forward(self, x):
-        size = x.shape[2:]
+        [b, c, row, col] = x.size()
+        conv1x1 = self.branch1(x)
+        conv3x3_1 = self.branch2(x)
+        conv3x3_2 = self.branch3(x)
+        conv3x3_3 = self.branch4(x)
+        global_feature = torch.mean(x, 2, True)
+        global_feature = torch.mean(global_feature, 3, True)
+        global_feature = self.branch5_conv(global_feature)
+        global_feature = self.branch5_bn(global_feature)
+        global_feature = self.branch5_relu(global_feature)
+        global_feature = F.interpolate(global_feature, (row, col), None, 'bilinear', True)
 
-        image_features = self.mean(x)
-        image_features = self.conv(image_features)
-        image_features = F.interpolate(input=image_features, size=size, mode='bilinear',align_corners=True)
-
-        atrous_block1 = self.atrous_block1(x)
-
-        atrous_block6 = self.atrous_block6(x)
-
-        atrous_block12 = self.atrous_block12(x)
-
-        atrous_block18 = self.atrous_block18(x)
-
-        net = self.conv_1x1_output(torch.cat([image_features, atrous_block1, atrous_block6,
-                                              atrous_block12, atrous_block18], dim=1))
-        return net
+        feature_cat = torch.cat([conv1x1, conv3x3_1, conv3x3_2, conv3x3_3, global_feature], dim=1)
+        # print('feature:',feature_cat.shape)
+        # 加入cbam注意力机制
+        result = self.conv_cat(cbamaspp)
+        return result
 
 
 class ResNetV2_ASPP(ResNetV2):
