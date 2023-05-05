@@ -279,7 +279,7 @@ class DecoderCup_CBAM(DecoderCup):
         blocks = []
 
         for i in range(len(in_channels)):
-            blocks.append(DecoderBlock(in_channels[i], out_channels[i], skip_channels[i]))
+            blocks.append(DecoderBlock_CBAM(in_channels[i], out_channels[i], skip_channels[i]))
 
         # blocks = [
         #     DecoderBlock_CBAM(in_ch, out_ch, sk_ch) for in_ch, out_ch, sk_ch in
@@ -401,7 +401,7 @@ class Vit_CBAM_ASPP(VisionTransformer):
         self.zero_head = zero_head
         self.classifier = config.classifier
         self.transformer = Transformer(config, img_size, vis)
-        self.decoder = DecoderCup_CBAM(config)
+        self.decoder = DecoderCup(config)
         self.segmentation_head = SegmentationHead(
             in_channels=config['decoder_channels'][-1],
             out_channels=config['n_classes'],
