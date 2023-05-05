@@ -650,6 +650,6 @@ class ResNetV2_CBAM_ASPP_CBAM(ResNetV2):
                 [(f'unit8', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
                 # [('ASPP_unit3', CBAM_ASPP(width * 16, width * 16, atrous_rates=(6, 12, 18)))] +
                 [(f'unit9', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
-                [('ASPP_CBAM', CBAM_ASPP(width * 16, width * 16))],
+                [('aspp_cbam', CBAM_ASPP(width * 16, width * 16))],
             ))),
         ]))

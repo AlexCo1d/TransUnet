@@ -553,7 +553,7 @@ def ob_weight():
     # 使用这个函数遍历模型的所有子模块
     # print_requires_grad(model)
     print('second check')
-    traverse_unfreeze_block(model,["cbam", "decoder", 'ASPP_unit3', 'segmentation_head'] )
+    traverse_unfreeze_block(model,["cbam", "decoder", 'ASPP_unit3', 'segmentation_head', 'aspp_cbam'] )
     # for param in model.parameters():
     #     param.requires_grad = True
     # print_requires_grad(model)
@@ -631,7 +631,7 @@ if __name__ == '__main__':
     # main()
     #txt()
     # count_pos()
-    # ob_weight()
+    ob_weight()
     # preprocess()
 
 
