@@ -1,6 +1,6 @@
-class BaseConfig:
-    inputs_size = [512, 512, 3]
-    image_type = '.jpg'  # image is jpg or png
+class Config:
+    inputs_size = [256, 256, 3]
+    image_type = '.png'  # image is jpg or png
     log_dir = "logs/"
     # ---------------------#
     #   分类个数+1
@@ -81,12 +81,12 @@ class BaseConfig:
     output_type = 2
 
 
-class Config(BaseConfig):
+class Config1(Config):
     inputs_size = [512, 512, 3]
     image_type = '.jpg'  # image is jpg or png
 
 
-class Config_Breast(BaseConfig):
+class Config_Breast(Config):
     inputs_size = [512, 512, 3]
     image_type = '.png'  # image is jpg or png
     NUM_CLASSES = 3
