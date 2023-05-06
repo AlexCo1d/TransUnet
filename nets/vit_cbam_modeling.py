@@ -207,13 +207,14 @@ class DecoderBlock_CBAM(nn.Module):
         self.cbam = CBAMLayer(out_channels)
 
     def forward(self, x, skip=None):
+        print('in', x.size())
         if skip is not None:
             x = torch.cat([x, skip], dim=1)
         x = self.up(x)
-        # print(x.size())
         x = self.conv1(x)
         x = self.conv2(x)
         x = self.cbam(x)
+        print(x.size())
         return x
 
 
@@ -280,7 +281,7 @@ class DecoderCup_CBAM(DecoderCup):
             skip_channels = [0, 0, 0, 0]
         blocks = []
 
-        for i in range(len(in_channels)):
+        for i in range(self.config.n_skip):
             blocks.append(DecoderBlock_CBAM(in_channels[i], out_channels[i], skip_channels[i]))
 
         # blocks = [
@@ -362,7 +363,6 @@ class DecoderCup_SE(DecoderCup):
         x = self.conv_more(x)
         x = self.aspp(x)
         for i, decoder_block in enumerate(self.blocks):
-            print(i)
             if features is not None:
                 skip = features[i] if (i < self.config.n_skip) else None
             else:
@@ -409,12 +409,11 @@ class Vit_CBAM_ASPP(VisionTransformer):
         self.transformer = Transformer(config, img_size, vis)
         self.decoder = DecoderCup_CBAM(config)
         self.segmentation_head = SegmentationHead(
-            in_channels=config['decoder_channels'][-1],
+            in_channels=config['decoder_channels'][config.n_skip-1],
             out_channels=config['n_classes'],
             kernel_size=3,
         )
         self.config = config
-        self.if_cgm = cgm
 
         # self.BinaryClassifier = ReducedBinaryClassifier(config.hidden_size, num_classes)
 
