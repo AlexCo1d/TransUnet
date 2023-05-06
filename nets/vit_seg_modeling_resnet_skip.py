@@ -616,7 +616,7 @@ class ResNetV2_SE_ASPP_SE(ResNetV2):
                 [(f'unit6', PreActBottleneck_SE(cin=width * 16, cout=width * 16, cmid=width * 4))] +
                 [(f'unit7', PreActBottleneck_SE(cin=width * 16, cout=width * 16, cmid=width * 4))] +
                 # [(f'unit8', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
-                [('ASPP_unit3', SE_ASPP(width * 16, width * 16, atrous_rates=(6, 12, 18)))] +
+                [('ASPP_unit3', ASPP_SE(width * 16, width * 16, atrous_rates=(6, 12, 18)))] +
                 [(f'unit9', PreActBottleneck_SE(cin=width * 16, cout=width * 16, cmid=width * 4))],
             ))),
         ]))

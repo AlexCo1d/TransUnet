@@ -69,7 +69,7 @@ class BaseConfig:
     Init_Epoch = 0
     Interval_Epoch = 150
     # 设置冻结的epoch
-    Freeze_Epoch = 40
+    Freeze_Epoch = 30
     Freeze_Batch_Size = 2
 
     # ----------------------#

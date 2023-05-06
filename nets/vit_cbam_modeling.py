@@ -207,14 +207,13 @@ class DecoderBlock_CBAM(nn.Module):
         self.cbam = CBAMLayer(out_channels)
 
     def forward(self, x, skip=None):
-        print('in', x.size())
+        # print('in', x.size())
         if skip is not None:
             x = torch.cat([x, skip], dim=1)
         x = self.up(x)
         x = self.conv1(x)
         x = self.conv2(x)
         x = self.cbam(x)
-        print(x.size())
         return x
 
 
@@ -275,7 +274,7 @@ class DecoderCup_CBAM(DecoderCup):
             skip_channels = self.config.skip_channels
             skip_channels[self.config.n_skip:]=[0]*len(skip_channels[self.config.n_skip:])
             # for i in range(4 - self.config.n_skip):  # re-select the skip channels according to n_skip
-            #     skip_channels[4 - i] = 0 # skip_channels[3 - i] = 0
+            #     skip_channels[3 - i] = 0
 
         else:
             skip_channels = [0, 0, 0, 0]
