@@ -163,6 +163,7 @@ class ResNetV2(nn.Module):
                 feat = x
             features.append(feat)
         x = self.body[-1](x)
+        features.append(x)
         # print('features:',len(features))
         return x, features[::-1]
 
@@ -639,7 +640,6 @@ class ResNetV2_CBAM_ASPP_CBAM(ResNetV2):
                 [(f'unit3', PreActBottleneck_CBAM(cin=width * 8, cout=width * 8, cmid=width * 2))] +
                 [(f'unit4', PreActBottleneck_CBAM(cin=width * 8, cout=width * 8, cmid=width * 2))],
             ))),
-            ('aspp_cbam', CBAM_ASPP(width * 8, width * 8)),
             ('block3', nn.Sequential(OrderedDict(
                 [('unit1', PreActBottleneck_CBAM(cin=width * 8, cout=width * 16, cmid=width * 4, stride=2))] +
                 [(f'unit2', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +

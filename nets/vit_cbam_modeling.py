@@ -207,9 +207,10 @@ class DecoderBlock_CBAM(nn.Module):
         self.cbam = CBAMLayer(out_channels)
 
     def forward(self, x, skip=None):
-        x = self.up(x)
         if skip is not None:
             x = torch.cat([x, skip], dim=1)
+        x = self.up(x)
+        # print(x.size())
         x = self.conv1(x)
         x = self.conv2(x)
         x = self.cbam(x)
@@ -257,7 +258,7 @@ class DecoderCup_CBAM(DecoderCup):
     def __init__(self, config):
         super().__init__(config)
         self.config = config
-        head_channels = 512
+        head_channels = config.skip_channels[0] # 512
         self.conv_more = Conv2dReLU(
             config.hidden_size,
             head_channels,
@@ -271,8 +272,9 @@ class DecoderCup_CBAM(DecoderCup):
 
         if self.config.n_skip != 0:
             skip_channels = self.config.skip_channels
-            for i in range(4 - self.config.n_skip):  # re-select the skip channels according to n_skip
-                skip_channels[3 - i] = 0
+            skip_channels[self.config.n_skip:]=[0]*len(skip_channels[self.config.n_skip:])
+            # for i in range(4 - self.config.n_skip):  # re-select the skip channels according to n_skip
+            #     skip_channels[4 - i] = 0 # skip_channels[3 - i] = 0
 
         else:
             skip_channels = [0, 0, 0, 0]
@@ -286,9 +288,11 @@ class DecoderCup_CBAM(DecoderCup):
         #     zip(in_channels, out_channels, skip_channels)
         # ]
         self.blocks = nn.ModuleList(blocks)
-        # self.cbam_aspp = CBAM_ASPP(head_channels, head_channels)
+        self.cbam_aspp = CBAM_ASPP(head_channels, head_channels)
 
     def forward(self, hidden_states, features=None):
+        # for f in range(len(features)):
+        #     print(features[f].size())
         B, n_patch, hidden = hidden_states.size()  # reshape from (B, n_patch, hidden) to (B, h, w, hidden)
         h, w = int(np.sqrt(n_patch)), int(np.sqrt(n_patch))
         #####变矩阵###########3
@@ -298,7 +302,8 @@ class DecoderCup_CBAM(DecoderCup):
         x = hidden_states.permute(0, 2, 1)
         x = x.contiguous().view(B, hidden, h, w)
         x = self.conv_more(x)
-        # x = self.cbam_aspp(x)
+        x = self.cbam_aspp(x)
+
         for i, decoder_block in enumerate(self.blocks):
             if features is not None:
                 skip = features[i] if (i < self.config.n_skip) else None
@@ -357,6 +362,7 @@ class DecoderCup_SE(DecoderCup):
         x = self.conv_more(x)
         x = self.aspp(x)
         for i, decoder_block in enumerate(self.blocks):
+            print(i)
             if features is not None:
                 skip = features[i] if (i < self.config.n_skip) else None
             else:
@@ -401,7 +407,7 @@ class Vit_CBAM_ASPP(VisionTransformer):
         self.zero_head = zero_head
         self.classifier = config.classifier
         self.transformer = Transformer(config, img_size, vis)
-        self.decoder = DecoderCup(config)
+        self.decoder = DecoderCup_CBAM(config)
         self.segmentation_head = SegmentationHead(
             in_channels=config['decoder_channels'][-1],
             out_channels=config['n_classes'],
