@@ -178,7 +178,7 @@ class unetDataset(Dataset):
             shuffle(self.train_lines)
 
         annotation_line = self.train_lines[index]
-        name = annotation_line.split()[0]
+        name = annotation_line.replace('\n','')
         # 从文件中读取图像
         jpg = Image.open(r"./VOCdevkit/VOC2007/JPEGImages" + '/' + name + config.image_type).convert('RGB')
         png = Image.open(r"./VOCdevkit/VOC2007/SegmentationClass" + '/' + name + ".png").convert('L')

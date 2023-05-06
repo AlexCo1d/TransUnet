@@ -1,12 +1,12 @@
 class Config:
-    inputs_size = [256, 256, 3]
+    inputs_size = [512, 512, 3]
     image_type = '.png'  # image is jpg or png
     log_dir = "logs/"
     # ---------------------#
     #   分类个数+1
     #   2+1
     # ---------------------#
-    NUM_CLASSES = 2
+    NUM_CLASSES = 3
     # --------------------------------------------------------------------#
     #   建议选项：
     #   种类少（几类）时，设置为True
@@ -67,9 +67,9 @@ class Config:
     # ----------------------#
     save_dir = 'logs'
     Init_Epoch = 0
-    Interval_Epoch = 150
+    Interval_Epoch = 200
     # 设置冻结的epoch
-    Freeze_Epoch = 30
+    Freeze_Epoch = 40
     Freeze_Batch_Size = 2
 
     # ----------------------#
