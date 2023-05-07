@@ -365,8 +365,7 @@ class DecoderCup(nn.Module):
 
         if self.config.n_skip-1 != 0:
             skip_channels = self.config.skip_channels[1:]
-            for i in range(5 - self.config.n_skip):  # re-select the skip channels according to n_skip
-                skip_channels[3 - i] = 0
+            skip_channels[3 ] = 0
 
         else:
             skip_channels = [0, 0, 0, 0]
