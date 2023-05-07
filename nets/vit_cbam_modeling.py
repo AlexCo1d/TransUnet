@@ -153,7 +153,7 @@ class Embeddings_CBAM(Embeddings):
     def __init__(self, config, img_size, in_channels=3):
         super().__init__(config, img_size, in_channels)
 
-        self.hybrid_model = ResNetV2_CBAM(block_units=config.resnet.num_layers,
+        self.hybrid_model = ResNetV2_CBAM_4skip(block_units=config.resnet.num_layers,
                                           width_factor=config.resnet.width_factor)
 
 
@@ -209,15 +209,14 @@ class DecoderBlock_CBAM(DecoderBlock):
         self.cbam = CBAMLayer(out_channels)
 
     def forward(self, x, skip=None):
-        # print('in', x.size())‘
-        x = self.up(x)
+        print('in', x.size())
+        # x = self.up(x)
         if skip is not None:
             x = torch.cat([x, skip], dim=1)
-
         x = self.conv1(x)
         x = self.conv2(x)
         x = self.cbam(x)
-        # x = self.up(x)
+        x = self.up(x)
         return x
 
 
@@ -288,7 +287,7 @@ class DecoderCup_3skip(nn.Module):
         x = self.conv_more(x)
         for i, decoder_block in enumerate(self.blocks):
             if features is not None:
-                skip = features[i] if (i < self.config.n_skip - 1) else None
+                skip = features[i] if (i < self.config.n_skip - 2) else None
             else:
                 skip = None
             x = decoder_block(x, skip=skip)
@@ -298,7 +297,7 @@ class DecoderCup_3skip(nn.Module):
 
 class DecoderCup_4skip(nn.Module):
     def __init__(self, config):
-        super().__init__(config)
+        super().__init__()
         self.config = config
         head_channels = config.skip_channels[0]  # 512
         self.conv_more = Conv2dReLU(
@@ -314,7 +313,7 @@ class DecoderCup_4skip(nn.Module):
 
         if self.config.n_skip != 0:
             skip_channels = self.config.skip_channels
-            skip_channels[self.config.n_skip:] = [0] * len(skip_channels[self.config.n_skip:])
+            # skip_channels[self.config.n_skip:] = [0] * len(skip_channels[self.config.n_skip:])
             # for i in range(4 - self.config.n_skip):  # re-select the skip channels according to n_skip
             #     skip_channels[3 - i] = 0
 
@@ -342,18 +341,17 @@ class DecoderCup_4skip_CBAM_ASPP_CBAM(DecoderCup_4skip):
         out_channels = decoder_channels
 
         if self.config.n_skip != 0:
-            skip_channels = self.config.skip_channels
-            skip_channels[self.config.n_skip:] = [0] * len(skip_channels[self.config.n_skip:])
+            self.skip_channels = self.config.skip_channels
+            # skip_channels[self.config.n_skip:] = [0] * len(skip_channels[self.config.n_skip:])
             # for i in range(4 - self.config.n_skip):  # re-select the skip channels according to n_skip
             #     skip_channels[3 - i] = 0
 
         else:
-            skip_channels = [0, 0, 0, 0]
-
+            self.skip_channels = [0, 0, 0, 0]
         blocks = []
 
         for i in range(self.config.n_skip):
-            blocks.append(DecoderBlock_CBAM(in_channels[i], out_channels[i], skip_channels[i]))
+            blocks.append(DecoderBlock_CBAM(in_channels[i], out_channels[i], self.skip_channels[i]))
 
         # blocks = [
         #     DecoderBlock_CBAM(in_ch, out_ch, sk_ch) for in_ch, out_ch, sk_ch in
@@ -403,16 +401,15 @@ class DecoderCup_4skip_ASPP_CBAM(DecoderCup_4skip):
         out_channels = decoder_channels
 
         if self.config.n_skip != 0:
-            skip_channels = self.config.skip_channels
+            self.skip_channels = self.config.skip_channels
             for i in range(4 - self.config.n_skip):  # re-select the skip channels according to n_skip
-                skip_channels[3 - i] = 0
-
+                self.skip_channels[3 - i] = 0
         else:
-            skip_channels = [0, 0, 0, 0]
+            self.skip_channels = [0, 0, 0, 0]
         blocks = []
 
         for i in range(len(in_channels)):
-            blocks.append(DecoderBlock_SE(in_channels[i], out_channels[i], skip_channels[i]))
+            blocks.append(DecoderBlock_SE(in_channels[i], out_channels[i], self.skip_channels[i]))
 
         # blocks = [
         #     DecoderBlock_CBAM(in_ch, out_ch, sk_ch) for in_ch, out_ch, sk_ch in
@@ -522,7 +519,7 @@ class Vit_CBAM_ASPP(VisionTransformer):
         self.transformer = Transformer_CBAM(config, img_size, vis)
         self.decoder = DecoderCup_4skip_CBAM_ASPP_CBAM(config)
         self.segmentation_head = SegmentationHead(
-            in_channels=config['decoder_channels'][config.n_skip - 1],
+            in_channels=config['decoder_channels'][config.n_skip-1],
             out_channels=config['n_classes'],
             kernel_size=3,
         )
@@ -550,7 +547,7 @@ class Vit_CBAM_3skip(VisionTransformer):
         self.transformer = Transformer_CBAM(config, img_size, vis)
         self.decoder = DecoderCup_3skip_CBAM_ASPP_CBAM(config)
         self.segmentation_head = SegmentationHead(
-            in_channels=config['decoder_channels'][config.n_skip - 1],
+            in_channels=config['decoder_channels'][config.n_skip-1],
             out_channels=config['n_classes'],
             kernel_size=3,
         )

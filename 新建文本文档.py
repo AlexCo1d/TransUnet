@@ -486,7 +486,7 @@ def label_to_onehot(label_image, num_classes):
 def observe_model():
     from nets.Net import get_Net
 
-    model = get_Net(n_classes=3, img_size=256)
+    model = get_Net(n_classes=2, img_size=256)
     # model=UNet_3Plus_DeepSup_CGM()
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model.to(device)

@@ -330,7 +330,7 @@ class DecoderBlock(nn.Module):
         self.up = interpolate(scale_factor=2, mode='bilinear',align_corners=True)
 
     def forward(self, x, skip=None):
-        # print(x.size(),skip.size())
+        print(x.size(),skip.size())
         x = self.up(x)
         if skip is not None:
             x = torch.cat([x, skip], dim=1)
@@ -366,10 +366,8 @@ class DecoderCup(nn.Module):
         out_channels = decoder_channels
 
         if self.config.n_skip-1 != 0:
-            skip_channels = self.config.skip_channels[1:]
-            for i in range(5 - self.config.n_skip):  # re-select the skip channels according to n_skip
-                skip_channels[3 - i] = 0
-
+            skip_channels = self.config.skip_channels
+            # skip_channels[-1] = 0
         else:
             skip_channels = [0, 0, 0, 0]
 
@@ -400,7 +398,7 @@ class DecoderCup(nn.Module):
 
 class VisionTransformer(nn.Module):
     def __init__(self, config, img_size=256, num_classes=21843, zero_head=False, vis=False):
-        super(VisionTransformer, self).__init__()
+        super().__init__()
         self.num_classes = num_classes
         self.zero_head = zero_head
         self.classifier = config.classifier
