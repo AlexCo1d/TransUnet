@@ -1,5 +1,5 @@
-class Config:
-    inputs_size = [512, 512, 3]
+class BaseConfig:
+    inputs_size = [256, 256, 3]
     image_type = '.png'  # image is jpg or png
     log_dir = "logs/"
     # ---------------------#
@@ -60,17 +60,19 @@ class Config:
     model_path = './model_data/pretrained_weight.pth'
     # no_load_dict,加载预训练时不加载解码器部分
     no_load_dict = ['decoder', 'segmentation_head']
-    frozen_modules = ["cbam", "decoder", 'ASPP_unit1', 'ASPP_unit2', 'ASPP_unit3', 'segmentation_head', 'se', 'aspp_cbam',]  # removed: 'cls','ASPP_unit1', 'ASPP_unit2' 'aspp'
+    frozen_modules = ["cbam", "decoder", 'ASPP_unit1', 'ASPP_unit2', 'ASPP_unit3', 'segmentation_head', 'se',
+                      'aspp_cbam', ]  # removed: 'cls','ASPP_unit1', 'ASPP_unit2' 'aspp'
 
     # ----------------------#
     #   记录Loss
     # ----------------------#
     save_dir = 'logs'
     Init_Epoch = 0
-    Interval_Epoch = 200
+    Interval_Epoch = 300
     # 设置冻结的epoch
     Freeze_Epoch = 40
     Freeze_Batch_Size = 2
+    epoch_batch = [150, 1]
 
     # ----------------------#
     # 输出图像的形式
@@ -81,12 +83,19 @@ class Config:
     output_type = 2
 
 
-class Config1(Config):
+class Config_Cervical(BaseConfig):
     inputs_size = [512, 512, 3]
     image_type = '.jpg'  # image is jpg or png
 
 
-class Config_Breast(Config):
+class Config_Breast(BaseConfig):
     inputs_size = [512, 512, 3]
     image_type = '.png'  # image is jpg or png
     NUM_CLASSES = 3
+
+class Config_DDTI(BaseConfig):
+    inputs_size = [256, 256, 3]
+    image_type = '.png'  # image is jpg or png
+
+
+config = Config_Breast()

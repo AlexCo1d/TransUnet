@@ -11,7 +11,7 @@ import os
 
 from PIL import Image
 
-from train_config import Config
+from train_config import config
 
 """ 
 混淆矩阵
@@ -132,7 +132,6 @@ def dice(confusionMatrix):
     dice = np.nanmean(dice)
     return dice
 
-config= Config()
 #################################################################
 #  标签图像文件夹
 LabelPath = r"miou_pr_dir copy"

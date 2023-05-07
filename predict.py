@@ -10,7 +10,7 @@ import torch.nn.functional as F
 import numpy as np
 import torch
 
-from train_config import Config
+from train_config import config
 
 txt_path = "./VOCdevkit/VOC2007/ImageSets/Segmentation/val.txt"
 image_path='./VOCdevkit/VOC2007/JPEGImages'
@@ -39,7 +39,6 @@ label_path='./VOCdevkit/VOC2007/SegmentationClass'
 #
 #         return image
 
-config = Config()
 type=config.image_type
 def show_image():
     from unet import uNet

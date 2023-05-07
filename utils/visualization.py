@@ -8,7 +8,7 @@ import numpy as np
 #------------------
 from PIL import Image
 
-from train_config import Config
+from train_config import config
 
 txt_path="./VOCdevkit/VOC2007/ImageSets/Segmentation/val.txt"
 image_path='./VOCdevkit/VOC2007/JPEGImages'
@@ -21,7 +21,6 @@ color_map = [(0, 0, 0), (0, 255, 0), (255, 0, 0), (128, 128, 0), (128, 0, 128), 
                (0, 64, 128), (128, 64, 12)]
 alpha=0.5
 
-config=Config()
 type=config.image_type
 
 def main():

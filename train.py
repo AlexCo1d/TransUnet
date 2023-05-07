@@ -10,7 +10,7 @@ from torch.autograd import Variable
 from torch.nn import CrossEntropyLoss
 from tqdm import tqdm
 
-from train_config import *
+from train_config import config
 from nets.TransUnet import get_transNet
 from torch.utils.data import DataLoader
 from dataloader import unetDataset, unet_dataset_collate
@@ -65,7 +65,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
     for iteration, batch in enumerate(gen):
         if iteration >= epoch_size:
             break
-        imgs, pngs, labels= batch
+        imgs, pngs, labels = batch
 
         with torch.no_grad():
             imgs = Variable(torch.from_numpy(imgs).type(torch.FloatTensor))
@@ -236,7 +236,6 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
 
 
 if __name__ == "__main__":
-    config=Config()
     inputs_size = config.inputs_size
     log_dir = config.log_dir
     # ---------------------#
@@ -318,8 +317,7 @@ if __name__ == "__main__":
     model = get_transNet(n_classes=NUM_CLASSES, img_size=inputs_size[0]).train()
     init_weights(model, init_type='kaiming')
     print('model is here:')
-    print(model,'\n','\n')
-
+    print(model, '\n', '\n')
 
     # -------------------------------------------#
     #   权值文件的下载请看README
@@ -402,7 +400,7 @@ if __name__ == "__main__":
         # --------------#
         # BATCH_SIZE
         # --------------#
-        Batch_size = config.Batch_size if Freeze_Epoch<=0 else config.Freeze_Batch_Size
+        Batch_size = config.Batch_size if Freeze_Epoch <= 0 else config.Freeze_Batch_Size
 
         # set opt
         # ------------------------------------------------------------------#
@@ -472,7 +470,7 @@ if __name__ == "__main__":
 
         epoch_size = max(1, len(train_lines) // Batch_size)
         epoch_size_val = max(1, len(val_lines) // Batch_size)
-
+        set_epoch, set_batch = config.set_epoch_batch
         # begin train
         for epoch in range(Init_Epoch, Interval_Epoch):
 
@@ -480,12 +478,16 @@ if __name__ == "__main__":
             #                  drop_last=True, collate_fn=unet_dataset_collate, sampler=train_sampler)
             # gen_val = DataLoader(val_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
             #                      drop_last=True, collate_fn=unet_dataset_collate, sampler=val_sampler)
+            # 给定最后精度调优的epoch
+            if epoch == set_epoch:
+                Batch_size = set_batch
+
             if (pretrained is True) and (epoch == Freeze_Epoch):
                 # 解冻!!
                 for param in model.parameters():
                     param.requires_grad = True
                 # 调整batch_size
-                Batch_size=config.Batch_size
+                Batch_size = config.Batch_size
 
                 # 根据batch_size 调整学习率
                 nbs = 16
