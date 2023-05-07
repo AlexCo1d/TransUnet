@@ -11,7 +11,7 @@ from torch.nn import CrossEntropyLoss
 from tqdm import tqdm
 
 from train_config import config
-from nets.TransUnet import get_transNet
+from nets.Net import get_Net
 from torch.utils.data import DataLoader
 from dataloader import unetDataset, unet_dataset_collate
 from utils.Loss_utils import get_loss_weight, LossHistory, get_lr_scheduler, set_optimizer_lr
@@ -314,7 +314,7 @@ if __name__ == "__main__":
     # -------------------------------------------#
     # 得到model,并进行初始化，可以选择!
     # -------------------------------------------#
-    model = get_transNet(n_classes=NUM_CLASSES, img_size=inputs_size[0]).train()
+    model = get_Net(n_classes=NUM_CLASSES, img_size=inputs_size[0]).train()
     init_weights(model, init_type='kaiming')
     print('model is here:')
     print(model, '\n', '\n')

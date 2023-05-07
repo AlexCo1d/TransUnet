@@ -2,7 +2,7 @@ import cv2
 from numpy.core.numeric import False_, True_
 
 from train_config import Config
-from nets.TransUnet import get_transNet
+from nets.Net import get_Net
 from torch import nn
 from PIL import Image
 from torch.autograd import Variable
@@ -44,7 +44,7 @@ class uNet(object):
     # ---------------------------------------------------#
     def generate(self):
         os.environ["CUDA_VISIBLE_DEVICES"] = '0'
-        self.net = get_transNet(n_classes=self.num_classes, img_size=self.model_image_size[0])
+        self.net = get_Net(n_classes=self.num_classes, img_size=self.model_image_size[0])
         self.net = self.net.eval()
 
         state_dict = torch.load(self.model_path)

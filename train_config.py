@@ -14,6 +14,16 @@ class BaseConfig:
     #   种类多（十几类）时，如果batch_size比较小（10以下），那么设置为False
     # ---------------------------------------------------------------------#
 
+    # -------------------------------#
+    #   选用的MODEL
+    # -------------------------------#
+    model='BASIC'
+    # -------------------------------#
+    #   1: BASIC(defaultTransUnet)
+    #   2: Vit_CBAM_ASPP
+    #   3: Vit_CBAM
+    # -------------------------------#
+
     # --------------#
     # BATCH_SIZE
     # --------------#
@@ -60,6 +70,7 @@ class BaseConfig:
     model_path = './model_data/pretrained_weight.pth'
     # no_load_dict,加载预训练时不加载解码器部分
     no_load_dict = ['decoder', 'segmentation_head']
+    # 设置解冻部分！
     frozen_modules = ["cbam", "decoder", 'ASPP_unit1', 'ASPP_unit2', 'ASPP_unit3', 'segmentation_head', 'se',
                       'aspp_cbam', ]  # removed: 'cls','ASPP_unit1', 'ASPP_unit2' 'aspp'
 
@@ -73,7 +84,6 @@ class BaseConfig:
     Freeze_Epoch = 40
     Freeze_Batch_Size = 4
     set_epoch_batch = [200, 1]
-
     # ----------------------#
     # 输出图像的形式
     # 0：不上色

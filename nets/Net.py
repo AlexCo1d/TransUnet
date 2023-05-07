@@ -7,7 +7,7 @@ from nets.vit_cbam_modeling import Vit_CBAM,Vit_CBAM_ASPP
 from .transunet_modeling import VisionTransformer as ViT_seg
 from .transunet_modeling import CONFIGS as CONFIGS_ViT_seg
 
-def get_transNet(n_classes,img_size=256):
+def get_Net(n_classes, img_size=256):
     vit_patches_size = 16
     vit_name = 'R50-ViT-B_16'
 
@@ -21,7 +21,7 @@ def get_transNet(n_classes,img_size=256):
 
 
 if __name__ == '__main__':
-    net = get_transNet(1)
+    net = get_Net(1)
     img = torch.randn((2, 3, 512, 512))
     segments = net(img)
     print(segments.size())
