@@ -257,7 +257,8 @@ def compute_dice(label_folder,prediction_folder):
         label_img = np.array(Image.open(label_path))
         assert len(np.unique(label_img))<3,"label wrong"
         prediction_img = np.array(Image.open(prediction_path))
-        #label_img[prediction_img!=0]=1
+        label_img[label_img!=0]=1
+        prediction_img[prediction_img != 0] = 1
         # for i in range(colorDict_GRAY.shape[0]):
         #     label_img[label_img == colorDict_GRAY[i][0]] = i
         #     prediction_img[prediction_img == colorDict_GRAY[i][0]] = i

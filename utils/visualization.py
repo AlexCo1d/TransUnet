@@ -13,8 +13,8 @@ from train_config import Config
 txt_path="./VOCdevkit/VOC2007/ImageSets/Segmentation/val.txt"
 image_path='./VOCdevkit/VOC2007/JPEGImages'
 label_path='./VOCdevkit/VOC2007/SegmentationClass'
-output_path='./DDTI_visualization/gt'
-color_map = [(0, 0, 0), (0, 255, 0), (0, 128, 0), (128, 128, 0), (128, 0, 128), (0, 128, 128),
+output_path='./BUSI_visualization/gt'
+color_map = [(0, 0, 0), (0, 255, 0), (255, 0, 0), (128, 128, 0), (128, 0, 128), (0, 128, 128),
                (128, 128, 128), (64, 0, 0), (192, 0, 0), (64, 128, 0), (192, 128, 0), (64, 0, 128),
                (192, 0, 128),
                (64, 128, 128), (192, 128, 128), (0, 64, 0), (128, 64, 0), (0, 192, 0), (128, 192, 0),

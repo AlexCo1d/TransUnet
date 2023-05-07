@@ -50,7 +50,7 @@ def show_image():
         lines = file.readlines()
 
     for jpg in lines:
-        jpg=jpg.split()[0]+type
+        jpg=jpg.replace('\n','')+type
         img = Image.open(os.path.join(image_path,jpg)).convert('RGB')
         start_time = time.time()
         image = uNet.detect_image(img,mix=config.output_type)
@@ -68,7 +68,7 @@ def transfer_image():
 
     for image_name in lines:
         # 测试集原标签
-        image_name=image_name.split()[0]+type
+        image_name=image_name.replace('\n','')+type
         label_name=image_name.replace(type,'.png')
 
         label = Image.open(os.path.join(label_path, label_name))
