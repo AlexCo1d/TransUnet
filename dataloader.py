@@ -59,7 +59,7 @@ class unetDataset(Dataset):
     def rand(self, a=0, b=1):
         return np.random.rand() * (b - a) + a
 
-    def get_random_data(self, image, label, input_shape, jitter=.3, hue=.1, sat=1.5, val=1.5, fil=.5):
+    def get_random_data(self, image, label, input_shape, jitter=.3, hue=.1, sat=1.5, val=1.5, fil=.3):
         label = Image.fromarray(np.array(label))
         # crop image or not
         if rand() < .6:
@@ -110,13 +110,13 @@ class unetDataset(Dataset):
             label = label.transpose(Image.FLIP_TOP_BOTTOM)
 
         # rotate image:
-        if rand() < .4:
-            angle = np.random.uniform(3, 20)
+        if rand() < .3:
+            angle = np.random.uniform(3, 10)
             image = image.rotate(angle, resample=Image.BICUBIC, expand=False, fillcolor=(128, 128, 128))
             label = label.rotate(angle, resample=Image.BICUBIC, expand=False, fillcolor=0)
 
         # gaussian filter and sharpen filter choose one
-        if rand() < .4:
+        if rand() < .3:
             if rand() < .5:
                 radius = np.random.uniform(1 - fil, 1)
                 image = image.filter(ImageFilter.GaussianBlur(radius))
