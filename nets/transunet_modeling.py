@@ -330,6 +330,7 @@ class DecoderBlock(nn.Module):
         self.up = interpolate(scale_factor=2, mode='bilinear',align_corners=True)
 
     def forward(self, x, skip=None):
+        # print(x.size(),skip.size())
         x = self.up(x)
         if skip is not None:
             x = torch.cat([x, skip], dim=1)
@@ -365,7 +366,8 @@ class DecoderCup(nn.Module):
 
         if self.config.n_skip-1 != 0:
             skip_channels = self.config.skip_channels[1:]
-            skip_channels[3 ] = 0
+            for i in range(5 - self.config.n_skip):  # re-select the skip channels according to n_skip
+                skip_channels[3 - i] = 0
 
         else:
             skip_channels = [0, 0, 0, 0]
@@ -387,7 +389,7 @@ class DecoderCup(nn.Module):
         x = self.conv_more(x)
         for i, decoder_block in enumerate(self.blocks):
             if features is not None:
-                skip = features[i] if (i < self.config.n_skip) else None
+                skip = features[i] if (i < self.config.n_skip-1) else None
             else:
                 skip = None
             x = decoder_block(x, skip=skip)

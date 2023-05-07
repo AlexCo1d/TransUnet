@@ -163,7 +163,7 @@ class ResNetV2(nn.Module):
                 feat = x
             features.append(feat)
         x = self.body[-1](x)
-        features.append(x)
+        # features.append(x)
         # print('features:',len(features))
         return x, features[::-1]
 
@@ -653,3 +653,27 @@ class ResNetV2_CBAM_ASPP_CBAM(ResNetV2):
                 [(f'unit9', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))],
             ))),
         ]))
+
+    def forward(self, x):
+        features = []
+        b, c, in_size, _ = x.size()
+        x = self.root(x)
+        features.append(x)
+        x = nn.MaxPool2d(kernel_size=3, stride=2, padding=0)(x)
+        for i in range(len(self.body) - 1):
+            x = self.body[i](x)
+            right_size = int(in_size / 4 / (i + 1))
+            if x.size()[2] != right_size:
+                '''这个 forward 函数中的 if 语句的目的是检查当前特征图 x 的空间尺寸（宽度和高度）是否等于期望的 right_size。如果不等于， 它将创建一个填充零的新特征图 
+                feat，并将原始特征图 x 复制到这个新特征图的左上角，以使其空间尺寸与期望的尺寸相符。这样做主要是为了确保特征图的尺寸在之后的操作中是正确的，例如在特征金字塔网络中对特征图进行上采样和融合时。 '''
+                pad = right_size - x.size()[2]
+                assert pad < 3 and pad > 0, "x {} should {}".format(x.size(), right_size)
+                feat = torch.zeros((b, x.size()[1], right_size, right_size), device=x.device)
+                feat[:, :, 0:x.size()[2], 0:x.size()[3]] = x[:]
+            else:
+                feat = x
+            features.append(feat)
+        x = self.body[-1](x)
+        features.append(x)
+        # print('features:',len(features))
+        return x, features[::-1]
