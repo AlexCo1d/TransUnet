@@ -14,7 +14,6 @@ from nets.vit_seg_modeling_resnet_skip import *
 path = r'D:/PycharmProjects/unet/transunet 癌细胞/transunet/VOCdevkit/VOC2007/SegmentationClass/'
 newpath = r'D:\PycharmProjects\unet\transunet 癌细胞\transunet\VOCdevkit\VOC2007\lable'
 
-
 # def turnto24(path):
 #   fileList = []
 #   files = os.listdir(path)
@@ -117,6 +116,7 @@ class unetUp_origin(nn.Module):
         for i in range(len(input)):
             outputs0 = torch.cat([outputs0, input[i]], 1)
         return self.conv(outputs0)
+
 
 class UNet_3Plus_DeepSup_CGM(nn.Module):
 
@@ -290,10 +290,10 @@ class UNet_3Plus_DeepSup_CGM(nn.Module):
         self.relu1d_1 = nn.ReLU(inplace=True)
 
         # -------------Bilinear Upsampling--------------
-        self.upscore6 = nn.Upsample(scale_factor=32,mode='bilinear')###
-        self.upscore5 = nn.Upsample(scale_factor=16,mode='bilinear')
-        self.upscore4 = nn.Upsample(scale_factor=8,mode='bilinear')
-        self.upscore3 = nn.Upsample(scale_factor=4,mode='bilinear')
+        self.upscore6 = nn.Upsample(scale_factor=32, mode='bilinear')  ###
+        self.upscore5 = nn.Upsample(scale_factor=16, mode='bilinear')
+        self.upscore4 = nn.Upsample(scale_factor=8, mode='bilinear')
+        self.upscore3 = nn.Upsample(scale_factor=4, mode='bilinear')
         self.upscore2 = nn.Upsample(scale_factor=2, mode='bilinear')
 
         # DeepSup
@@ -304,10 +304,10 @@ class UNet_3Plus_DeepSup_CGM(nn.Module):
         self.outconv5 = nn.Conv2d(filters[4], n_classes, 3, padding=1)
 
         self.cls = nn.Sequential(
-                    nn.Dropout(p=0.5),
-                    nn.Conv2d(filters[4], 2, 1),
-                    nn.AdaptiveMaxPool2d(1),
-                    nn.Sigmoid())
+            nn.Dropout(p=0.5),
+            nn.Conv2d(filters[4], 2, 1),
+            nn.AdaptiveMaxPool2d(1),
+            nn.Sigmoid())
 
         # initialise weights
         for m in self.modules():
@@ -316,7 +316,7 @@ class UNet_3Plus_DeepSup_CGM(nn.Module):
             elif isinstance(m, nn.BatchNorm2d):
                 init_weights(m, init_type='kaiming')
 
-    def dotProduct(self,seg,cls):
+    def dotProduct(self, seg, cls):
         B, N, H, W = seg.size()
         seg = seg.view(B, N, H * W)
         final = torch.einsum("ijk,ij->ijk", [seg, cls])
@@ -351,7 +351,7 @@ class UNet_3Plus_DeepSup_CGM(nn.Module):
         h4_Cat_hd4 = self.h4_Cat_hd4_relu(self.h4_Cat_hd4_bn(self.h4_Cat_hd4_conv(h4)))
         hd5_UT_hd4 = self.hd5_UT_hd4_relu(self.hd5_UT_hd4_bn(self.hd5_UT_hd4_conv(self.hd5_UT_hd4(hd5))))
         hd4 = self.relu4d_1(self.bn4d_1(self.conv4d_1(
-            torch.cat((h1_PT_hd4, h2_PT_hd4, h3_PT_hd4, h4_Cat_hd4, hd5_UT_hd4), 1)))) # hd4->40*40*UpChannels
+            torch.cat((h1_PT_hd4, h2_PT_hd4, h3_PT_hd4, h4_Cat_hd4, hd5_UT_hd4), 1))))  # hd4->40*40*UpChannels
 
         h1_PT_hd3 = self.h1_PT_hd3_relu(self.h1_PT_hd3_bn(self.h1_PT_hd3_conv(self.h1_PT_hd3(h1))))
         h2_PT_hd3 = self.h2_PT_hd3_relu(self.h2_PT_hd3_bn(self.h2_PT_hd3_conv(self.h2_PT_hd3(h2))))
@@ -359,7 +359,7 @@ class UNet_3Plus_DeepSup_CGM(nn.Module):
         hd4_UT_hd3 = self.hd4_UT_hd3_relu(self.hd4_UT_hd3_bn(self.hd4_UT_hd3_conv(self.hd4_UT_hd3(hd4))))
         hd5_UT_hd3 = self.hd5_UT_hd3_relu(self.hd5_UT_hd3_bn(self.hd5_UT_hd3_conv(self.hd5_UT_hd3(hd5))))
         hd3 = self.relu3d_1(self.bn3d_1(self.conv3d_1(
-            torch.cat((h1_PT_hd3, h2_PT_hd3, h3_Cat_hd3, hd4_UT_hd3, hd5_UT_hd3), 1)))) # hd3->80*80*UpChannels
+            torch.cat((h1_PT_hd3, h2_PT_hd3, h3_Cat_hd3, hd4_UT_hd3, hd5_UT_hd3), 1))))  # hd3->80*80*UpChannels
 
         h1_PT_hd2 = self.h1_PT_hd2_relu(self.h1_PT_hd2_bn(self.h1_PT_hd2_conv(self.h1_PT_hd2(h1))))
         h2_Cat_hd2 = self.h2_Cat_hd2_relu(self.h2_Cat_hd2_bn(self.h2_Cat_hd2_conv(h2)))
@@ -367,7 +367,7 @@ class UNet_3Plus_DeepSup_CGM(nn.Module):
         hd4_UT_hd2 = self.hd4_UT_hd2_relu(self.hd4_UT_hd2_bn(self.hd4_UT_hd2_conv(self.hd4_UT_hd2(hd4))))
         hd5_UT_hd2 = self.hd5_UT_hd2_relu(self.hd5_UT_hd2_bn(self.hd5_UT_hd2_conv(self.hd5_UT_hd2(hd5))))
         hd2 = self.relu2d_1(self.bn2d_1(self.conv2d_1(
-            torch.cat((h1_PT_hd2, h2_Cat_hd2, hd3_UT_hd2, hd4_UT_hd2, hd5_UT_hd2), 1)))) # hd2->160*160*UpChannels
+            torch.cat((h1_PT_hd2, h2_Cat_hd2, hd3_UT_hd2, hd4_UT_hd2, hd5_UT_hd2), 1))))  # hd2->160*160*UpChannels
 
         h1_Cat_hd1 = self.h1_Cat_hd1_relu(self.h1_Cat_hd1_bn(self.h1_Cat_hd1_conv(h1)))
         hd2_UT_hd1 = self.hd2_UT_hd1_relu(self.hd2_UT_hd1_bn(self.hd2_UT_hd1_conv(self.hd2_UT_hd1(hd2))))
@@ -375,21 +375,21 @@ class UNet_3Plus_DeepSup_CGM(nn.Module):
         hd4_UT_hd1 = self.hd4_UT_hd1_relu(self.hd4_UT_hd1_bn(self.hd4_UT_hd1_conv(self.hd4_UT_hd1(hd4))))
         hd5_UT_hd1 = self.hd5_UT_hd1_relu(self.hd5_UT_hd1_bn(self.hd5_UT_hd1_conv(self.hd5_UT_hd1(hd5))))
         hd1 = self.relu1d_1(self.bn1d_1(self.conv1d_1(
-            torch.cat((h1_Cat_hd1, hd2_UT_hd1, hd3_UT_hd1, hd4_UT_hd1, hd5_UT_hd1), 1)))) # hd1->320*320*UpChannels
+            torch.cat((h1_Cat_hd1, hd2_UT_hd1, hd3_UT_hd1, hd4_UT_hd1, hd5_UT_hd1), 1))))  # hd1->320*320*UpChannels
 
         d5 = self.outconv5(hd5)
-        d5 = self.upscore5(d5) # 16->256
+        d5 = self.upscore5(d5)  # 16->256
 
         d4 = self.outconv4(hd4)
-        d4 = self.upscore4(d4) # 32->256
+        d4 = self.upscore4(d4)  # 32->256
 
         d3 = self.outconv3(hd3)
-        d3 = self.upscore3(d3) # 64->256
+        d3 = self.upscore3(d3)  # 64->256
 
         d2 = self.outconv2(hd2)
-        d2 = self.upscore2(d2) # 128->256
+        d2 = self.upscore2(d2)  # 128->256
 
-        d1 = self.outconv1(hd1) # 256
+        d1 = self.outconv1(hd1)  # 256
 
         d1 = self.dotProduct(d1, cls_branch_max)
         d2 = self.dotProduct(d2, cls_branch_max)
@@ -459,7 +459,7 @@ def main():
 
 
 def txt():
-    image_folder = './for_test/image'#'./VOCdevkit/VOC2007/JPEGImages'
+    image_folder = './for_test/image'  # './VOCdevkit/VOC2007/JPEGImages'
 
     # 指定要写入的txt文件路径
     output_txt_file = './VOCdevkit/VOC2007/ImageSets/Segmentation/val.txt'
@@ -490,13 +490,12 @@ def observe_model():
     # model=UNet_3Plus_DeepSup_CGM()
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model.to(device)
-    t=torch.rand(2,3, 256, 256)
-    x=model(t)
+    t = torch.rand(2, 3, 256, 256)
+    x = model(t)
     print(x.shape)
     summary(model, input_size=(2, 3, 256, 256))
     # summary(VisionTransformer(config_vit, img_size=img_size, num_classes=1),input_size=(2,3,256,256))
-    #print(model)
-
+    # print(model)
 
 
 def count_pos():
@@ -511,6 +510,7 @@ def count_pos():
             l.append(image)
     print(f'pos num: {count}')
     print(f'list:\n {l}')
+
 
 def ob_weight():
     import datetime
@@ -541,6 +541,7 @@ def ob_weight():
     for param in model.parameters():
         param.requires_grad = False
     print('first')
+
     # 观察权值矩阵！
     def print_requires_grad(module, prefix=''):
         for name, child in module.named_children():
@@ -553,7 +554,7 @@ def ob_weight():
     # 使用这个函数遍历模型的所有子模块
     # print_requires_grad(model)
     print('second check')
-    traverse_unfreeze_block(model,["cbam", "decoder", 'ASPP_unit3', 'segmentation_head', 'aspp_cbam'] )
+    traverse_unfreeze_block(model, ["cbam", "decoder", 'ASPP_unit3', 'segmentation_head', 'aspp_cbam'])
     # for param in model.parameters():
     #     param.requires_grad = True
     # print_requires_grad(model)
@@ -579,14 +580,15 @@ def ob_weight():
     # print("\nFail To Load Key:", str(no_load_key)[:500], "……\nFail To Load Key num:", len(no_load_key))
     # print("\n\033[1;33;44m温馨提示，head部分没有载入是正常现象，Backbone部分没有载入是错误的。\033[0m")
 
+
 def preprocess():
-    setlabel=2
-    folder='malignant'  # benign:1, 'malignant':2
-    path=os.path.join(r'D:\learning\UNNC 科研\data\BUSI\Dataset_BUSI_with_GT',folder)
-    image_path=os.path.join(r'D:\learning\UNNC 科研\data\BUSI\Dataset_BUSI_with_GT\output','image')
-    label_path=os.path.join(r'D:\learning\UNNC 科研\data\BUSI\Dataset_BUSI_with_GT\output','label')
-    output_image_path=os.path.join(r'D:\learning\UNNC 科研\data\BUSI\Dataset_BUSI_with_GT','image')
-    output_label_path=os.path.join(r'D:\learning\UNNC 科研\data\BUSI\Dataset_BUSI_with_GT','label')
+    setlabel = 2
+    folder = 'malignant'  # benign:1, 'malignant':2
+    path = os.path.join(r'D:\learning\UNNC 科研\data\BUSI\Dataset_BUSI_with_GT', folder)
+    image_path = os.path.join(r'D:\learning\UNNC 科研\data\BUSI\Dataset_BUSI_with_GT\output', 'image')
+    label_path = os.path.join(r'D:\learning\UNNC 科研\data\BUSI\Dataset_BUSI_with_GT\output', 'label')
+    output_image_path = os.path.join(r'D:\learning\UNNC 科研\data\BUSI\Dataset_BUSI_with_GT', 'image')
+    output_label_path = os.path.join(r'D:\learning\UNNC 科研\data\BUSI\Dataset_BUSI_with_GT', 'label')
     #
     # image_list=[]
     # for index,label in enumerate(os.listdir(path)):
@@ -617,37 +619,68 @@ def preprocess():
         #
         #     label = label + label2
         # Image.fromarray(label).save(os.path.join(output_label_path,image))
-        shutil.copy(os.path.join(image_path,image),os.path.join(output_image_path,image))
+        shutil.copy(os.path.join(image_path, image), os.path.join(output_image_path, image))
         shutil.copy(os.path.join(label_path, image), os.path.join(output_label_path, image))
 
+
 def test():
-    path=r'D:\learning\UNNC 科研\DeepLabV3Plus-Pytorch\best_deeplabv3plus_mobilenet_voc_os16.pth'
-    pw=torch.load(path,map_location=torch.device('cpu'))
-    load_key, no_load_key, temp_dict = [], [], {}
-    for k, v in pw['model_state'].items():
-        if not k.startswith('classifier'):
-            temp_dict[k]=v
-    pw['model_state']=temp_dict
+    # path=r'D:\learning\UNNC 科研\DeepLabV3Plus-Pytorch\best_deeplabv3plus_mobilenet_voc_os16.pth'
+    # pw=torch.load(path,map_location=torch.device('cpu'))
+    # load_key, no_load_key, temp_dict = [], [], {}
+    # for k, v in pw['model_state'].items():
+    #     if not k.startswith('classifier'):
+    #         temp_dict[k]=v
+    # pw['model_state']=temp_dict
+    #
+    # for k, v in pw['model_state'].items():
+    #     print(k)
 
-    for k, v in pw['model_state'].items():
-        print(k)
+    class Parent1:
+        def __init__(self, a, b,c):
+            if b:
+                self.a = a
+            temp=2+3*5+c
+            self.b=temp/2
 
+
+        def method1(self):
+            print("Method 1 from Parent1")
+
+        def method2(self):
+            print("Method 2 from Parent1")
+
+    class Parent2:
+        def __init__(self, a, b):
+            self.a = 'c'
+            self.b = 'c'
+
+        def method1(self):
+            print("Method 1 from Parent2")
+
+        def method3(self):
+            print("Method 3 from Parent2")
+
+    class Child(Parent1, Parent2):
+        def __init__(self,a,b,c):
+            super().__init__()
+            self.a='child'
+
+        def method1(self):
+            Parent2.method1(self)
+
+    child=Child('a','b',4)
+    print(child.a)
+    child.method1()
 
     pass
 
 
 if __name__ == '__main__':
-    observe_model()
+    # observe_model()
     # main()
-    # test()
-    #txt()
+    test()
+    # txt()
     # count_pos()
     # ob_weight()
     # preprocess()
     pass
-
-
-
-
-
-

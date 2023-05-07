@@ -97,17 +97,20 @@ class Config_Cervical(BaseConfig):
     inputs_size = [512, 512, 3]
     image_type = '.jpg'  # image is jpg or png
     NUM_CLASSES = 2
+    model = 'Vit_CBAM_ASPP'
 
 
 class Config_Breast(BaseConfig):
     inputs_size = [512, 512, 3]
     image_type = '.png'  # image is jpg or png
     NUM_CLASSES = 2
+    model = 'Vit_CBAM_ASPP'
 
 class Config_DDTI(BaseConfig):
     inputs_size = [256, 256, 3]
     image_type = '.png'  # image is jpg or png
     NUM_CLASSES = 2
+    model = 'Vit_CBAM_ASPP'
 
 
 config = Config_Breast()

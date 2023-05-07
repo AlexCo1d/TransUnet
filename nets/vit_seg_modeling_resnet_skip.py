@@ -390,63 +390,6 @@ class ASPP_SE(nn.Module):
         return result
 
 
-class CBAM_ASPP(nn.Module):
-    def __init__(self, dim_in, dim_out, atrous_rates=(6,12,18), bn_mom=0.1):
-        super().__init__()
-        self.branch1 = nn.Sequential(
-            nn.Conv2d(dim_in, dim_out, 1, 1, padding=0, dilation=1, bias=True),
-            nn.BatchNorm2d(dim_out, momentum=bn_mom),
-            nn.ReLU(inplace=True),
-        )
-        self.branch2 = nn.Sequential(
-            nn.Conv2d(dim_in, dim_out, 3, 1, padding=atrous_rates[0], dilation=atrous_rates[0], bias=True),
-            nn.BatchNorm2d(dim_out, momentum=bn_mom),
-            nn.ReLU(inplace=True),
-        )
-        self.branch3 = nn.Sequential(
-            nn.Conv2d(dim_in, dim_out, 3, 1, padding=atrous_rates[1], dilation=atrous_rates[1], bias=True),
-            nn.BatchNorm2d(dim_out, momentum=bn_mom),
-            nn.ReLU(inplace=True),
-        )
-        self.branch4 = nn.Sequential(
-            nn.Conv2d(dim_in, dim_out, 3, 1, padding=atrous_rates[2], dilation=atrous_rates[2], bias=True),
-            nn.BatchNorm2d(dim_out, momentum=bn_mom),
-            nn.ReLU(inplace=True),
-        )
-        self.branch5_conv = nn.Conv2d(dim_in, dim_out, 1, 1, 0, bias=True)
-        self.branch5_bn = nn.BatchNorm2d(dim_out, momentum=bn_mom)
-        self.branch5_relu = nn.ReLU(inplace=True)
-
-        self.conv_cat = nn.Sequential(
-            nn.Conv2d(dim_out * 5, dim_out, 1, 1, padding=0, bias=True),
-            nn.BatchNorm2d(dim_out, momentum=bn_mom),
-            nn.ReLU(inplace=True),
-        )
-        # print('dim_in:',dim_in)
-        # print('dim_out:',dim_out)
-        self.cbam = CBAMLayer(channel=dim_out * 5)
-
-    def forward(self, x):
-        [b, c, row, col] = x.size()
-        conv1x1 = self.branch1(x)
-        conv3x3_1 = self.branch2(x)
-        conv3x3_2 = self.branch3(x)
-        conv3x3_3 = self.branch4(x)
-        global_feature = torch.mean(x, 2, True)
-        global_feature = torch.mean(global_feature, 3, True)
-        global_feature = self.branch5_conv(global_feature)
-        global_feature = self.branch5_bn(global_feature)
-        global_feature = self.branch5_relu(global_feature)
-        global_feature = F.interpolate(global_feature, (row, col), None, 'bilinear', True)
-
-        feature_cat = torch.cat([conv1x1, conv3x3_1, conv3x3_2, conv3x3_3, global_feature], dim=1)
-        # print('feature:',feature_cat.shape)
-        # 加入cbam注意力机制
-        cbamaspp = self.cbam(feature_cat)
-        result = self.conv_cat(cbamaspp)
-        return result
-
-
 class PreActBottleneck_CBAM(PreActBottleneck):
     """Pre-activation (v2) bottleneck block.
     """
@@ -522,6 +465,37 @@ class PreActBottleneck_SE(PreActBottleneck):
         y = self.relu(residual + y)
         return y
 
+
+class ResNetV2_4skip(ResNetV2):
+
+    def __init__(self, block_units, width_factor):
+        super().__init__(block_units, width_factor)
+
+    def forward(self, x):
+        features = []
+        b, c, in_size, _ = x.size()
+        x = self.root(x)
+        features.append(x)
+        x = nn.MaxPool2d(kernel_size=3, stride=2, padding=0)(x)
+        for i in range(len(self.body) - 1):
+            x = self.body[i](x)
+            right_size = int(in_size / 4 / (i + 1))
+            if x.size()[2] != right_size:
+                '''这个 forward 函数中的 if 语句的目的是检查当前特征图 x 的空间尺寸（宽度和高度）是否等于期望的 right_size。如果不等于， 它将创建一个填充零的新特征图 
+                feat，并将原始特征图 x 复制到这个新特征图的左上角，以使其空间尺寸与期望的尺寸相符。这样做主要是为了确保特征图的尺寸在之后的操作中是正确的，例如在特征金字塔网络中对特征图进行上采样和融合时。 '''
+                pad = right_size - x.size()[2]
+                assert pad < 3 and pad > 0, "x {} should {}".format(x.size(), right_size)
+                feat = torch.zeros((b, x.size()[1], right_size, right_size), device=x.device)
+                feat[:, :, 0:x.size()[2], 0:x.size()[3]] = x[:]
+            else:
+                feat = x
+            features.append(feat)
+        x = self.body[-1](x)
+        features.append(x)
+        # print('features:',len(features))
+        return x, features[::-1]
+
+
 class ResNetV2_CBAM(ResNetV2):
     def __init__(self, block_units, width_factor):
         super().__init__(block_units, width_factor)
@@ -556,7 +530,7 @@ class ResNetV2_CBAM(ResNetV2):
         ]))
 
 
-class ResNetV2_ASPP_SE(ResNetV2):
+class ResNetV2_SE(ResNetV2):
     def __init__(self, block_units, width_factor):
         super().__init__(block_units, width_factor)
         width = int(64 * width_factor)
@@ -589,7 +563,7 @@ class ResNetV2_ASPP_SE(ResNetV2):
         ]))
 
 
-class ResNetV2_SE_ASPP_SE(ResNetV2):
+class ResNetV2_ASPP_SE(ResNetV2):
     def __init__(self, block_units, width_factor):
         super().__init__(block_units, width_factor)
         width = int(64 * width_factor)
@@ -622,58 +596,9 @@ class ResNetV2_SE_ASPP_SE(ResNetV2):
         ]))
 
 
-class ResNetV2_CBAM_ASPP_CBAM(ResNetV2):
+class ResNetV2_CBAM_4skip(ResNetV2_CBAM,ResNetV2_4skip):
     def __init__(self, block_units, width_factor):
         super().__init__(block_units, width_factor)
-        width = int(64 * width_factor)
-        self.width = width
-        self.body = nn.Sequential(OrderedDict([
-            ('block1', nn.Sequential(OrderedDict(
-                [('unit1', PreActBottleneck(cin=width, cout=width * 4, cmid=width))] +
-                [(f'unit2', PreActBottleneck(cin=width * 4, cout=width * 4, cmid=width))] +
-                [(f'unit3', PreActBottleneck(cin=width * 4, cout=width * 4, cmid=width))]
-
-            ))),
-            ('block2', nn.Sequential(OrderedDict(
-                [('unit1', PreActBottleneck_CBAM(cin=width * 4, cout=width * 8, cmid=width * 2, stride=2))] +
-                [(f'unit2', PreActBottleneck_CBAM(cin=width * 8, cout=width * 8, cmid=width * 2))] +
-                [(f'unit3', PreActBottleneck_CBAM(cin=width * 8, cout=width * 8, cmid=width * 2))] +
-                [(f'unit4', PreActBottleneck_CBAM(cin=width * 8, cout=width * 8, cmid=width * 2))],
-            ))),
-            ('block3', nn.Sequential(OrderedDict(
-                [('unit1', PreActBottleneck_CBAM(cin=width * 8, cout=width * 16, cmid=width * 4, stride=2))] +
-                [(f'unit2', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
-                [(f'unit3', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
-                [(f'unit4', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
-                [(f'unit5', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
-                [(f'unit6', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
-                [(f'unit7', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
-                [(f'unit8', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))] +
-                # [('ASPP_unit3', CBAM_ASPP(width * 16, width * 16, atrous_rates=(6, 12, 18)))] +
-                [(f'unit9', PreActBottleneck_CBAM(cin=width * 16, cout=width * 16, cmid=width * 4))],
-            ))),
-        ]))
 
     def forward(self, x):
-        features = []
-        b, c, in_size, _ = x.size()
-        x = self.root(x)
-        features.append(x)
-        x = nn.MaxPool2d(kernel_size=3, stride=2, padding=0)(x)
-        for i in range(len(self.body) - 1):
-            x = self.body[i](x)
-            right_size = int(in_size / 4 / (i + 1))
-            if x.size()[2] != right_size:
-                '''这个 forward 函数中的 if 语句的目的是检查当前特征图 x 的空间尺寸（宽度和高度）是否等于期望的 right_size。如果不等于， 它将创建一个填充零的新特征图 
-                feat，并将原始特征图 x 复制到这个新特征图的左上角，以使其空间尺寸与期望的尺寸相符。这样做主要是为了确保特征图的尺寸在之后的操作中是正确的，例如在特征金字塔网络中对特征图进行上采样和融合时。 '''
-                pad = right_size - x.size()[2]
-                assert pad < 3 and pad > 0, "x {} should {}".format(x.size(), right_size)
-                feat = torch.zeros((b, x.size()[1], right_size, right_size), device=x.device)
-                feat[:, :, 0:x.size()[2], 0:x.size()[3]] = x[:]
-            else:
-                feat = x
-            features.append(feat)
-        x = self.body[-1](x)
-        features.append(x)
-        # print('features:',len(features))
-        return x, features[::-1]
+        ResNetV2_4skip.forward(self,x)
