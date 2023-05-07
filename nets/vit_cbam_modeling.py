@@ -210,10 +210,11 @@ class DecoderBlock_CBAM(nn.Module):
         # print('in', x.size())
         if skip is not None:
             x = torch.cat([x, skip], dim=1)
-        x = self.up(x)
+        # x = self.up(x)
         x = self.conv1(x)
         x = self.conv2(x)
         x = self.cbam(x)
+        x = self.up(x)
         return x
 
 

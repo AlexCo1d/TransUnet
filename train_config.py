@@ -86,16 +86,18 @@ class BaseConfig:
 class Config_Cervical(BaseConfig):
     inputs_size = [512, 512, 3]
     image_type = '.jpg'  # image is jpg or png
+    NUM_CLASSES = 2
 
 
 class Config_Breast(BaseConfig):
     inputs_size = [512, 512, 3]
     image_type = '.png'  # image is jpg or png
-    NUM_CLASSES = 3
+    NUM_CLASSES = 2
 
 class Config_DDTI(BaseConfig):
     inputs_size = [256, 256, 3]
     image_type = '.png'  # image is jpg or png
+    NUM_CLASSES = 2
 
 
 config = Config_Breast()
