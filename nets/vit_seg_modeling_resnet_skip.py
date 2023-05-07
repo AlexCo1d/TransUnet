@@ -601,4 +601,4 @@ class ResNetV2_CBAM_4skip(ResNetV2_CBAM,ResNetV2_4skip):
         super().__init__(block_units, width_factor)
 
     def forward(self, x):
-        ResNetV2_4skip.forward(self,x)
+        return ResNetV2_4skip.forward(self,x)

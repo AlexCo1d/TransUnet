@@ -21,7 +21,7 @@ def get_Net(n_classes, img_size=256):
     global net
     if config.model == 'Vit_CBAM_ASPP':
         net = Vit_CBAM_ASPP(config_vit, img_size=img_size, num_classes=n_classes)
-    elif config.model == 'Vit_CBAM_ASPP':
+    elif config.model == 'Vit_CBAM':
         net = Vit_CBAM(config_vit, img_size=img_size, num_classes=n_classes)
     else:
         net = ViT_seg(config_vit, img_size=img_size, num_classes=n_classes)

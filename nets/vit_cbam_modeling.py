@@ -89,9 +89,8 @@ class CBAMLayer(nn.Module):
         return x
 
 
-
 class CBAM_ASPP(nn.Module):
-    def __init__(self, dim_in, dim_out, atrous_rates=(6,12,18), bn_mom=0.1):
+    def __init__(self, dim_in, dim_out, atrous_rates=(6, 12, 18), bn_mom=0.1):
         super().__init__()
         self.branch1 = nn.Sequential(
             nn.Conv2d(dim_in, dim_out, 1, 1, padding=0, dilation=1, bias=True),
@@ -152,10 +151,11 @@ class Embeddings_CBAM(Embeddings):
     """
 
     def __init__(self, config, img_size, in_channels=3):
-        super(Embeddings, self).__init__(config, img_size, in_channels)
+        super().__init__(config, img_size, in_channels)
 
         self.hybrid_model = ResNetV2_CBAM_4skip(block_units=config.resnet.num_layers,
                                                 width_factor=config.resnet.width_factor)
+
 
 # not change module, so save here
 class Encoder(nn.Module):
@@ -180,10 +180,15 @@ class Encoder(nn.Module):
 
 class Transformer_CBAM(Transformer):
     def __init__(self, config, img_size, vis):
-        super(Transformer, self).__init__(config, img_size, vis)
+        super().__init__(config, img_size, vis)
         self.embeddings = Embeddings_CBAM(config, img_size=img_size)  ######读懂####
-
         self.encoder = Encoder(config, vis)
+
+    def forward(self, input_ids):
+        embedding_output, features = self.embeddings(input_ids)
+        encoded, attn_weights = self.encoder(embedding_output)  # (B, n_patch, hidden)
+
+        return encoded, attn_weights, features
 
 
 # DecoderBlock_CBAM
@@ -245,7 +250,7 @@ class DecoderCup_CBAM_ASPP_CBAM(DecoderCup):
     def __init__(self, config):
         super().__init__(config)
         self.config = config
-        head_channels = config.skip_channels[0] # 512
+        head_channels = config.skip_channels[0]  # 512
         self.conv_more = Conv2dReLU(
             config.hidden_size,
             head_channels,
@@ -259,7 +264,7 @@ class DecoderCup_CBAM_ASPP_CBAM(DecoderCup):
 
         if self.config.n_skip != 0:
             skip_channels = self.config.skip_channels
-            skip_channels[self.config.n_skip:]=[0]*len(skip_channels[self.config.n_skip:])
+            skip_channels[self.config.n_skip:] = [0] * len(skip_channels[self.config.n_skip:])
             # for i in range(4 - self.config.n_skip):  # re-select the skip channels according to n_skip
             #     skip_channels[3 - i] = 0
 
@@ -337,7 +342,6 @@ class DecoderCup_ASPP(DecoderCup):
         self.blocks = nn.ModuleList(blocks)
         self.aspp = ASPP(head_channels, head_channels)
 
-
     def forward(self, hidden_states, features=None):
         B, n_patch, hidden = hidden_states.size()  # reshape from (B, n_patch, hidden) to (B, h, w, hidden)
         h, w = int(np.sqrt(n_patch)), int(np.sqrt(n_patch))
@@ -357,6 +361,7 @@ class DecoderCup_ASPP(DecoderCup):
             x = decoder_block(x, skip=skip)
 
         return x
+
 
 class Vit_CBAM(VisionTransformer):
     def __init__(self, config, img_size=256, num_classes=21843, zero_head=False, vis=False, cgm=True):
@@ -395,7 +400,7 @@ class Vit_CBAM_ASPP(VisionTransformer):
         self.transformer = Transformer_CBAM(config, img_size, vis)
         self.decoder = DecoderCup_CBAM_ASPP_CBAM(config)
         self.segmentation_head = SegmentationHead(
-            in_channels=config['decoder_channels'][config.n_skip-1],
+            in_channels=config['decoder_channels'][config.n_skip - 1],
             out_channels=config['n_classes'],
             kernel_size=3,
         )

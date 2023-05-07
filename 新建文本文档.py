@@ -676,9 +676,9 @@ def test():
 
 
 if __name__ == '__main__':
-    # observe_model()
+    observe_model()
     # main()
-    test()
+    # test()
     # txt()
     # count_pos()
     # ob_weight()
