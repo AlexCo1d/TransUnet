@@ -14,9 +14,7 @@ from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
 import torchvision.transforms as transforms
 import cv2
 
-from train_config import Config
-
-config = Config()
+from train_config import config
 
 
 def letterbox_image(image, label, size):
@@ -59,7 +57,7 @@ class unetDataset(Dataset):
     def rand(self, a=0, b=1):
         return np.random.rand() * (b - a) + a
 
-    def get_random_data(self, image, label, input_shape, jitter=.3, hue=.1, sat=1.5, val=1.5, fil=.3):
+    def get_random_data(self, image, label, input_shape, jitter=.3, hue=.1, sat=1.4, val=1.4, fil=.3):
         label = Image.fromarray(np.array(label))
         # crop image or not
         if rand() < .6:

@@ -480,7 +480,20 @@ if __name__ == "__main__":
             #                      drop_last=True, collate_fn=unet_dataset_collate, sampler=val_sampler)
             # 给定最后精度调优的epoch
             if epoch == set_epoch:
+
                 Batch_size = set_batch
+
+
+                Init_lr_fit = min(max(Batch_size / nbs * Init_lr, lr_limit_min), lr_limit_max)
+                Min_lr_fit = min(max(Batch_size / nbs * Min_lr, lr_limit_min * 1e-2), lr_limit_max * 1e-2)
+                gen = DataLoader(train_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
+                                 drop_last=True, collate_fn=unet_dataset_collate, sampler=train_sampler)
+                gen_val = DataLoader(val_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
+                                     drop_last=True, collate_fn=unet_dataset_collate, sampler=val_sampler)
+
+                epoch_size = max(1, len(train_lines) // Batch_size)
+                epoch_size_val = max(1, len(val_lines) // Batch_size)
+                lr_scheduler_func = get_lr_scheduler(lr_decay_type, Init_lr_fit, Min_lr_fit, Interval_Epoch)
 
             if (pretrained is True) and (epoch == Freeze_Epoch):
                 # 解冻!!
