@@ -1,7 +1,7 @@
 import cv2
 from numpy.core.numeric import False_, True_
 
-from train_config import Config
+from train_config import config
 from nets.Net import get_Net
 from torch import nn
 from PIL import Image
@@ -15,7 +15,7 @@ import os
 
 from utils.visualization import blend_images
 
-config= Config()
+
 class uNet(object):
     # -----------------------------------------#
     #   注意修改model_path、num_classes

@@ -3,7 +3,7 @@ import torch.nn as nn
 import functools
 import torch.nn.functional as F
 
-from nets.vit_cbam_modeling import Vit_CBAM, Vit_CBAM_ASPP
+from nets.vit_cbam_modeling import Vit_CBAM, Vit_CBAM_ASPP,Vit_CBAM_3skip
 from .transunet_modeling import VisionTransformer as ViT_seg
 from .transunet_modeling import CONFIGS as CONFIGS_ViT_seg
 from train_config import config
@@ -20,7 +20,7 @@ def get_Net(n_classes, img_size=256):
     # net = ViT_seg(config_vit, img_size=img_size, num_classes=n_classes)
     global net
     if config.model == 'Vit_CBAM_ASPP':
-        net = Vit_CBAM_ASPP(config_vit, img_size=img_size, num_classes=n_classes)
+        net = Vit_CBAM_3skip(config_vit, img_size=img_size, num_classes=n_classes)
     elif config.model == 'Vit_CBAM':
         net = Vit_CBAM(config_vit, img_size=img_size, num_classes=n_classes)
     else:
