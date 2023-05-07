@@ -1,6 +1,6 @@
 import ml_collections
-import train_config
-c=train_config.Config()
+from train_config import config
+
 def get_b16_config():
     """Returns the ViT-B/16 configuration."""
     config = ml_collections.ConfigDict()
@@ -20,7 +20,7 @@ def get_b16_config():
     config.patch_size = 16
 
     config.decoder_channels = (256, 128, 64, 16)
-    config.n_classes = c.NUM_CLASSES
+    config.n_classes = 2
     config.activation = 'softmax'
     return config
 
@@ -85,7 +85,7 @@ def get_l16_config():
     config.resnet_pretrained_path = None
     config.pretrained_path = '../model/vit_checkpoint/imagenet21k/ViT-L_16.npz'
     config.decoder_channels = (256, 128, 64, 16)
-    config.n_classes = c.NUM_CLASSES
+    config.n_classes = 2
     config.activation = 'softmax'
     return config
 
@@ -102,7 +102,7 @@ def get_r50_l16_config():
     config.resnet_pretrained_path = '../model/vit_checkpoint/imagenet21k/R50+ViT-B_16.npz'
     config.decoder_channels = (256, 128, 64, 16)
     config.skip_channels = [512, 256, 64, 16]
-    config.n_classes = c.NUM_CLASSES
+    config.n_classes = 2
     config.activation = 'softmax'
     return config
 
