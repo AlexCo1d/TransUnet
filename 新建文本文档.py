@@ -634,25 +634,28 @@ def test():
     #
     # for k, v in pw['model_state'].items():
     #     print(k)
+    class A:
+        def __init__(self):
+            self.a=[1,2,3]
+            a[-1]=0
+
+    class B:
+        def __init__(self):
+            self.a=[1,2,3]
+            b=a
 
     class Parent1:
-        def __init__(self, a, b,c):
-            if b:
-                self.a = a
-            temp=2+3*5+c
-            self.b=temp/2
-
-
+        def __init__(self):
+            self.a=A()
         def method1(self):
             print("Method 1 from Parent1")
 
         def method2(self):
             print("Method 2 from Parent1")
 
-    class Parent2:
-        def __init__(self, a, b):
-            self.a = 'c'
-            self.b = 'c'
+    class Parent2(Parent1):
+        def __init__(self):
+            self.a=B()
 
         def method1(self):
             print("Method 1 from Parent2")
@@ -660,18 +663,7 @@ def test():
         def method3(self):
             print("Method 3 from Parent2")
 
-    class Child(Parent1, Parent2):
-        def __init__(self,a,b,c):
-            super().__init__()
-            self.a='child'
-
-        def method1(self):
-            Parent2.method1(self)
-
-    child=Child('a','b',4)
-    print(child.a)
-    child.method1()
-
+    Parent2()
     pass
 
 

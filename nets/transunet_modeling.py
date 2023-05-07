@@ -366,13 +366,12 @@ class DecoderCup(nn.Module):
         out_channels = decoder_channels
 
         if self.config.n_skip-1 != 0:
-            skip_channels = self.config.skip_channels
-            # skip_channels[-1] = 0
+            self.skip_channels = self.config.skip_channels
         else:
-            skip_channels = [0, 0, 0, 0]
+            self.skip_channels = [0, 0, 0, 0]
 
         blocks = [
-            DecoderBlock(in_ch, out_ch, sk_ch) for in_ch, out_ch, sk_ch in zip(in_channels, out_channels, skip_channels)
+            DecoderBlock(in_ch, out_ch, sk_ch) for in_ch, out_ch, sk_ch in zip(in_channels, out_channels, self.skip_channels)
         ]
         self.blocks = nn.ModuleList(blocks)
 

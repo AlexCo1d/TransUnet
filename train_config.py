@@ -91,7 +91,8 @@ class BaseConfig:
     # 2：混合
     # -----------------------#
     output_type = 2
-
+    # 跳跃连接数量
+    n_skip=4
 
 class Config_Cervical(BaseConfig):
     inputs_size = [512, 512, 3]
@@ -104,7 +105,7 @@ class Config_Breast(BaseConfig):
     inputs_size = [512, 512, 3]
     image_type = '.png'  # image is jpg or png
     NUM_CLASSES = 2
-    model = 'Vit_CBAM_ASPP'
+    model = 'Vit_CBAM'
 
 class Config_DDTI(BaseConfig):
     inputs_size = [256, 256, 3]
