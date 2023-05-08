@@ -57,7 +57,7 @@ class unetDataset(Dataset):
     def rand(self, a=0, b=1):
         return np.random.rand() * (b - a) + a
 
-    def get_random_data(self, image, label, input_shape, jitter=.3, hue=.1, sat=1.5, val=15, fil=.4):
+    def get_random_data(self, image, label, input_shape, jitter=.3, hue=.1, sat=.7, val=.3, fil=.4):
         label = Image.fromarray(np.array(label))
         # crop image or not
         if rand() < .6:
