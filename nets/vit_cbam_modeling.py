@@ -212,7 +212,7 @@ class DecoderBlock_4skip_CBAM(DecoderBlock):
         self.cbam = CBAMLayer(out_channels)
 
     def forward(self, x, skip=None):
-        print('in', x.size())
+        # print('in', x.size())
         # x = self.up(x)
         if skip is not None:
             x = torch.cat([x, skip], dim=1)
