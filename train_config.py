@@ -114,4 +114,4 @@ class Config_DDTI(BaseConfig):
     model = 'Vit_CBAM_ASPP'
 
 
-config = Config_Breast()
+config = Config_DDTI()
