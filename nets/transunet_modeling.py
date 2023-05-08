@@ -330,7 +330,7 @@ class DecoderBlock(nn.Module):
         self.up = interpolate(scale_factor=2, mode='bilinear',align_corners=True)
 
     def forward(self, x, skip=None):
-        print(x.size(),skip.size())
+        # print(x.size(),skip.size())
         x = self.up(x)
         if skip is not None:
             x = torch.cat([x, skip], dim=1)

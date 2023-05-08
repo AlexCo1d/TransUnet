@@ -57,7 +57,7 @@ class unetDataset(Dataset):
     def rand(self, a=0, b=1):
         return np.random.rand() * (b - a) + a
 
-    def get_random_data(self, image, label, input_shape, jitter=.3, hue=.1, sat=1.4, val=1.4, fil=.3):
+    def get_random_data(self, image, label, input_shape, jitter=.3, hue=.1, sat=1.5, val=15, fil=.4):
         label = Image.fromarray(np.array(label))
         # crop image or not
         if rand() < .6:
@@ -114,7 +114,7 @@ class unetDataset(Dataset):
             label = label.rotate(angle, resample=Image.BICUBIC, expand=False, fillcolor=0)
 
         # gaussian filter and sharpen filter choose one
-        if rand() < .3:
+        if rand() < .4:
             if rand() < .5:
                 radius = np.random.uniform(1 - fil, 1)
                 image = image.filter(ImageFilter.GaussianBlur(radius))
@@ -128,7 +128,7 @@ class unetDataset(Dataset):
 
         # distort image slightly
         if rand() < .3:
-            augmenter = iaa.ElasticTransformation(alpha=10, sigma=5)
+            augmenter = iaa.ElasticTransformation(alpha=8, sigma=5)
             image_data, label = augmenter(images=[image_data, label])
 
         # ---------------------------------#

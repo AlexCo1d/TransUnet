@@ -82,7 +82,7 @@ class BaseConfig:
     Interval_Epoch = 300
     # 设置冻结的epoch
     Freeze_Epoch = 40
-    Freeze_Batch_Size = 4
+    Freeze_Batch_Size = 2
     set_epoch_batch = [200, 1]
     # ----------------------#
     # 输出图像的形式
@@ -105,7 +105,7 @@ class Config_Breast(BaseConfig):
     inputs_size = [512, 512, 3]
     image_type = '.png'  # image is jpg or png
     NUM_CLASSES = 2
-    model = 'Vit_CBAM'
+    model = 'Vit_CBAM_ASPP'
 
 class Config_DDTI(BaseConfig):
     inputs_size = [256, 256, 3]
