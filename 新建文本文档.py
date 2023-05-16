@@ -634,43 +634,21 @@ def test():
     #
     # for k, v in pw['model_state'].items():
     #     print(k)
-    class A:
-        def __init__(self):
-            self.a=[1,2,3]
-            a[-1]=0
+    path='/Users/zouyuanhao/Desktop/data/all_data/cervical_visualization/' #label,miou,test_Trans
+    sub='miou_pr_dir_TransUnet'
+    path=os.path.join(path,sub)
+    for image in os.listdir(path):
+        img=np.array(Image.open(os.path.join(path,image)))
+        img[img!=0]=255
+        Image.fromarray(img).save(os.path.join('/Users/zouyuanhao/Desktop/data/all_data/cervical_visualization/',sub,image))
 
-    class B:
-        def __init__(self):
-            self.a=[1,2,3]
-            b=a
-
-    class Parent1:
-        def __init__(self):
-            self.a=A()
-        def method1(self):
-            print("Method 1 from Parent1")
-
-        def method2(self):
-            print("Method 2 from Parent1")
-
-    class Parent2(Parent1):
-        def __init__(self):
-            self.a=B()
-
-        def method1(self):
-            print("Method 1 from Parent2")
-
-        def method3(self):
-            print("Method 3 from Parent2")
-
-    Parent2()
-    pass
 
 
 if __name__ == '__main__':
-    observe_model()
+    # observe_model()
     # main()
-    # test()
+    test()
+    # print(torch.__version__)
     # txt()
     # count_pos()
     # ob_weight()
