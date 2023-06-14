@@ -624,6 +624,7 @@ def preprocess():
 
 
 def test():
+
     # path=r'D:\learning\UNNC 科研\DeepLabV3Plus-Pytorch\best_deeplabv3plus_mobilenet_voc_os16.pth'
     # pw=torch.load(path,map_location=torch.device('cpu'))
     # load_key, no_load_key, temp_dict = [], [], {}
@@ -634,14 +635,24 @@ def test():
     #
     # for k, v in pw['model_state'].items():
     #     print(k)
-    path='/Users/zouyuanhao/Desktop/data/all_data/cervical_visualization/' #label,miou,test_Trans
-    sub='miou_pr_dir_TransUnet'
+    path='BUSI_visualization/' #label,miou,test_Trans
+    sub='validation_raw_postprocessed'
     path=os.path.join(path,sub)
-    for image in os.listdir(path):
-        img=np.array(Image.open(os.path.join(path,image)))
-        img[img!=0]=255
-        Image.fromarray(img).save(os.path.join('/Users/zouyuanhao/Desktop/data/all_data/cervical_visualization/',sub,image))
+    # for image in os.listdir(path):
 
+    img=np.array(Image.open(r'D:\learning\UNNC 科研\benign (62).png'))
+    img[img!=0]=255
+    Image.fromarray(img).save('benign (62).png')
+
+    # import SimpleITK as sitk
+    # for nii_file in os.listdir(path):
+    #     if nii_file.endswith('.nii.gz'):
+    #         cur_addr = os.path.join(path, nii_file)
+    #         nii = sitk.ReadImage(cur_addr)
+    #         img = sitk.GetArrayFromImage(nii).squeeze()
+    #         # img = (img - img.min()) / (img.max() - img.min())
+    #         img[img!=0]=255
+    #         Image.fromarray(img).save(os.path.join(path, nii_file.replace('.nii.gz', '.png')))
 
 
 if __name__ == '__main__':

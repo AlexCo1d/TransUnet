@@ -11,6 +11,7 @@ import numpy as np
 import torch
 
 from train_config import config
+from utils.postprocess import postprocess
 
 txt_path = "./VOCdevkit/VOC2007/ImageSets/Segmentation/val.txt"
 image_path='./VOCdevkit/VOC2007/JPEGImages'
@@ -40,6 +41,7 @@ label_path='./VOCdevkit/VOC2007/SegmentationClass'
 #         return image
 
 type=config.image_type
+
 def show_image():
     from unet import uNet
     uNet = uNet()
@@ -53,6 +55,7 @@ def show_image():
         img = Image.open(os.path.join(image_path,jpg)).convert('RGB')
         start_time = time.time()
         image = uNet.detect_image(img,mix=config.output_type)
+        image = postprocess(np.array(image))
         duration = time.time() - start_time
         print("预测时间", duration)
         image.save("./img_out/" + jpg)
@@ -78,7 +81,7 @@ def transfer_image():
         # 测试集生成标签
         image = Image.open(os.path.join(image_path, image_name))
         label = unet.detect_image(image,mix=0)
-
+        label= postprocess(np.array(label))
         # image = image.resize((512, 512))
         label.save(f"miou_pr_dir/{label_name}")
         print(label_name, " done!")
