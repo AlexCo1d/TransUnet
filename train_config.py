@@ -103,6 +103,7 @@ class Config_Cervical(BaseConfig):
     image_type = '.jpg'  # image is jpg or png
     NUM_CLASSES = 2
     model = 'Vit_CBAM_ASPP'
+    component = 1
 
 
 class Config_Breast(BaseConfig):
@@ -119,4 +120,4 @@ class Config_DDTI(BaseConfig):
     model = 'Vit_CBAM_ASPP'
 
 
-config = Config_DDTI()
+config = Config_Cervical()

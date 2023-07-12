@@ -5,7 +5,7 @@ import os
 import sys
 import shutil
 import random
-from torchinfo import summary
+# from torchinfo import summary
 import torch
 from nets.Net import get_Net
 from nets.transunet_modeling import *
@@ -493,7 +493,7 @@ def observe_model():
     t = torch.rand(2, 3, 256, 256)
     x = model(t)
     print(x.shape)
-    summary(model, input_size=(2, 3, 256, 256))
+    # summary(model, input_size=(2, 3, 256, 256))
     # summary(VisionTransformer(config_vit, img_size=img_size, num_classes=1),input_size=(2,3,256,256))
     # print(model)
 
@@ -655,13 +655,37 @@ def test():
     #         Image.fromarray(img).save(os.path.join(path, nii_file.replace('.nii.gz', '.png')))
 
 
+def postprocess_and_evaluate():
+    src_folder=r'E:\learning\UNNC 科研\TransUnet\cervical_visualization\miou_pr_dir_latest'
+    dst_folder=r'E:\learning\UNNC 科研\TransUnet\cervical_visualization\postprocess_latest'
+    list=os.listdir(src_folder)
+    for img in list:
+        image=np.array(Image.open(os.path.join(src_folder,img)))
+        from utils.postprocess import postprocess
+        image=postprocess(image)
+        image[image!=0]=255
+        Image.fromarray(image).save(os.path.join(dst_folder,img))
+    from seg_metrics import compute_dice
+    compute_dice(r'E:\learning\UNNC 科研\TransUnet\cervical_visualization\label',dst_folder)
+
+
+def turn():
+    src_f=r'E:\learning\UNNC 科研\TransUnet\cervical_visualization\miou_pr_dir_pp'
+    dst_f=r'E:\learning\UNNC 科研\TransUnet\cervical_visualization\pp_latest'
+    for img in os.listdir(src_f):
+        image=np.array(Image.open(os.path.join(src_f,img)))
+        image[image != 0] = 255
+        Image.fromarray(image).save(os.path.join(dst_f, img))
+
 if __name__ == '__main__':
     # observe_model()
     # main()
-    test()
+    # test()
     # print(torch.__version__)
     # txt()
     # count_pos()
     # ob_weight()
     # preprocess()
+    # postprocess_and_evaluate()
+    turn()
     pass

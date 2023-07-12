@@ -38,18 +38,26 @@ def largest_k_connected_components(binary_image, k):
 
 
 def postprocess(image):
+    '''
+
+    Args:
+        image:
+
+    Returns:
+        经过形态学处理的图片
+    '''
     if config.component != -1:
-        image=largest_k_connected_components(image,config.k_component)
+        image=largest_k_connected_components(image,config.component)
 
     # 开运算，去除孤立点
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
-    image = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
+    # kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+    # image = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
 
     # 闭运算，去除空洞
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
-    image = cv2.morphologyEx(image, cv2.MORPH_ClOSE, kernel)
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+    image = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
 
-    return Image.fromarray(image)
+    return image
 
 
 
