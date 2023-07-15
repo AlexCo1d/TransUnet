@@ -1,3 +1,6 @@
+from sklearn.metrics import roc_curve, auc, confusion_matrix
+import matplotlib.pyplot as plt
+
 # -*- coding: utf-8 -*-
 """
 Created on Tue Jul 21 15:29:02 2020
@@ -124,103 +127,13 @@ def Frequency_Weighted_Intersection_over_Union(confusionMatrix):
     return FWIoU
 
 
-def dice(confusionMatrix):
+def compute_direct_dice(confusionMatrix):
     #  返回交并比IoU
     intersection = 2 * np.diag(confusionMatrix)
     union = np.sum(confusionMatrix, axis=1) + np.sum(confusionMatrix, axis=0)
     dice = intersection / union
     dice = np.nanmean(dice)
     return dice
-
-#################################################################
-#  标签图像文件夹
-LabelPath = r"miou_pr_dir copy"
-#  预测图像文件夹
-PredictPath = r"miou_pr_dir"
-#  类别数目(包括背景)
-classNum = config.NUM_CLASSES
-#################################################################
-
-#  获取类别颜色字典
-colorDict_BGR, colorDict_GRAY = color_dict(LabelPath, classNum)
-
-#  获取文件夹内所有图像
-labelList = os.listdir(LabelPath)
-PredictList = os.listdir(PredictPath)
-
-#  读取第一个图像，后面要用到它的shape
-Label0 = cv2.imread(LabelPath + "//" + labelList[0], 0)
-
-#  图像数目
-label_num = len(labelList)
-
-#  把所有图像放在一个数组里
-# label_all = np.zeros((label_num,) + Label0.shape, np.uint8)
-# predict_all = np.zeros((label_num,) + Label0.shape, np.uint8)
-label_all=[]
-predict_all=[]
-for i in range(label_num):
-    Label = cv2.imread(LabelPath + "//" + labelList[i])
-    Label = cv2.cvtColor(Label, cv2.COLOR_BGR2GRAY)
-    label_all.append(Label)
-    Predict = cv2.imread(PredictPath + "//" + PredictList[i])
-    Predict = cv2.cvtColor(Predict, cv2.COLOR_BGR2GRAY)
-    predict_all.append(Predict)
-
-label_all = np.concatenate([array.flatten() for array in label_all])
-predict_all = np.concatenate([array.flatten() for array in predict_all])
-
-#  把颜色映射为0,1,2,3...
-# for i in range(colorDict_GRAY.shape[0]):
-#     label_all[label_all == colorDict_GRAY[i][0]] = i
-#     predict_all[predict_all == colorDict_GRAY[i][0]] = i
-
-#  拉直成一维
-# label_all = label_all.flatten()
-# predict_all = predict_all.flatten()
-
-
-#  计算混淆矩阵及各精度参数
-confusionMatrix = ConfusionMatrix(classNum, predict_all, label_all)
-precision = Precision(confusionMatrix)
-recall = Recall(confusionMatrix)
-OA = OverallAccuracy(confusionMatrix)
-IoU = IntersectionOverUnion(confusionMatrix)
-FWIOU = Frequency_Weighted_Intersection_over_Union(confusionMatrix)
-mIOU = MeanIntersectionOverUnion(confusionMatrix)
-f1ccore = F1Score(confusionMatrix)
-dice = dice(confusionMatrix)
-
-for i in range(colorDict_BGR.shape[0]):
-    #  输出类别颜色,需要安装webcolors,直接pip install webcolors
-    try:
-        import webcolors
-
-        rgb = colorDict_BGR[i]
-        rgb[0], rgb[2] = rgb[2], rgb[0]
-        print(webcolors.rgb_to_name(rgb), end="  ")
-    #  不安装的话,输出灰度值
-    except:
-        print(colorDict_GRAY[i][0], end="  ")
-print("")
-print("混淆矩阵:")
-print(confusionMatrix)
-print("精确度:")
-print(precision)
-print("召回率:")
-print(recall)
-print("F1-Score:")
-print(f1ccore)
-print("整体精度:")
-print(OA)
-print("IoU:")
-print(IoU)
-print("mIoU:")
-print(mIOU)
-print("FWIoU:")
-print(FWIOU)
-print("dice:")
-print(dice)
 
 
 def dice_coefficient(y_true, y_pred):
@@ -303,5 +216,129 @@ def compute_dice(label_folder,prediction_folder):
 #
 #     print("混淆矩阵：\n", conf_mat)
 
-from sklearn.metrics import confusion_matrix
-compute_dice(LabelPath,PredictPath)
+
+def plot_roc(fpr, tpr, roc_auc):
+    plt.figure()
+    lw = 2
+    plt.plot(fpr, tpr, color='darkorange', lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver Operating Characteristic example')
+    plt.legend(loc="lower right")
+    plt.show()
+
+
+def Get_ROC(prediction_dir, truth_dir):
+    # todo:
+    file_names = os.listdir(
+        truth_dir)  # Assume that the truth and prediction directories have the same structure and file names
+
+    y_score_all = np.concatenate([img.ravel() for img in y_score_list])
+    y_true_all = np.concatenate([img.ravel() for img in y_true_list])
+
+    # Now `y_score_all` and `y_true_all` are 1D arrays containing all predictions and ground truth.
+    # They can be used to calculate the ROC curve and AUC.
+
+    fpr, tpr, _ = roc_curve(y_true_all, y_score_all)
+    roc_auc = auc(fpr, tpr)
+
+    print('AUC:', roc_auc)
+
+    plot_roc(fpr, tpr, roc_auc)
+
+
+def seg_metrics():
+
+    #################################################################
+    #  标签图像文件夹
+    LabelPath = r"miou_pr_dir copy"
+    #  预测图像文件夹
+    PredictPath = r"miou_pr_dir"
+    #  类别数目(包括背景)
+    classNum = config.NUM_CLASSES
+    #################################################################
+
+    #  获取类别颜色字典
+    colorDict_BGR, colorDict_GRAY = color_dict(LabelPath, classNum)
+
+    #  获取文件夹内所有图像
+    labelList = os.listdir(LabelPath)
+    PredictList = os.listdir(PredictPath)
+
+    #  读取第一个图像，后面要用到它的shape
+    Label0 = cv2.imread(LabelPath + "//" + labelList[0], 0)
+
+    #  图像数目
+    label_num = len(labelList)
+
+    #  把所有图像放在一个数组里
+    # label_all = np.zeros((label_num,) + Label0.shape, np.uint8)
+    # predict_all = np.zeros((label_num,) + Label0.shape, np.uint8)
+    label_all = []
+    predict_all = []
+    for i in range(label_num):
+        Label = cv2.imread(LabelPath + "//" + labelList[i])
+        Label = cv2.cvtColor(Label, cv2.COLOR_BGR2GRAY)
+        label_all.append(Label)
+        Predict = cv2.imread(PredictPath + "//" + PredictList[i])
+        Predict = cv2.cvtColor(Predict, cv2.COLOR_BGR2GRAY)
+        predict_all.append(Predict)
+
+    label_all = np.concatenate([array.flatten() for array in label_all])
+    predict_all = np.concatenate([array.flatten() for array in predict_all])
+
+    #  把颜色映射为0,1,2,3...
+    # for i in range(colorDict_GRAY.shape[0]):
+    #     label_all[label_all == colorDict_GRAY[i][0]] = i
+    #     predict_all[predict_all == colorDict_GRAY[i][0]] = i
+
+    #  拉直成一维
+    # label_all = label_all.flatten()
+    # predict_all = predict_all.flatten()
+    #  计算混淆矩阵及各精度参数
+    confusionMatrix = ConfusionMatrix(classNum, predict_all, label_all)
+    precision = Precision(confusionMatrix)
+    recall = Recall(confusionMatrix)
+    OA = OverallAccuracy(confusionMatrix)
+    IoU = IntersectionOverUnion(confusionMatrix)
+    FWIOU = Frequency_Weighted_Intersection_over_Union(confusionMatrix)
+    mIOU = MeanIntersectionOverUnion(confusionMatrix)
+    f1ccore = F1Score(confusionMatrix)
+    dice = compute_direct_dice(confusionMatrix)
+
+    for i in range(colorDict_BGR.shape[0]):
+        #  输出类别颜色,需要安装webcolors,直接pip install webcolors
+        try:
+            import webcolors
+
+            rgb = colorDict_BGR[i]
+            rgb[0], rgb[2] = rgb[2], rgb[0]
+            print(webcolors.rgb_to_name(rgb), end="  ")
+        #  不安装的话,输出灰度值
+        except:
+            print(colorDict_GRAY[i][0], end="  ")
+
+    print("")
+    print("混淆矩阵:")
+    print(confusionMatrix)
+    print("精确度:")
+    print(precision)
+    print("召回率:")
+    print(recall)
+    print("F1-Score:")
+    print(f1ccore)
+    print("整体精度:")
+    print(OA)
+    print("IoU:")
+    print(IoU)
+    print("mIoU:")
+    print(mIOU)
+    print("FWIoU:")
+    print(FWIOU)
+    print("dice:")
+    print(dice)
+
+    compute_dice(LabelPath,PredictPath)

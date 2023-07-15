@@ -10,6 +10,7 @@ import torch.nn.functional as F
 import numpy as np
 import torch
 
+from seg_metrics import seg_metrics
 from train_config import config
 from utils.postprocess import postprocess
 
@@ -90,3 +91,4 @@ def transfer_image():
 if __name__ == '__main__':
     show_image()
     transfer_image()
+    seg_metrics()
