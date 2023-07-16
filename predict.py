@@ -15,8 +15,8 @@ from train_config import config
 from utils.postprocess import postprocess
 
 txt_path = "./VOCdevkit/VOC2007/ImageSets/Segmentation/val.txt"
-image_path='./VOCdevkit/VOC2007/JPEGImages'
-label_path='./VOCdevkit/VOC2007/SegmentationClass'
+image_path = './VOCdevkit/VOC2007/JPEGImages'
+label_path = './VOCdevkit/VOC2007/SegmentationClass'
 
 # class miou_Pspnet(psp):
 #     def detect_image(self, image):
@@ -41,7 +41,8 @@ label_path='./VOCdevkit/VOC2007/SegmentationClass'
 #
 #         return image
 
-type=config.image_type
+type = config.image_type
+
 
 def show_image():
     from unet import uNet
@@ -52,10 +53,10 @@ def show_image():
         lines = file.readlines()
 
     for jpg in lines:
-        jpg=jpg.replace('\n','')+type
-        img = Image.open(os.path.join(image_path,jpg)).convert('RGB')
+        jpg = jpg.replace('\n', '') + type
+        img = Image.open(os.path.join(image_path, jpg)).convert('RGB')
         start_time = time.time()
-        image = uNet.detect_image(img,mix=config.output_type)
+        image, _ = uNet.detect_image(img, mix=config.output_type)
         image = postprocess(np.array(image))
         duration = time.time() - start_time
         print("预测时间", duration)
@@ -71,8 +72,8 @@ def transfer_image():
 
     for image_name in lines:
         # 测试集原标签
-        image_name=image_name.replace('\n','')+type
-        label_name=image_name.replace(type,'.png')
+        image_name = image_name.replace('\n', '') + type
+        label_name = image_name.replace(type, '.png')
 
         label = Image.open(os.path.join(label_path, label_name))
 
@@ -81,14 +82,15 @@ def transfer_image():
 
         # 测试集生成标签
         image = Image.open(os.path.join(image_path, image_name))
-        label = unet.detect_image(image,mix=0)
-        label= postprocess(np.array(label))
+        label, pr = unet.detect_image(image, mix=0) # label is classification result, pr is prediction score
+        label = postprocess(np.array(label))
         # image = image.resize((512, 512))
         label.save(f"miou_pr_dir/{label_name}")
         print(label_name, " done!")
 
 
 if __name__ == '__main__':
-    show_image()
+    # show_image()
     transfer_image()
+    # 获取指标
     seg_metrics()

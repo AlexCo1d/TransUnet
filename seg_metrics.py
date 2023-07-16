@@ -251,7 +251,6 @@ def Get_ROC(prediction_dir, truth_dir):
 
 
 def seg_metrics():
-
     #################################################################
     #  标签图像文件夹
     LabelPath = r"miou_pr_dir copy"

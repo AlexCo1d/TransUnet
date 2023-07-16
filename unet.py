@@ -151,4 +151,4 @@ class uNet(object):
             # seg_img = np.reshape(np.array(self.colors, np.uint8)[np.reshape(pr, [-1])], [orininal_h, orininal_w, -1])
             # image   = Image.fromarray(np.uint8(seg_img))
 
-        return image
+        return image,pr
