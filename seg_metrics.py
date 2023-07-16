@@ -218,6 +218,17 @@ def compute_dice(label_folder,prediction_folder):
 
 
 def plot_roc(fpr, tpr, roc_auc):
+    """
+    Plot the ROC curve.
+
+    Args:
+        fpr (numpy.ndarray): Array of false positive rates.
+        tpr (numpy.ndarray): Array of true positive rates.
+        roc_auc (float): Area under the ROC curve.
+
+    Returns:
+        None
+    """
     plt.figure()
     lw = 2
     plt.plot(fpr, tpr, color='darkorange', lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
@@ -231,13 +242,20 @@ def plot_roc(fpr, tpr, roc_auc):
     plt.show()
 
 
-def Get_ROC(prediction_dir, truth_dir):
-    # todo:
-    file_names = os.listdir(
-        truth_dir)  # Assume that the truth and prediction directories have the same structure and file names
+def Get_ROC(y_score_list, y_truth_list,num_classes):
+    """
+    Calculate ROC curve and AUC, and plot the ROC curve.
 
+    Args:
+        y_score_list (list of numpy.ndarray): List of 2D arrays containing the predicted scores for each image.
+        y_truth_list (list of numpy.ndarray): List of 2D arrays containing the ground truth labels for each image.
+        num_classes (int): The number of classes.
+
+    Returns:
+        None
+    """
     y_score_all = np.concatenate([img.ravel() for img in y_score_list])
-    y_true_all = np.concatenate([img.ravel() for img in y_true_list])
+    y_true_all = np.concatenate([img.ravel() for img in y_truth_list])
 
     # Now `y_score_all` and `y_true_all` are 1D arrays containing all predictions and ground truth.
     # They can be used to calculate the ROC curve and AUC.

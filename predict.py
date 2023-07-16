@@ -10,7 +10,7 @@ import torch.nn.functional as F
 import numpy as np
 import torch
 
-from seg_metrics import seg_metrics
+from seg_metrics import seg_metrics, Get_ROC
 from train_config import config
 from utils.postprocess import postprocess
 
@@ -70,15 +70,17 @@ def transfer_image():
     with open(txt_path, "r") as file:
         lines = file.readlines()
 
+    label_all = []
+    predict_all = []
     for image_name in lines:
         # 测试集原标签
         image_name = image_name.replace('\n', '') + type
         label_name = image_name.replace(type, '.png')
 
-        label = Image.open(os.path.join(label_path, label_name))
+        label_truth = Image.open(os.path.join(label_path, label_name))
 
         # image = image.resize((512, 512))
-        label.save(f"miou_pr_dir copy/{label_name}")
+        label_truth.save(f"miou_pr_dir copy/{label_name}")
 
         # 测试集生成标签
         image = Image.open(os.path.join(image_path, image_name))
@@ -88,6 +90,12 @@ def transfer_image():
         label.save(f"miou_pr_dir/{label_name}")
         print(label_name, " done!")
 
+        # only for 1 label, todo: this work should be further accomplished in future
+        if config.NUM_CLASSES==2:
+            label_all.append(np.array(label_truth))
+            predict_all.append(np.array(pr[..., 1]))
+
+        Get_ROC(predict_all,label_all,config.NUM_CLASSES)
 
 if __name__ == '__main__':
     # show_image()

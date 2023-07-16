@@ -108,7 +108,7 @@ class uNet(object):
             #   将灰条部分截取掉
             # --------------------------------------#
             pr = pre[int((self.model_image_size[0] - nh) // 2):int((self.model_image_size[0] - nh) // 2 + nh),
-                     int((self.model_image_size[1] - nw) // 2):int((self.model_image_size[1] - nw) // 2 + nw)]
+                 int((self.model_image_size[1] - nw) // 2):int((self.model_image_size[1] - nw) // 2 + nw)]
             # ---------------------------------------------------#
             #   进行图片的resize
             # ---------------------------------------------------#
@@ -133,16 +133,16 @@ class uNet(object):
             # ------------------------------------------------#
             #   将新图与原图及进行混合
             # ------------------------------------------------#
-            image = blend_images(image,old_img, 0.5)
+            image = blend_images(image, old_img, 0.5)
 
         elif self.mix == 1:
             seg_img = np.reshape(np.array(self.colors, np.uint8)[np.reshape(pr, [-1])], [orininal_h, orininal_w, -1])
             image = Image.fromarray(np.uint8(seg_img))
 
         elif self.mix == 0:
-            pr=pre.argmax(axis=-1)
+            pr = pre.argmax(axis=-1)
             pr = pr[int((self.model_image_size[0] - nh) // 2):int((self.model_image_size[0] - nh) // 2 + nh),
-                    int((self.model_image_size[1] - nw) // 2):int((self.model_image_size[1] - nw) // 2 + nw)]
+                 int((self.model_image_size[1] - nw) // 2):int((self.model_image_size[1] - nw) // 2 + nw)]
 
             image = Image.fromarray(np.uint8(pr)).resize((orininal_w, orininal_h), Image.NEAREST)
             # ------------------------------------------------#
@@ -151,4 +151,4 @@ class uNet(object):
             # seg_img = np.reshape(np.array(self.colors, np.uint8)[np.reshape(pr, [-1])], [orininal_h, orininal_w, -1])
             # image   = Image.fromarray(np.uint8(seg_img))
 
-        return image,pr
+        return image, pr
