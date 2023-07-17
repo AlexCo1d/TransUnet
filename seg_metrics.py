@@ -1,6 +1,3 @@
-from sklearn.metrics import roc_curve, auc, confusion_matrix
-import matplotlib.pyplot as plt
-
 # -*- coding: utf-8 -*-
 """
 Created on Tue Jul 21 15:29:02 2020
@@ -11,10 +8,10 @@ Created on Tue Jul 21 15:29:02 2020
 import numpy as np
 import cv2
 import os
-
 from PIL import Image
-
 from train_config import config
+from sklearn.metrics import roc_curve, auc, confusion_matrix
+import matplotlib.pyplot as plt
 
 """ 
 混淆矩阵
