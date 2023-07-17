@@ -23,7 +23,7 @@ class uNet(object):
     #   使其符合自己的模型
     # -----------------------------------------#
     _defaults = {
-        "model_path": './logs/best_epoch_weights.pth',
+        "model_path":'./logs/best_epoch_weights.pth',
         "model_image_size": config.inputs_size,
         "backbone": "ECAresnet",
         "downsample_factor": config.downsample_factor,
@@ -116,6 +116,7 @@ class uNet(object):
             # ---------------------------------------------------#
             #   取出每一个像素点的种类
             # ---------------------------------------------------#
+            class_score=pr
             pr = pr.argmax(axis=-1)
 
         if self.mix == 2:
@@ -151,4 +152,4 @@ class uNet(object):
             # seg_img = np.reshape(np.array(self.colors, np.uint8)[np.reshape(pr, [-1])], [orininal_h, orininal_w, -1])
             # image   = Image.fromarray(np.uint8(seg_img))
 
-        return image, pr
+        return image, class_score

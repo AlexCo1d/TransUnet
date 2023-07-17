@@ -69,6 +69,8 @@ class CBAMLayer(nn.Module):
         # spatial attention
         self.conv = nn.Conv2d(2, 1, kernel_size=spatial_kernel,
                               padding=spatial_kernel // 2, bias=False)
+        # 加一层BN layer
+        # self.BN = nn.BatchNorm2d(*)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
@@ -88,7 +90,7 @@ class CBAMLayer(nn.Module):
         # print('x:',x.shape)
         return x
 
-
+###  CBAM_ASPP和CBAM_Layer的区别是什么
 class CBAM_ASPP(nn.Module):
     def __init__(self, dim_in, dim_out, atrous_rates=(6, 12, 18), bn_mom=0.1):
         super().__init__()
@@ -492,7 +494,7 @@ class DecoderCup_3skip_CBAM_ASPP_CBAM(DecoderCup_3skip):
             zip(in_channels, out_channels, skip_channels)
         ]
         self.blocks = nn.ModuleList(blocks)
-        self.cbam_aspp = CBAM_ASPP(head_channels, head_channels)
+        self.cbam_aspp = ASPP(head_channels, head_channels)
 
     def forward(self, hidden_states, features=None):
         B, n_patch, hidden = hidden_states.size()  # reshape from (B, n_patch, hidden) to (B, h, w, hidden)

@@ -37,6 +37,7 @@ def get_Net(n_classes, img_size=256):
         # default BASIC
         config_vit.decoder_channels = (256, 128, 64, 16)
         config_vit.skip_channels = [512, 256, 64, 0]
+        config_vit.n_skip = 3
         net = ViT_seg(config_vit, img_size=img_size, num_classes=n_classes)
 
     return net

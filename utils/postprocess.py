@@ -57,7 +57,7 @@ def postprocess(image):
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
     image = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
 
-    return image
+    return Image.fromarray(image)
 
 
 

@@ -84,18 +84,18 @@ def transfer_image():
 
         # 测试集生成标签
         image = Image.open(os.path.join(image_path, image_name))
-        label, pr = unet.detect_image(image, mix=0) # label is classification result, pr is prediction score
+        label, score = unet.detect_image(image, mix=0) # label is classification result, pr is prediction score
         label = postprocess(np.array(label))
         # image = image.resize((512, 512))
         label.save(f"miou_pr_dir/{label_name}")
         print(label_name, " done!")
 
-        # only for 1 label, todo: this work should be further accomplished in future
+        # only for 1 label, todo: this work should be further accomplished
         if config.NUM_CLASSES==2:
             label_all.append(np.array(label_truth))
-            predict_all.append(np.array(pr[..., 1]))
+            predict_all.append(np.array(score[..., 1]))
 
-        Get_ROC(predict_all,label_all,config.NUM_CLASSES)
+    Get_ROC(predict_all,label_all,config.NUM_CLASSES)
 
 if __name__ == '__main__':
     # show_image()

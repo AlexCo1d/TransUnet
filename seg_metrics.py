@@ -169,7 +169,7 @@ def compute_dice(label_folder,prediction_folder):
         label_img = np.array(Image.open(label_path))
         assert len(np.unique(label_img))<3,"label wrong"
         prediction_img = np.array(Image.open(prediction_path))
-        dice_val = cal_dice(prediction_img, label_img, classes=classNum, background_id=0)
+        dice_val = cal_dice(prediction_img, label_img, classes=config.NUM_CLASSES, background_id=0)
         label_img[label_img!=0]=1
         prediction_img[prediction_img != 0] = 1
         # for i in range(colorDict_GRAY.shape[0]):
@@ -359,3 +359,6 @@ def seg_metrics():
     print(dice)
 
     compute_dice(LabelPath,PredictPath)
+
+if __name__ == '__main__':
+    seg_metrics()

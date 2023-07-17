@@ -361,11 +361,11 @@ class DecoderCup(nn.Module):
             padding=1,
             use_batchnorm=True,
         )
-        decoder_channels = config.decoder_channels[1:]
+        decoder_channels = config.decoder_channels
         in_channels = [head_channels] + list(decoder_channels[:-1])
         out_channels = decoder_channels
 
-        if self.config.n_skip-1 != 0:
+        if self.config.n_skip - 1 != 0:
             self.skip_channels = self.config.skip_channels
         else:
             self.skip_channels = [0, 0, 0, 0]
@@ -387,7 +387,7 @@ class DecoderCup(nn.Module):
         x = self.conv_more(x)
         for i, decoder_block in enumerate(self.blocks):
             if features is not None:
-                skip = features[i] if (i < self.config.n_skip-1) else None
+                skip = features[i] if (i < self.config.n_skip) else None
             else:
                 skip = None
             x = decoder_block(x, skip=skip)
