@@ -31,15 +31,16 @@ if config.n_fold > 1:
         train_images = [os.path.splitext(img)[0] for img in train_images]
         valid_images = [os.path.splitext(img)[0] for img in valid_images]
 
-        with open(f'train_{i+1}.txt', 'w') as f:
+        with open(os.path.join(saveBasePath,f'train_{i+1}.txt'), 'w') as f:
             for img in train_images:
                 f.write(img + '\n')
 
-        with open(f'valid_{i+1}.txt', 'w') as f:
+        with open(os.path.join(saveBasePath,f'valid_{i+1}.txt'), 'w') as f:
             for img in valid_images:
                 f.write(img + '\n')
+
 else:   # if fold<=1, then all need train
-    with open(f'train_1.txt', 'w') as ftrain:
+    with open(os.path.join(saveBasePath,'train_1.txt'), 'w') as ftrain:
         for img in os.listdir(image_seg):
             name = img.split('.')[0] + '\n'
             ftrain.write(name)
