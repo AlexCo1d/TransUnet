@@ -14,7 +14,7 @@ from seg_metrics import seg_metrics, Get_ROC
 from train_config import config
 from utils.postprocess import postprocess
 
-txt_path = "./VOCdevkit/VOC2007/ImageSets/Segmentation/val.txt"
+txt_path = "./VOCdevkit/VOC2007/ImageSets/Segmentation/valid"
 image_path = './VOCdevkit/VOC2007/JPEGImages'
 label_path = './VOCdevkit/VOC2007/SegmentationClass'
 
@@ -63,43 +63,47 @@ def show_image():
         image.save("./img_out/" + jpg)
 
 
-def transfer_image():
+def predict_and_eval():
     from unet import uNet
-    unet = uNet()
-    unet.net.eval()
-    with open(txt_path, "r") as file:
-        lines = file.readlines()
+    # label_all = []
+    # predict_all = []
 
-    label_all = []
-    predict_all = []
-    for image_name in lines:
-        # 测试集原标签
-        image_name = image_name.replace('\n', '') + type
-        label_name = image_name.replace(type, '.png')
+    for fold in range(config.n_fold):
+        if not os.path.exists(f'pr_dir/fold_{fold+1}'):
+            os.mkdir(f'pr_dir/fold_{fold+1}')
 
-        label_truth = Image.open(os.path.join(label_path, label_name))
+        unet = uNet(fold=fold)
+        unet.net.eval()
+        with open(txt_path+f'_{fold+1}.txt', "r") as file:
+            lines = file.readlines()
+        for image_name in lines:
+            # 测试集原标签
+            image_name = image_name.replace('\n', '') + type
+            label_name = image_name.replace(type, '.png')
 
-        # image = image.resize((512, 512))
-        label_truth.save(f"miou_pr_dir copy/{label_name}")
+            label_truth = Image.open(os.path.join(label_path, label_name))
+            label_truth.save(f"pr_dir copy/{label_name}")
 
-        # 测试集生成标签
-        image = Image.open(os.path.join(image_path, image_name))
-        label, score = unet.detect_image(image, mix=0) # label is classification result, pr is prediction score
-        label = postprocess(np.array(label))
-        # image = image.resize((512, 512))
-        label.save(f"miou_pr_dir/{label_name}")
-        print(label_name, " done!")
+            # 测试集生成标签
+            image = Image.open(os.path.join(image_path, image_name))
+            label, score = unet.detect_image(image, mix=0) # label is classification result, pr is prediction score
+            label = postprocess(np.array(label))
+            # image = image.resize((512, 512))
+            label.save(f"pr_dir/fold_{fold+1}/{label_name}")
+            print(label_name, " done!")
 
-        # only for 1 label, todo: this work should be further accomplished
-        # if config.NUM_CLASSES==2:
-        #     label_all.append(np.array(label_truth))
-        #     predict_all.append(np.array(score[..., 1]))
+            # only for 1 label, this work should be further accomplished, ROC for multiple labels
+            # if config.NUM_CLASSES==2:
+            #     label_all.append(np.array(label_truth))
+            #     predict_all.append(np.array(score[..., 1]))
 
-    # Get_ROC(predict_all,label_all,config.NUM_CLASSES)
+        # evaluate the prediction by using the metrics
+        seg_metrics(fold=fold)
+
+        # get ROC func
+        # Get_ROC(predict_all,label_all,config.NUM_CLASSES)
 
 if __name__ == '__main__':
     # show_image()
-    transfer_image()
+    predict_and_eval()
 
-    # evaluate the prediction by using the metrics
-    seg_metrics()

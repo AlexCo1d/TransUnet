@@ -59,7 +59,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
     start_time = time.time()
 
     if local_rank == 0:
-        print(f'Start Train, Fold:{fold}')
+        print(f'Start Train, Fold:{fold+1}')
         pbar = tqdm(total=epoch_size, desc=f'Epoch {epoch + 1}/{Epoch}', postfix=dict, mininterval=0.3)
 
     model_train.train()
@@ -142,7 +142,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
     if local_rank == 0:
         pbar.close()
         print('Finish Train')
-        print('Start Validation, Fold:{fold}')
+        print(f'Start Validation, Fold:{fold+1}')
         pbar = tqdm(total=epoch_size_val, desc=f'Epoch {epoch + 1}/{Epoch}', postfix=dict, mininterval=0.3)
 
     model_train.eval()
@@ -211,11 +211,11 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
         # -----------------------------------------------#
         if (epoch + 1) % 10 == 0 or epoch + 1 == Epoch:
             torch.save(model.state_dict(), os.path.join(save_dir, 'ep%03d-loss%.3f-val_loss%.3f-fold%s.pth' % (
-                (epoch + 1), total_loss / epoch_size, val_toal_loss / epoch_size_val, fold)))
+                (epoch + 1), total_loss / epoch_size, val_toal_loss / epoch_size_val, fold+1)))
 
         if len(loss_history.val_loss) <= 1 or (val_toal_loss / epoch_size_val) <= min(loss_history.val_loss):
             print('Save best model to best_epoch_weights.pth')
-            torch.save(model.state_dict(), os.path.join(save_dir, f"best_epoch_weights_fold_{fold}.pth"))
+            torch.save(model.state_dict(), os.path.join(save_dir, f"best_epoch_weights_fold_{fold+1}.pth"))
 
         torch.save(model.state_dict(), os.path.join(save_dir, "last_epoch_weights.pth"))
     # print('Finish Validation')

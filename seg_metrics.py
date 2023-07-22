@@ -1,10 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Jul 21 15:29:02 2020
-
-@author: 12624
-"""
-
 import numpy as np
 import cv2
 import os
@@ -265,7 +259,7 @@ def Get_ROC(y_score_list, y_truth_list,num_classes):
     plot_roc(fpr, tpr, roc_auc)
 
 
-def seg_metrics():
+def seg_metrics(fold):
     #################################################################
     #  标签图像文件夹
     LabelPath = r"miou_pr_dir copy"
@@ -282,15 +276,9 @@ def seg_metrics():
     labelList = os.listdir(LabelPath)
     PredictList = os.listdir(PredictPath)
 
-    #  读取第一个图像，后面要用到它的shape
-    Label0 = cv2.imread(LabelPath + "//" + labelList[0], 0)
-
     #  图像数目
     label_num = len(labelList)
 
-    #  把所有图像放在一个数组里
-    # label_all = np.zeros((label_num,) + Label0.shape, np.uint8)
-    # predict_all = np.zeros((label_num,) + Label0.shape, np.uint8)
     label_all = []
     predict_all = []
     for i in range(label_num):

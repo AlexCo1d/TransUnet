@@ -19,13 +19,10 @@ from utils.visualization import blend_images
 class uNet(object):
     # -----------------------------------------#
     #   注意修改model_path、num_classes
-    #   和backbone
     #   使其符合自己的模型
     # -----------------------------------------#
     _defaults = {
-        "model_path":'./logs/best_epoch_weights.pth',
         "model_image_size": config.inputs_size,
-        "backbone": "ECAresnet",
         "downsample_factor": config.downsample_factor,
         "num_classes": config.NUM_CLASSES,
         "cuda": config.Cuda,
@@ -37,7 +34,9 @@ class uNet(object):
     # ---------------------------------------------------#
     def __init__(self, **kwargs):
         self.__dict__.update(self._defaults)
+        self.__dict__.update(kwargs)
         self.generate()
+        self.model_path = os.path.join(config.save_dir,f'best_epoch_weights_fold_{self.fold + 1}.pth')
 
     # ---------------------------------------------------#
     #   获得所有的分类
@@ -116,7 +115,7 @@ class uNet(object):
             # ---------------------------------------------------#
             #   取出每一个像素点的种类
             # ---------------------------------------------------#
-            class_score=pr
+            class_score = pr
             pr = pr.argmax(axis=-1)
 
         if self.mix == 2:

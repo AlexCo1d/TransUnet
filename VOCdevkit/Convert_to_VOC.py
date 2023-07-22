@@ -38,13 +38,16 @@ if config.n_fold > 1:
         with open(f'valid_{i+1}.txt', 'w') as f:
             for img in valid_images:
                 f.write(img + '\n')
-else:   # all need train
+else:   # if fold<=1, then all need train
     with open(f'train_1.txt', 'w') as ftrain:
         for img in os.listdir(image_seg):
             name = img.split('.')[0] + '\n'
             ftrain.write(name)
-    # you should then decide the val.txt for prediction
-
+    # ============================================================
+    # ============================================================
+    # ===todo:you should then decide the val.txt for prediction===
+    # ============================================================
+    # ============================================================
 
 # trainval_percent=1
 # train_percent=0.8
