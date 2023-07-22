@@ -1,6 +1,8 @@
 import datetime
 import os
 import time
+from random import random
+
 import torch.distributed as dist
 import numpy as np
 import torch
@@ -26,7 +28,7 @@ def get_lr(optimizer):
 
 
 def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size, epoch_size_val, gen, genval, Epoch,
-                  cuda, aux_branch, num_classes, dice_loss, ce_loss, local_rank=0, cls_weights=True):
+                  cuda, aux_branch, num_classes, dice_loss, ce_loss, fold, local_rank=0, cls_weights=True):
     """
 
     Args:
@@ -57,7 +59,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
     start_time = time.time()
 
     if local_rank == 0:
-        print('Start Train')
+        print(f'Start Train, Fold:{fold}')
         pbar = tqdm(total=epoch_size, desc=f'Epoch {epoch + 1}/{Epoch}', postfix=dict, mininterval=0.3)
 
     model_train.train()
@@ -140,7 +142,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
     if local_rank == 0:
         pbar.close()
         print('Finish Train')
-        print('Start Validation')
+        print('Start Validation, Fold:{fold}')
         pbar = tqdm(total=epoch_size_val, desc=f'Epoch {epoch + 1}/{Epoch}', postfix=dict, mininterval=0.3)
 
     model_train.eval()
@@ -207,13 +209,13 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
         # -----------------------------------------------#
         #   保存权值
         # -----------------------------------------------#
-        if (epoch + 1) % 5 == 0 or epoch + 1 == Epoch:
-            torch.save(model.state_dict(), os.path.join(save_dir, 'ep%03d-loss%.3f-val_loss%.3f.pth' % (
-                (epoch + 1), total_loss / epoch_size, val_toal_loss / epoch_size_val)))
+        if (epoch + 1) % 10 == 0 or epoch + 1 == Epoch:
+            torch.save(model.state_dict(), os.path.join(save_dir, 'ep%03d-loss%.3f-val_loss%.3f-fold%s.pth' % (
+                (epoch + 1), total_loss / epoch_size, val_toal_loss / epoch_size_val, fold)))
 
         if len(loss_history.val_loss) <= 1 or (val_toal_loss / epoch_size_val) <= min(loss_history.val_loss):
             print('Save best model to best_epoch_weights.pth')
-            torch.save(model.state_dict(), os.path.join(save_dir, "best_epoch_weights.pth"))
+            torch.save(model.state_dict(), os.path.join(save_dir, f"best_epoch_weights_fold_{fold}.pth"))
 
         torch.save(model.state_dict(), os.path.join(save_dir, "last_epoch_weights.pth"))
     # print('Finish Validation')
@@ -235,7 +237,16 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
     # (epoch + 1), total_loss / (epoch_size + 1), val_toal_loss / (epoch_size_val + 1)))
 
 
+def setup_seed(seed):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    # torch.backends.cudnn.deterministic = True
+
+
 if __name__ == "__main__":
+    setup_seed(1000)
     inputs_size = config.inputs_size
     log_dir = config.log_dir
     # ---------------------#
@@ -341,17 +352,6 @@ if __name__ == "__main__":
         # 解冻需要训练的的模块，一般包括上采样部分和改动的网络
         traverse_unfreeze_block(model, frozen_modules, local_rank)
 
-    # ----------------------#
-    #   记录Loss
-    # ----------------------#
-    save_dir = config.save_dir
-    if local_rank == 0:
-        time_str = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H_%M_%S')
-        log_dir = os.path.join(save_dir, "loss_" + str(time_str))
-        loss_history = LossHistory(log_dir, model, input_shape=inputs_size[:2])
-    else:
-        loss_history = None
-
     model_train = model.train()
 
     if sync_bn and ngpus_per_node > 1 and distributed:
@@ -372,162 +372,180 @@ if __name__ == "__main__":
             cudnn.benchmark = True
             model_train = model_train.cuda()
 
-    # 打开数据集的txt
-    with open(r"VOCdevkit/VOC2007/ImageSets/Segmentation/train.txt", "r") as f:
-        train_lines = f.readlines()
-
-    # 打开数据集的txt
-    with open(r"VOCdevkit/VOC2007/ImageSets/Segmentation/val.txt", "r") as f:
-        val_lines = f.readlines()
-
     # ------------------------------------------------------#
-    #   主干特征提取网络特征通用，冻结训练可以加快训练速度
-    #   也可以在训练初期防止权值被破坏。
-    #   Init_Epoch为起始世代
-    #   Interval_Epoch为冻结训练的世代
-    #   Epoch总训练世代
-    #   提示OOM或者显存不足请调小Batch_size
     # ------------------------------------------------------#
-    if True:
-        """
-        important parameter
-        """
-        # lr = 1e-3
-        Init_Epoch = config.Init_Epoch
-        Interval_Epoch = config.Interval_Epoch
-        # 设置冻结的epoch
-        Freeze_Epoch = config.Freeze_Epoch
-        # --------------#
-        # BATCH_SIZE
-        # --------------#
-        Batch_size = config.Batch_size if Freeze_Epoch <= 0 else config.Freeze_Batch_Size
+    #                       整体交叉训练的训练的循环：
+    # ------------------------------------------------------#
+    # ------------------------------------------------------#
+    for fold in range(config.n_fold):
 
-        # set opt
-        # ------------------------------------------------------------------#
-        #   Init_lr         模型的最大学习率
-        #                   当使用Adam优化器时建议设置  Init_lr=1e-4
-        #                   当使用SGD优化器时建议设置   Init_lr=1e-2
-        #   Min_lr          模型的最小学习率，默认为最大学习率的0.01
-        # ------------------------------------------------------------------#
-        Init_lr = 1e-4
-        Min_lr = Init_lr * 0.01
-        # ------------------------------------------------------------------#
-        #   optimizer_type  使用到的优化器种类，可选的有adam、sgd
-        #                   当使用Adam优化器时建议设置  Init_lr=1e-4
-        #                   当使用SGD优化器时建议设置   Init_lr=1e-2
-        #   momentum        优化器内部使用到的momentum参数
-        #   weight_decay    权值衰减，可防止过拟合
-        #                   adam会导致weight_decay错误，使用adam时建议设置为0。
-        # ------------------------------------------------------------------#
-        optimizer_type = "adam"
-        momentum = 0.9
-        weight_decay = 0
-        # ------------------------------------------------------------------#
-        #   lr_decay_type   使用到的学习率下降方式，可选的有'step'、'cos'
-        # ------------------------------------------------------------------#
-        lr_decay_type = 'cos'
-        # -------------------------------------------------------------------#
-        #   判断当前batch_size，自适应调整学习率
-        # -------------------------------------------------------------------#
-        nbs = 16
-        lr_limit_max = 1e-4 if optimizer_type == 'adam' else 1e-1
-        lr_limit_min = 1e-4 if optimizer_type == 'adam' else 5e-4
-        Init_lr_fit = min(max(Batch_size / nbs * Init_lr, lr_limit_min), lr_limit_max)
-        Min_lr_fit = min(max(Batch_size / nbs * Min_lr, lr_limit_min * 1e-2), lr_limit_max * 1e-2)
-        # ---------------------------------------#
-        #   根据optimizer_type选择优化器
-        # ---------------------------------------#
-        optimizer = {
-            'adam': optim.Adam(model.parameters(), Init_lr_fit, betas=(momentum, 0.999), weight_decay=weight_decay),
-            'sgd': optim.SGD(model.parameters(), Init_lr_fit, momentum=momentum, nesterov=True,
-                             weight_decay=weight_decay)
-        }[optimizer_type]
-        # ---------------------------------------#
-        #   获得学习率下降的公式
-        # ---------------------------------------#
-        lr_scheduler_func = get_lr_scheduler(lr_decay_type, Init_lr_fit, Min_lr_fit, Interval_Epoch)
+        # 打开数据集的txt
+        with open(f"VOCdevkit/VOC2007/ImageSets/Segmentation/train_{fold + 1}.txt", "r") as f:
+            train_lines = f.readlines()
 
-        # optimizer = optim.Adam(model.parameters(), lr)
-        # lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.9)
+        # 打开数据集的txt
+        with open(f"VOCdevkit/VOC2007/ImageSets/Segmentation/valid_{fold + 1}.txt", "r") as f:
+            val_lines = f.readlines()
 
-        train_dataset = unetDataset(train_lines, inputs_size, NUM_CLASSES, True)
-        val_dataset = unetDataset(val_lines, inputs_size, NUM_CLASSES, False)
+        # ------------------------------------------------------#
+        #   主干特征提取网络特征通用，冻结训练可以加快训练速度
+        #   也可以在训练初期防止权值被破坏。
+        #   Init_Epoch为起始世代
+        #   Interval_Epoch为冻结训练的世代
+        #   Epoch总训练世代
+        #   提示OOM或者显存不足请调小Batch_size
+        # ------------------------------------------------------#
+        if True:
+            """
+            important parameter
+            """
+            # lr = 1e-3
+            Init_Epoch = config.Init_Epoch
+            Interval_Epoch = config.Interval_Epoch
+            # 设置冻结的epoch
+            Freeze_Epoch = config.Freeze_Epoch
+            # --------------#
+            # BATCH_SIZE
+            # --------------#
+            Batch_size = config.Batch_size if Freeze_Epoch <= 0 else config.Freeze_Batch_Size
 
-        if distributed:
-            train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset, shuffle=True, )
-            val_sampler = torch.utils.data.distributed.DistributedSampler(val_dataset, shuffle=False, )
-            # Batch_size = Batch_size // ngpus_per_node
-            shuffle = False
-        else:
-            train_sampler = None
-            val_sampler = None
-            shuffle = True
+            # ----------------------#
+            #   记录Loss
+            # ----------------------#
+            save_dir = config.save_dir
+            if local_rank == 0:
+                time_str = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H_%M_%S')
+                log_dir = os.path.join(save_dir, "loss_" + str(time_str))
+                loss_history = LossHistory(log_dir, model, input_shape=inputs_size[:2])
+            else:
+                loss_history = None
 
-        gen = DataLoader(train_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
-                         drop_last=True, collate_fn=unet_dataset_collate, sampler=train_sampler)
-        gen_val = DataLoader(val_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
-                             drop_last=True, collate_fn=unet_dataset_collate, sampler=val_sampler)
+            # set opt
+            # ------------------------------------------------------------------#
+            #   Init_lr         模型的最大学习率
+            #                   当使用Adam优化器时建议设置  Init_lr=1e-4
+            #                   当使用SGD优化器时建议设置   Init_lr=1e-2
+            #   Min_lr          模型的最小学习率，默认为最大学习率的0.01
+            # ------------------------------------------------------------------#
+            Init_lr = 1e-4
+            Min_lr = Init_lr * 0.01
+            # ------------------------------------------------------------------#
+            #   optimizer_type  使用到的优化器种类，可选的有adam、sgd
+            #                   当使用Adam优化器时建议设置  Init_lr=1e-4
+            #                   当使用SGD优化器时建议设置   Init_lr=1e-2
+            #   momentum        优化器内部使用到的momentum参数
+            #   weight_decay    权值衰减，可防止过拟合
+            #                   adam会导致weight_decay错误，使用adam时建议设置为0。
+            # ------------------------------------------------------------------#
+            optimizer_type = "adam"
+            momentum = 0.9
+            weight_decay = 0
+            # ------------------------------------------------------------------#
+            #   lr_decay_type   使用到的学习率下降方式，可选的有'step'、'cos'
+            # ------------------------------------------------------------------#
+            lr_decay_type = 'cos'
+            # -------------------------------------------------------------------#
+            #   判断当前batch_size，自适应调整学习率
+            # -------------------------------------------------------------------#
+            nbs = 16
+            lr_limit_max = 1e-4 if optimizer_type == 'adam' else 1e-1
+            lr_limit_min = 1e-4 if optimizer_type == 'adam' else 5e-4
+            Init_lr_fit = min(max(Batch_size / nbs * Init_lr, lr_limit_min), lr_limit_max)
+            Min_lr_fit = min(max(Batch_size / nbs * Min_lr, lr_limit_min * 1e-2), lr_limit_max * 1e-2)
+            # ---------------------------------------#
+            #   根据optimizer_type选择优化器
+            # ---------------------------------------#
+            optimizer = {
+                'adam': optim.Adam(model.parameters(), Init_lr_fit, betas=(momentum, 0.999), weight_decay=weight_decay),
+                'sgd': optim.SGD(model.parameters(), Init_lr_fit, momentum=momentum, nesterov=True,
+                                 weight_decay=weight_decay)
+            }[optimizer_type]
+            # ---------------------------------------#
+            #   获得学习率下降的公式
+            # ---------------------------------------#
+            lr_scheduler_func = get_lr_scheduler(lr_decay_type, Init_lr_fit, Min_lr_fit, Interval_Epoch)
 
-        epoch_size = max(1, len(train_lines) // Batch_size)
-        epoch_size_val = max(1, len(val_lines) // Batch_size)
-        set_epoch, set_batch = config.set_epoch_batch
-        # begin train
-        for epoch in range(Init_Epoch, Interval_Epoch):
+            # optimizer = optim.Adam(model.parameters(), lr)
+            # lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.9)
 
-            # gen = DataLoader(train_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
-            #                  drop_last=True, collate_fn=unet_dataset_collate, sampler=train_sampler)
-            # gen_val = DataLoader(val_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
-            #                      drop_last=True, collate_fn=unet_dataset_collate, sampler=val_sampler)
-            # 给定最后精度调优的epoch
-            if epoch == set_epoch:
-
-                Batch_size = set_batch
-
-                Init_lr_fit = min(max(Batch_size / nbs * Init_lr, lr_limit_min), lr_limit_max)
-                Min_lr_fit = min(max(Batch_size / nbs * Min_lr, lr_limit_min * 1e-2), lr_limit_max * 1e-2)
-                gen = DataLoader(train_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
-                                 drop_last=True, collate_fn=unet_dataset_collate, sampler=train_sampler)
-                gen_val = DataLoader(val_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
-                                     drop_last=True, collate_fn=unet_dataset_collate, sampler=val_sampler)
-
-                epoch_size = max(1, len(train_lines) // Batch_size)
-                epoch_size_val = max(1, len(val_lines) // Batch_size)
-                lr_scheduler_func = get_lr_scheduler(lr_decay_type, Init_lr_fit, Min_lr_fit, Interval_Epoch)
-
-            if (pretrained is True) and (epoch == Freeze_Epoch):
-                # 解冻!!
-                for param in model.parameters():
-                    param.requires_grad = True
-                # 调整batch_size
-                Batch_size = config.Batch_size
-
-                # 根据batch_size 调整学习率
-                Init_lr_fit = min(max(Batch_size / nbs * Init_lr, lr_limit_min), lr_limit_max)
-                Min_lr_fit = min(max(Batch_size / nbs * Min_lr, lr_limit_min * 1e-2), lr_limit_max * 1e-2)
-
-                gen = DataLoader(train_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
-                                 drop_last=True, collate_fn=unet_dataset_collate, sampler=train_sampler)
-                gen_val = DataLoader(val_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
-                                     drop_last=True, collate_fn=unet_dataset_collate, sampler=val_sampler)
-
-                epoch_size = max(1, len(train_lines) // Batch_size)
-                epoch_size_val = max(1, len(val_lines) // Batch_size)
-                lr_scheduler_func = get_lr_scheduler(lr_decay_type, Init_lr_fit, Min_lr_fit, Interval_Epoch)
+            train_dataset = unetDataset(train_lines, inputs_size, NUM_CLASSES, True)
+            val_dataset = unetDataset(val_lines, inputs_size, NUM_CLASSES, False)
 
             if distributed:
-                train_sampler.set_epoch(epoch)
+                train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset, shuffle=True, )
+                val_sampler = torch.utils.data.distributed.DistributedSampler(val_dataset, shuffle=False, )
+                # Batch_size = Batch_size // ngpus_per_node
+                shuffle = False
+            else:
+                train_sampler = None
+                val_sampler = None
+                shuffle = True
 
-            set_optimizer_lr(optimizer, lr_scheduler_func, epoch)
+            gen = DataLoader(train_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
+                             drop_last=True, collate_fn=unet_dataset_collate, sampler=train_sampler)
+            gen_val = DataLoader(val_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
+                                 drop_last=True, collate_fn=unet_dataset_collate, sampler=val_sampler)
 
-            fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size, epoch_size_val, gen, gen_val,
-                          Interval_Epoch, Cuda, aux_branch, num_classes=NUM_CLASSES, ce_loss=ce_loss,
-                          dice_loss=dice_loss, cls_weights=cls_weights, local_rank=local_rank)
-            # lr_scheduler.step()
+            epoch_size = max(1, len(train_lines) // Batch_size)
+            epoch_size_val = max(1, len(val_lines) // Batch_size)
+            set_epoch, set_batch = config.set_epoch_batch
+            # 迭代循环, begin train
+            for epoch in range(Init_Epoch, Interval_Epoch):
 
-            if distributed:
-                dist.barrier()
-        if local_rank == 0:
-            loss_history.writer.close()
+                # gen = DataLoader(train_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
+                #                  drop_last=True, collate_fn=unet_dataset_collate, sampler=train_sampler)
+                # gen_val = DataLoader(val_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
+                #                      drop_last=True, collate_fn=unet_dataset_collate, sampler=val_sampler)
+                # 给定最后精度调优的epoch
+                if epoch == set_epoch:
+                    Batch_size = set_batch
+
+                    Init_lr_fit = min(max(Batch_size / nbs * Init_lr, lr_limit_min), lr_limit_max)
+                    Min_lr_fit = min(max(Batch_size / nbs * Min_lr, lr_limit_min * 1e-2), lr_limit_max * 1e-2)
+                    gen = DataLoader(train_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
+                                     drop_last=True, collate_fn=unet_dataset_collate, sampler=train_sampler)
+                    gen_val = DataLoader(val_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
+                                         drop_last=True, collate_fn=unet_dataset_collate, sampler=val_sampler)
+
+                    epoch_size = max(1, len(train_lines) // Batch_size)
+                    epoch_size_val = max(1, len(val_lines) // Batch_size)
+                    lr_scheduler_func = get_lr_scheduler(lr_decay_type, Init_lr_fit, Min_lr_fit, Interval_Epoch)
+
+                if (pretrained is True) and (epoch == Freeze_Epoch):
+                    # 解冻!!
+                    for param in model.parameters():
+                        param.requires_grad = True
+                    # 调整batch_size
+                    Batch_size = config.Batch_size
+
+                    # 根据batch_size 调整学习率
+                    Init_lr_fit = min(max(Batch_size / nbs * Init_lr, lr_limit_min), lr_limit_max)
+                    Min_lr_fit = min(max(Batch_size / nbs * Min_lr, lr_limit_min * 1e-2), lr_limit_max * 1e-2)
+
+                    gen = DataLoader(train_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
+                                     drop_last=True, collate_fn=unet_dataset_collate, sampler=train_sampler)
+                    gen_val = DataLoader(val_dataset, batch_size=Batch_size, num_workers=4, pin_memory=True,
+                                         drop_last=True, collate_fn=unet_dataset_collate, sampler=val_sampler)
+
+                    epoch_size = max(1, len(train_lines) // Batch_size)
+                    epoch_size_val = max(1, len(val_lines) // Batch_size)
+                    lr_scheduler_func = get_lr_scheduler(lr_decay_type, Init_lr_fit, Min_lr_fit, Interval_Epoch)
+
+                if distributed:
+                    train_sampler.set_epoch(epoch)
+
+                set_optimizer_lr(optimizer, lr_scheduler_func, epoch)
+
+                fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size, epoch_size_val, gen,
+                              gen_val,
+                              Interval_Epoch, Cuda, aux_branch, num_classes=NUM_CLASSES, ce_loss=ce_loss,
+                              dice_loss=dice_loss, cls_weights=cls_weights, local_rank=local_rank, fold=fold)
+                # lr_scheduler.step()
+
+                if distributed:
+                    dist.barrier()
+            if local_rank == 0:
+                loss_history.writer.close()
 
     # if True:
     #     lr = 1e-5

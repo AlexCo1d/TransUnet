@@ -91,14 +91,15 @@ def transfer_image():
         print(label_name, " done!")
 
         # only for 1 label, todo: this work should be further accomplished
-        if config.NUM_CLASSES==2:
-            label_all.append(np.array(label_truth))
-            predict_all.append(np.array(score[..., 1]))
+        # if config.NUM_CLASSES==2:
+        #     label_all.append(np.array(label_truth))
+        #     predict_all.append(np.array(score[..., 1]))
 
-    Get_ROC(predict_all,label_all,config.NUM_CLASSES)
+    # Get_ROC(predict_all,label_all,config.NUM_CLASSES)
 
 if __name__ == '__main__':
     # show_image()
     transfer_image()
-    # 获取指标
+
+    # evaluate the prediction by using the metrics
     seg_metrics()

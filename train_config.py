@@ -1,6 +1,11 @@
 class BaseConfig:
     inputs_size = [256, 256, 3]
     image_type = '.png'  # image is jpg or png
+    # ---------------------#
+    #   if n_fold=1 then all train, if other divide the dataset into n part, using cross validation
+    #   建议为5，大数据集可以为10
+    # ---------------------#
+    n_fold = 5
     log_dir = "logs/"
     # ---------------------#
     #   分类个数+1
@@ -79,11 +84,11 @@ class BaseConfig:
     # ----------------------#
     save_dir = 'logs'
     Init_Epoch = 0
-    Interval_Epoch = 300
+    Interval_Epoch = 200
     # 设置冻结的epoch
     Freeze_Epoch = 40
     Freeze_Batch_Size = 2
-    set_epoch_batch = [200, 1]
+    set_epoch_batch = [150, 1]
     # ----------------------#
     # 输出图像的形式
     # 0：不上色
