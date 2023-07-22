@@ -1,7 +1,7 @@
 import datetime
 import os
 import time
-from random import random
+import random
 
 import torch.distributed as dist
 import numpy as np
