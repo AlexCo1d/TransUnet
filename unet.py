@@ -36,6 +36,7 @@ class uNet(object):
         self.__dict__.update(self._defaults)
         self.__dict__.update(kwargs)
         self.generate()
+
         self.model_path = os.path.join(config.save_dir,f'best_epoch_weights_fold_{self.fold + 1}.pth')
 
     # ---------------------------------------------------#

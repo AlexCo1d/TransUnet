@@ -327,8 +327,9 @@ if __name__ == "__main__":
     # -------------------------------------------#
     model = get_Net(n_classes=NUM_CLASSES, img_size=inputs_size[0]).train()
     init_weights(model, init_type='kaiming')
-    print('model is here:')
-    print(model, '\n', '\n')
+    if local_rank==0:
+        print('model is here:')
+        print(model, '\n', '\n')
 
     # -------------------------------------------#
     #   权值文件的下载请看README
