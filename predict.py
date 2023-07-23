@@ -68,7 +68,7 @@ def predict_and_eval():
     # label_all = []
     # predict_all = []
 
-    for fold in range(config.n_fold):
+    for fold in range(config.n_fold if config.n_fold>=1 else 0):
         if not os.path.exists(f'pr_dir/fold_{fold+1}'):
             os.mkdir(f'pr_dir/fold_{fold+1}')
 
@@ -81,8 +81,8 @@ def predict_and_eval():
             image_name = image_name.replace('\n', '') + type
             label_name = image_name.replace(type, '.png')
 
-            label_truth = Image.open(os.path.join(label_path, label_name))
-            label_truth.save(f"pr_dir copy/{label_name}")
+            # label_truth = Image.open(os.path.join(label_path, label_name))
+            # label_truth.save(f"pr_dir copy/{label_name}")
 
             # 测试集生成标签
             image = Image.open(os.path.join(image_path, image_name))

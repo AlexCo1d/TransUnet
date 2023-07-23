@@ -23,7 +23,7 @@ for seg in temp_seg:
 
 # to judge the n_fold's setting and divide the dataset in balance
 if config.n_fold > 1:
-    skf = StratifiedKFold(n_splits=config.n_fold, random_state=1000)  # set seed
+    skf = StratifiedKFold(n_splits=config.n_fold, random_state=1000, shuffle=True)  # set seed
     for i, (train_index, valid_index) in enumerate(skf.split(image_seg, neg_pos_label)):
         train_images = [image_seg[idx] for idx in train_index]
         valid_images = [image_seg[idx] for idx in valid_index]
