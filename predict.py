@@ -90,7 +90,7 @@ def predict_and_eval():
             label = postprocess(np.array(label))
             # image = image.resize((512, 512))
             label.save(f"pr_dir/fold_{fold+1}/{label_name}")
-            print(label_name, " done!")
+            # print(label_name, " done!")
 
             # only for 1 label, this work should be further accomplished, ROC for multiple labels
             # if config.NUM_CLASSES==2:

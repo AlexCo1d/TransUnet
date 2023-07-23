@@ -262,9 +262,9 @@ def Get_ROC(y_score_list, y_truth_list,num_classes):
 def seg_metrics(fold):
     #################################################################
     #  标签图像文件夹
-    LabelPath = r"miou_pr_dir copy"
+    LabelPath = r"pr_dir copy"
     #  预测图像文件夹
-    PredictPath = r"miou_pr_dir"
+    PredictPath = r"pr_dir"
     #  类别数目(包括背景)
     classNum = config.NUM_CLASSES
     #################################################################

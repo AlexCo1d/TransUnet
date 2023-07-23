@@ -5,24 +5,25 @@ from train_config import config
 from PIL import Image
 import numpy as np
 
-segfilepath='./VOCdevkit/VOC2007/SegmentationClass'
-saveBasePath="./VOCdevkit/VOC2007/ImageSets/Segmentation"
+segfilepath = './VOCdevkit/VOC2007/SegmentationClass'
+saveBasePath = "./VOCdevkit/VOC2007/ImageSets/Segmentation"
 
 # 分割任务，正负样本均衡的数据集划分
 temp_seg = os.listdir(segfilepath)
 image_seg = []
-neg_pos_label=[]
+neg_pos_label = []
 for seg in temp_seg:
     if seg.endswith(".png"):
         image_seg.append(seg)
-        temp=np.array(Image.open(os.path.join(segfilepath,seg)))
-        if len(np.unique(temp))==1:     # negative sample
+        temp = np.array(Image.open(os.path.join(segfilepath, seg)))
+        if len(np.unique(temp)) == 1:  # negative sample
             neg_pos_label.append(0)
-        else: neg_pos_label.append(1)   # positive sample
+        else:
+            neg_pos_label.append(1)  # positive sample
 
-# to judge the n_fold's setting and divide the dataset
+# to judge the n_fold's setting and divide the dataset in balance
 if config.n_fold > 1:
-    skf = StratifiedKFold(n_splits=config.n_fold)
+    skf = StratifiedKFold(n_splits=config.n_fold, random_state=1000)  # set seed
     for i, (train_index, valid_index) in enumerate(skf.split(image_seg, neg_pos_label)):
         train_images = [image_seg[idx] for idx in train_index]
         valid_images = [image_seg[idx] for idx in valid_index]
@@ -31,16 +32,16 @@ if config.n_fold > 1:
         train_images = [os.path.splitext(img)[0] for img in train_images]
         valid_images = [os.path.splitext(img)[0] for img in valid_images]
 
-        with open(os.path.join(saveBasePath,f'train_{i+1}.txt'), 'w') as f:
+        with open(os.path.join(saveBasePath, f'train_{i + 1}.txt'), 'w') as f:
             for img in train_images:
                 f.write(img + '\n')
 
-        with open(os.path.join(saveBasePath,f'valid_{i+1}.txt'), 'w') as f:
+        with open(os.path.join(saveBasePath, f'valid_{i + 1}.txt'), 'w') as f:
             for img in valid_images:
                 f.write(img + '\n')
 
-else:   # if fold<=1, then all need train
-    with open(os.path.join(saveBasePath,'train_1.txt'), 'w') as ftrain:
+else:  # if fold<=1, then all need train
+    with open(os.path.join(saveBasePath, 'train_1.txt'), 'w') as ftrain:
         for img in os.listdir(image_seg):
             name = img.split('.')[0] + '\n'
             ftrain.write(name)

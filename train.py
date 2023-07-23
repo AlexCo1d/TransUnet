@@ -17,7 +17,7 @@ from nets.Net import get_Net
 from torch.utils.data import DataLoader
 from dataloader import unetDataset, unet_dataset_collate
 from utils.Loss_utils import get_loss_weight, LossHistory, get_lr_scheduler, set_optimizer_lr
-from utils.basic_utils import _one_hot_encoder
+from utils.basic_utils import _one_hot_encoder, setup_seed
 from utils.init_weight import *
 from utils.metrics import *
 
@@ -237,14 +237,6 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
     # (epoch + 1), total_loss / (epoch_size + 1), val_toal_loss / (epoch_size_val + 1)))
 
 
-def setup_seed(seed):
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    np.random.seed(seed)
-    random.seed(seed)
-    # torch.backends.cudnn.deterministic = True
-
-
 if __name__ == "__main__":
     setup_seed(1000)
     inputs_size = config.inputs_size
@@ -322,64 +314,63 @@ if __name__ == "__main__":
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         local_rank = 0
 
-    # -------------------------------------------#
-    # 得到model,并进行初始化，可以选择!
-    # -------------------------------------------#
-    model = get_Net(n_classes=NUM_CLASSES, img_size=inputs_size[0]).train()
-    init_weights(model, init_type='kaiming')
-    if local_rank==0:
-        print('model is here:')
-        print(model, '\n', '\n')
-
-    # -------------------------------------------#
-    #   权值文件的下载请看README
-    #   权值和主干特征提取网络一定要对应
-    # -------------------------------------------#
-    if pretrained:
-        model_path = config.model_path
-        # no_load_dict,加载预训练时不加载解码器部分
-        no_load_dict = config.no_load_dict
-
-        load_pretrained_weights(model, model_path, no_load_dict, local_rank)
-
-        # ------------------------------------------------------#
-        #  注意！！将改动过的模块名字都列出来，为冻结训练作准备！
-        # ------------------------------------------------------#
-        # 将所有模块的requires_grad属性设置为False
-        for param in model.parameters():
-            param.requires_grad = False
-
-        frozen_modules = config.frozen_modules  # removed: cls
-        # 解冻需要训练的的模块，一般包括上采样部分和改动的网络
-        traverse_unfreeze_block(model, frozen_modules, local_rank)
-
-    model_train = model.train()
-
-    if sync_bn and ngpus_per_node > 1 and distributed:
-        model_train = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model_train)
-    elif sync_bn:
-        print("Sync_bn is not support in one gpu or not distributed.")
-
-    if Cuda:
-        if distributed:
-            # ----------------------------#
-            #   多卡平行运行
-            # ----------------------------#
-            model_train = model.cuda(local_rank)
-            model_train = torch.nn.parallel.DistributedDataParallel(model_train, device_ids=[local_rank],
-                                                                    find_unused_parameters=True)
-        else:
-            model_train = torch.nn.DataParallel(model)
-            cudnn.benchmark = True
-            model_train = model_train.cuda()
-
     # ------------------------------------------------------#
     # ------------------------------------------------------#
     #                       整体交叉训练的训练的循环：
     # ------------------------------------------------------#
     # ------------------------------------------------------#
-    for fold in range(config.n_fold):
+    for fold in range(config.n_fold if config.n_fold>=1 else 1):
 
+        # -------------------------------------------#
+        # 得到model,并进行初始化，可以选择!
+        # -------------------------------------------#
+        model = get_Net(n_classes=NUM_CLASSES, img_size=inputs_size[0]).train()
+        init_weights(model, init_type='kaiming')
+        if local_rank == 0:
+            print('model is here:')
+            print(model, '\n', '\n')
+
+        # -------------------------------------------#
+        #   权值文件的下载请看README
+        #   权值和主干特征提取网络一定要对应
+        # -------------------------------------------#
+        if pretrained:
+            model_path = config.model_path
+            # no_load_dict,加载预训练时不加载解码器部分
+            no_load_dict = config.no_load_dict
+
+            load_pretrained_weights(model, model_path, no_load_dict, local_rank)
+
+            # ------------------------------------------------------#
+            #  注意！！将改动过的模块名字都列出来，为冻结训练作准备！
+            # ------------------------------------------------------#
+            # 将所有模块的requires_grad属性设置为False
+            for param in model.parameters():
+                param.requires_grad = False
+
+            frozen_modules = config.frozen_modules  # removed: cls
+            # 解冻需要训练的的模块，一般包括上采样部分和改动的网络
+            traverse_unfreeze_block(model, frozen_modules, local_rank)
+
+        model_train = model.train()
+
+        if sync_bn and ngpus_per_node > 1 and distributed:
+            model_train = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model_train)
+        elif sync_bn:
+            print("Sync_bn is not support in one gpu or not distributed.")
+
+        if Cuda:
+            if distributed:
+                # ----------------------------#
+                #   多卡平行运行
+                # ----------------------------#
+                model_train = model.cuda(local_rank)
+                model_train = torch.nn.parallel.DistributedDataParallel(model_train, device_ids=[local_rank],
+                                                                        find_unused_parameters=True)
+            else:
+                model_train = torch.nn.DataParallel(model)
+                cudnn.benchmark = True
+                model_train = model_train.cuda()
         # 打开数据集的txt
         with open(f"VOCdevkit/VOC2007/ImageSets/Segmentation/train_{fold + 1}.txt", "r") as f:
             train_lines = f.readlines()
