@@ -4,7 +4,8 @@ import cv2
 import os
 from PIL import Image
 from train_config import config
-from sklearn.metrics import roc_curve, auc, confusion_matrix, accuracy_score, precision_score, recall_score, jaccard_score, f1_score
+from sklearn.metrics import roc_curve, auc, confusion_matrix, accuracy_score, precision_score, recall_score, \
+    jaccard_score, f1_score
 import matplotlib.pyplot as plt
 
 """ 
@@ -262,7 +263,8 @@ def seg_metrics(fold=1):
     TrueLabelPath = './VOCdevkit/VOC2007/SegmentationClass'
     #  类别数目(包括背景)
     classNum = config.NUM_CLASSES
-    average='binary' if config.NUM_CLASSES==2 else 'micro'
+    average = 'binary' if config.NUM_CLASSES == 2 else 'micro'
+    fold_data = []
     #################################################################
     #  获取类别颜色字典
     # colorDict_BGR, colorDict_GRAY = color_dict(LabelPath, classNum)
@@ -278,7 +280,7 @@ def seg_metrics(fold=1):
 
         #  图像数目
         label_num = len(labelList)
-        fold_data = []
+
         label_all = []
         predict_all = []
         for i in labelList:
@@ -323,16 +325,16 @@ def seg_metrics(fold=1):
 
         # sklearn
         confusionMatrix = confusion_matrix(classNum, predict_all, label_all)
-        accuracy=accuracy_score(label_all,predict_all)
-        precision = precision_score(label_all,predict_all)
-        recall = recall_score(label_all,predict_all)
-        jaccard=jaccard_score(label_all,predict_all)
+        accuracy = accuracy_score(label_all, predict_all, average=average)
+        precision = precision_score(label_all, predict_all, average=average)
+        recall = recall_score(label_all, predict_all, average=average)
+        jaccard = jaccard_score(label_all, predict_all, average=average)
         if average == 'binary':
             tn, fp, fn, tp = confusionMatrix.ravel()
             specificity = tn / (tn + fp)
         else:
             specificity = 'Not applicable for multiclass problems'
-        f1score = f1_score(label_all,predict_all)
+        f1score = f1_score(label_all, predict_all)
         dice1 = compute_dice(label_all, predict_all)
         print(f"Fold: {fold + 1},共 {label_num} 张图像")
         print("混淆矩阵:")
