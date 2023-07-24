@@ -167,10 +167,10 @@ def compute_dice(label_list, prediction_list):
             dice_values1.append(dice_val)
             dice_values2.append(dice_coefficient(label, prediction))
 
-    print(len(dice_values1))
+    # print(len(dice_values1))
     mean_dice_value = np.nanmean(dice_values1)
-    print(f'mean_dice: {mean_dice_value}')
-    print(f'naive mean_dice: {np.nanmean(dice_values2)}')
+    # print(f'mean_dice: {mean_dice_value}')
+    # print(f'naive mean_dice: {np.nanmean(dice_values2)}')
     return mean_dice_value
 
 
@@ -264,112 +264,106 @@ def seg_metrics(fold=1):
     #  类别数目(包括背景)
     classNum = config.NUM_CLASSES
     average = 'binary' if config.NUM_CLASSES == 2 else 'micro'
-    fold_data = []
     #################################################################
     #  获取类别颜色字典
     # colorDict_BGR, colorDict_GRAY = color_dict(LabelPath, classNum)
 
-    for i in range(fold if fold >= 1 else 1):
-        PredictPath = os.path.join(basePredictPath, f'fold_{i + 1}')
-        LabelPath = os.path.join(f"./VOCdevkit/VOC2007/ImageSets/Segmentation/valid_{i + 1}.txt")
-        #  获取文件夹内所有图像,以及对应的标签
-        with open(LabelPath, "r") as f:
-            val_lines = f.readlines()
-        labelList = [i.strip() + '.png' for i in val_lines]
-        PredictList = os.listdir(PredictPath)
+    PredictPath = os.path.join(basePredictPath, f'fold_{fold}')
+    LabelPath = os.path.join(f"./VOCdevkit/VOC2007/ImageSets/Segmentation/valid_{fold}.txt")
+    #  获取文件夹内所有图像,以及对应的标签
+    with open(LabelPath, "r") as f:
+        val_lines = f.readlines()
+    labelList = [i.strip() + '.png' for i in val_lines]
+    PredictList = os.listdir(PredictPath)
 
-        #  图像数目
-        label_num = len(labelList)
+    #  图像数目
+    label_num = len(labelList)
 
-        label_all = []
-        predict_all = []
-        for i in labelList:
-            Label = cv2.imread(os.path.join(TrueLabelPath, i))
-            Label = cv2.cvtColor(Label, cv2.COLOR_BGR2GRAY)
-            label_all.append(Label)
-            Predict = cv2.imread(os.path.join(PredictPath, i))
-            Predict = cv2.cvtColor(Predict, cv2.COLOR_BGR2GRAY)
-            predict_all.append(Predict)
+    label_all = []
+    predict_all = []
+    for i in labelList:
+        Label = cv2.imread(os.path.join(TrueLabelPath, i))
+        Label = cv2.cvtColor(Label, cv2.COLOR_BGR2GRAY)
+        label_all.append(Label)
+        Predict = cv2.imread(os.path.join(PredictPath, i))
+        Predict = cv2.cvtColor(Predict, cv2.COLOR_BGR2GRAY)
+        predict_all.append(Predict)
 
-        label_all = np.concatenate([array.flatten() for array in label_all])
-        predict_all = np.concatenate([array.flatten() for array in predict_all])
+    dice1 = compute_dice(label_all, predict_all)
 
-        #  把颜色映射为0,1,2,3...
-        # for i in range(colorDict_GRAY.shape[0]):
-        #     label_all[label_all == colorDict_GRAY[i][0]] = i
-        #     predict_all[predict_all == colorDict_GRAY[i][0]] = i
+    label_all = np.concatenate([array.flatten() for array in label_all])
+    predict_all = np.concatenate([array.flatten() for array in predict_all])
 
-        #  计算混淆矩阵及各精度参数
+    #  把颜色映射为0,1,2,3...
+    # for i in range(colorDict_GRAY.shape[0]):
+    #     label_all[label_all == colorDict_GRAY[i][0]] = i
+    #     predict_all[predict_all == colorDict_GRAY[i][0]] = i
 
-        # for i in range(colorDict_BGR.shape[0]):
-        #     #  输出类别颜色,需要安装webcolors,直接pip install webcolors
-        #     try:
-        #         import webcolors
-        #
-        #         rgb = colorDict_BGR[i]
-        #         rgb[0], rgb[2] = rgb[2], rgb[0]
-        #         print(webcolors.rgb_to_name(rgb), end="  ")
-        #     #  不安装的话,输出灰度值
-        #     except:
-        #         print(colorDict_GRAY[i][0], end="  ")
+    #  计算混淆矩阵及各精度参数
 
-        confusionMatrix = ConfusionMatrix(classNum, predict_all, label_all)
-        # precision = Precision(confusionMatrix)
-        # recall = Recall(confusionMatrix)
-        # OA = OverallAccuracy(confusionMatrix)
-        # IoU = IntersectionOverUnion(confusionMatrix)
-        # FWIOU = Frequency_Weighted_Intersection_over_Union(confusionMatrix)
-        # mIOU = MeanIntersectionOverUnion(confusionMatrix)
-        # f1ccore = F1Score(confusionMatrix)
-        dice = compute_direct_dice(confusionMatrix)
+    # for i in range(colorDict_BGR.shape[0]):
+    #     #  输出类别颜色,需要安装webcolors,直接pip install webcolors
+    #     try:
+    #         import webcolors
+    #
+    #         rgb = colorDict_BGR[i]
+    #         rgb[0], rgb[2] = rgb[2], rgb[0]
+    #         print(webcolors.rgb_to_name(rgb), end="  ")
+    #     #  不安装的话,输出灰度值
+    #     except:
+    #         print(colorDict_GRAY[i][0], end="  ")
 
-        # sklearn
-        confusionMatrix = confusion_matrix(label_all, predict_all)
-        accuracy = accuracy_score(label_all, predict_all, average=average)
-        precision = precision_score(label_all, predict_all, average=average)
-        recall = recall_score(label_all, predict_all, average=average)
-        jaccard = jaccard_score(label_all, predict_all, average=average)
-        if average == 'binary':
-            tn, fp, fn, tp = confusionMatrix.ravel()
-            specificity = tn / (tn + fp)
-        else:
-            specificity = 'Not applicable for multiclass problems'
-        f1score = f1_score(label_all, predict_all)
-        dice1 = compute_dice(label_all, predict_all)
-        print(f"Fold: {fold + 1},共 {label_num} 张图像")
-        print("混淆矩阵:")
-        print(confusionMatrix)
-        print("Accuracy:")
-        print(accuracy)
-        print('jaccard:')
-        print(jaccard)
-        print('specificity:')
-        print(specificity)
-        print("Precision:")
-        print(precision)
-        print("召回率:")
-        print(recall)
-        print("F1-Score:")
-        print(f1score)
-        # print("整体精度:")
-        # print(OA)
-        # print("IoU:")
-        # print(IoU)
-        # print("mIoU:")
-        # print(mIOU)
-        # print("FWIoU:")
-        # print(FWIOU)
-        print("pixel-wise dice:")
-        print(dice)
-        print("dice:")
-        print(dice1)
+    # confusionMatrix = ConfusionMatrix(classNum, predict_all, label_all)
+    # # precision = Precision(confusionMatrix)
+    # # recall = Recall(confusionMatrix)
+    # # OA = OverallAccuracy(confusionMatrix)
+    # # IoU = IntersectionOverUnion(confusionMatrix)
+    # # FWIOU = Frequency_Weighted_Intersection_over_Union(confusionMatrix)
+    # # mIOU = MeanIntersectionOverUnion(confusionMatrix)
+    # # f1ccore = F1Score(confusionMatrix)
+    # dice = compute_direct_dice(confusionMatrix)
 
-        fold_data.append((label_num, dice1))
+    # sklearn
+    confusionMatrix = confusion_matrix(label_all, predict_all)
+    accuracy = accuracy_score(label_all, predict_all)
+    precision = precision_score(label_all, predict_all, average=average)
+    recall = recall_score(label_all, predict_all, average=average)
+    jaccard = jaccard_score(label_all, predict_all, average=average)
+    if average == 'binary':
+        tn, fp, fn, tp = confusionMatrix.ravel()
+        specificity = tn / (tn + fp)
+    else:
+        specificity = 'Not applicable for multiclass problems'
+    f1score = f1_score(label_all, predict_all)
 
-    total = sum(d * l for l, d in fold_data)
-    average_dice = total / sum(l for l, d in fold_data)
-
-    print(f'平均 Dice 值: {average_dice}')
+    print(f"Fold: {fold},共 {label_num} 张图像")
+    print("混淆矩阵:")
+    print(confusionMatrix)
+    print("Accuracy:")
+    print(accuracy)
+    print('jaccard:')
+    print(jaccard)
+    print('specificity:')
+    print(specificity)
+    print("Precision:")
+    print(precision)
+    print("召回率:")
+    print(recall)
+    print("F1-Score:")
+    print(f1score)
+    # print("整体精度:")
+    # print(OA)
+    # print("IoU:")
+    # print(IoU)
+    # print("mIoU:")
+    # print(mIOU)
+    # print("FWIoU:")
+    # print(FWIOU)
+    print("pixel-wise dice:")
+    # print(dice)
+    print("dice:")
+    print(dice1)
+    print('')
 
 
 if __name__ == '__main__':

@@ -125,4 +125,4 @@ class Config_DDTI(BaseConfig):
     model = 'Vit_CBAM_ASPP'
 
 
-config = Config_Cervical()
+config = Config_DDTI()
