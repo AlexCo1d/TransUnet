@@ -324,7 +324,7 @@ def seg_metrics(fold=1):
         dice = compute_direct_dice(confusionMatrix)
 
         # sklearn
-        confusionMatrix = confusion_matrix(classNum, predict_all, label_all)
+        confusionMatrix = confusion_matrix(label_all, predict_all)
         accuracy = accuracy_score(label_all, predict_all, average=average)
         precision = precision_score(label_all, predict_all, average=average)
         recall = recall_score(label_all, predict_all, average=average)
