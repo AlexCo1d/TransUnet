@@ -174,33 +174,19 @@ def compute_dice(label_list, prediction_list):
     return mean_dice_value
 
 
-# def compute_conf_matrix(label_folder,prediction_folder,num):
-#     label_list = sorted(os.listdir(label_folder))
-#     prediction_list = sorted(os.listdir(prediction_folder))
-#
-#     # 初始化混淆矩阵
-#     num_classes = num  # 根据您的任务更改类别数量
-#     conf_mat = np.zeros((num_classes, num_classes), dtype=np.int64)
-#
-#     for label_file, prediction_file in zip(label_list, prediction_list):
-#         label_path = os.path.join(label_folder, label_file)
-#         prediction_path = os.path.join(prediction_folder, prediction_file)
-#
-#         label_img = cv2.imread(label_path, cv2.IMREAD_GRAYSCALE)
-#         prediction_img = cv2.imread(prediction_path, cv2.IMREAD_GRAYSCALE)
-#         #
-#         label_img[label_img != 0] = 1
-#         prediction_img[prediction_img!=0]=1
-#
-#         # 如果需要，您可以在此处将图像值映射到类标签（例如，将像素值从0-255映射到0-1）
-#
-#         # 计算单个图像的混淆矩阵
-#         single_conf_mat = confusion_matrix(label_img.flatten(), prediction_img.flatten())
-#
-#         # 将单个混淆矩阵累加到总混淆矩阵
-#         conf_mat += single_conf_mat
-#
-#     print("混淆矩阵：\n", conf_mat)
+def compute_miou(label_list, prediction_list):
+    miou_values = []
+    for label, prediction in zip(label_list, prediction_list):
+        cm = confusion_matrix(label.flatten(), prediction.flatten())
+        tp = np.diag(cm)
+        fp = cm.sum(axis=0) - tp
+        fn = cm.sum(axis=1) - tp
+
+        # 计算IOU值
+        iou = tp / (tp + fp + fn)
+        if iou != 0:
+            miou_values.append(iou)
+    return np.nanmean(miou_values)
 
 
 def plot_roc(fpr, tpr, roc_auc):
@@ -254,13 +240,10 @@ def Get_ROC(y_score_list, y_truth_list, num_classes):
     plot_roc(fpr, tpr, roc_auc)
 
 
-def seg_metrics(fold=1):
+def seg_metrics(fold=1, basePredictPath=r"pr_dir", trueLabelPath='./VOCdevkit/VOC2007/SegmentationClass'):
     #################################################################
     #  标签图像文件夹
     # LabelPath = r"pr_dir copy"
-    #  预测图像文件夹
-    basePredictPath = r"pr_dir"
-    TrueLabelPath = './VOCdevkit/VOC2007/SegmentationClass'
     #  类别数目(包括背景)
     classNum = config.NUM_CLASSES
     average = 'binary' if config.NUM_CLASSES == 2 else 'micro'
@@ -282,7 +265,7 @@ def seg_metrics(fold=1):
     label_all = []
     predict_all = []
     for i in labelList:
-        Label = cv2.imread(os.path.join(TrueLabelPath, i))
+        Label = cv2.imread(os.path.join(trueLabelPath, i))
         Label = cv2.cvtColor(Label, cv2.COLOR_BGR2GRAY)
         label_all.append(Label)
         Predict = cv2.imread(os.path.join(PredictPath, i))
@@ -290,6 +273,7 @@ def seg_metrics(fold=1):
         predict_all.append(Predict)
 
     dice1 = compute_dice(label_all, predict_all)
+    miou = compute_miou(label_all, predict_all)
 
     label_all = np.concatenate([array.flatten() for array in label_all])
     predict_all = np.concatenate([array.flatten() for array in predict_all])
@@ -359,12 +343,26 @@ def seg_metrics(fold=1):
     # print(mIOU)
     # print("FWIoU:")
     # print(FWIOU)
-    print("pixel-wise dice:")
+    # print("pixel-wise dice:")
     # print(dice)
+    print("miou:")
+    print(miou)
     print("dice:")
     print(dice1)
     print('')
 
 
 if __name__ == '__main__':
-    seg_metrics()
+    import argparse
+
+    # 创建一个解析器对象
+    parser = argparse.ArgumentParser(description="use for set the predict and label to get metrics, you must have a VOC dataset "
+                                                 "first!,remind to place them in fold_n!!!")
+    # 添加参数
+    parser.add_argument('--predictPath', type=str, default=r"pr_dir", help='dir for predicted label')
+    parser.add_argument('--labelPath', type=str, default='./VOCdevkit/VOC2007/SegmentationClass', help='dir for '
+                                                                                                       'ground truth '
+                                                                                                       'label')
+    parser.add_argument('--fold', type=int, default=1, )
+    args = parser.parse_args()
+    seg_metrics(fold=args.fold, basePredictPath=args.predictPath, trueLabelPath=args.labelPath)
