@@ -269,9 +269,9 @@ def seg_metrics(fold=1):
     #  获取类别颜色字典
     # colorDict_BGR, colorDict_GRAY = color_dict(LabelPath, classNum)
 
-    for i in range(fold if fold >= 1 else 0):
-        PredictPath = os.path.join(basePredictPath, f'fold_{fold + 1}')
-        LabelPath = os.path.join(f"./VOCdevkit/VOC2007/ImageSets/Segmentation/valid_{fold + 1}.txt")
+    for i in range(fold if fold >= 1 else 1):
+        PredictPath = os.path.join(basePredictPath, f'fold_{i + 1}')
+        LabelPath = os.path.join(f"./VOCdevkit/VOC2007/ImageSets/Segmentation/valid_{i + 1}.txt")
         #  获取文件夹内所有图像,以及对应的标签
         with open(LabelPath, "r") as f:
             val_lines = f.readlines()

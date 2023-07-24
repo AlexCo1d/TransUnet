@@ -68,7 +68,7 @@ def predict_and_eval():
     # label_all = []
     # predict_all = []
 
-    for fold in range(config.n_fold if config.n_fold>=1 else 0):
+    for fold in range(config.n_fold if config.n_fold>=1 else 1):
         if not os.path.exists(f'pr_dir/fold_{fold+1}'):
             os.mkdir(f'pr_dir/fold_{fold+1}')
 
@@ -98,7 +98,7 @@ def predict_and_eval():
             #     predict_all.append(np.array(score[..., 1]))
 
         # evaluate the prediction by using the metrics
-        seg_metrics(fold=fold)
+        seg_metrics(fold=fold+1)
 
         # get ROC func
         # Get_ROC(predict_all,label_all,config.NUM_CLASSES)
