@@ -174,19 +174,15 @@ def compute_dice(label_list, prediction_list):
     return mean_dice_value
 
 
-def compute_miou(label_list, prediction_list):
-    miou_values = []
-    for label, prediction in zip(label_list, prediction_list):
-        cm = confusion_matrix(label.flatten(), prediction.flatten())
-        tp = np.diag(cm)
-        fp = cm.sum(axis=0) - tp
-        fn = cm.sum(axis=1) - tp
+def compute_miou(cm):
+    tp = np.diag(cm)
+    fp = np.sum(cm, axis=0) - tp
+    fn = np.sum(cm, axis=1) - tp
 
-        # 计算IOU值
-        iou = tp / (tp + fp + fn)
-        if iou != 0:
-            miou_values.append(iou)
-    return np.nanmean(miou_values)
+    # 计算并返回每个类别的IoU值
+    iou = tp / (tp + fp + fn)
+    miou = np.nanmean(iou)
+    return iou, miou
 
 
 def plot_roc(fpr, tpr, roc_auc):
@@ -232,7 +228,7 @@ def Get_ROC(y_score_list, y_truth_list, num_classes):
     # Now `y_score_all` and `y_true_all` are 1D arrays containing all predictions and ground truth.
     # They can be used to calculate the ROC curve and AUC.
 
-    fpr, tpr, _ = roc_curve(y_true_all, y_score_all)
+    fpr, tpr, _ = roc_curve(y_true_all, y_score_all, pos_label=1)
     roc_auc = auc(fpr, tpr)
 
     print('AUC:', roc_auc)
@@ -273,7 +269,6 @@ def seg_metrics(fold=1, basePredictPath=r"pr_dir", trueLabelPath='./VOCdevkit/VO
         predict_all.append(Predict)
 
     dice1 = compute_dice(label_all, predict_all)
-    miou = compute_miou(label_all, predict_all)
 
     label_all = np.concatenate([array.flatten() for array in label_all])
     predict_all = np.concatenate([array.flatten() for array in predict_all])
@@ -309,6 +304,7 @@ def seg_metrics(fold=1, basePredictPath=r"pr_dir", trueLabelPath='./VOCdevkit/VO
 
     # sklearn
     confusionMatrix = confusion_matrix(label_all, predict_all)
+    iou, miou = compute_miou(confusionMatrix)
     accuracy = accuracy_score(label_all, predict_all)
     precision = precision_score(label_all, predict_all, average=average)
     recall = recall_score(label_all, predict_all, average=average)
@@ -345,6 +341,8 @@ def seg_metrics(fold=1, basePredictPath=r"pr_dir", trueLabelPath='./VOCdevkit/VO
     # print(FWIOU)
     # print("pixel-wise dice:")
     # print(dice)
+    print("iou:")
+    print(iou)
     print("miou:")
     print(miou)
     print("dice:")
@@ -356,8 +354,9 @@ if __name__ == '__main__':
     import argparse
 
     # 创建一个解析器对象
-    parser = argparse.ArgumentParser(description="use for set the predict and label to get metrics, you must have a VOC dataset "
-                                                 "first!,remind to place them in fold_n!!!")
+    parser = argparse.ArgumentParser(
+        description="use for set the predict and label to get metrics, you must have a VOC dataset "
+                    "first!,remind to place them in fold_n!!!")
     # 添加参数
     parser.add_argument('--predictPath', type=str, default=r"pr_dir", help='dir for predicted label')
     parser.add_argument('--labelPath', type=str, default='./VOCdevkit/VOC2007/SegmentationClass', help='dir for '
