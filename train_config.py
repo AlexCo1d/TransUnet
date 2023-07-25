@@ -119,6 +119,7 @@ class Config_Breast(BaseConfig):
 
 
 class Config_DDTI(BaseConfig):
+    n_skip = 3
     inputs_size = [256, 256, 3]
     image_type = '.png'  # image is jpg or png
     NUM_CLASSES = 2
