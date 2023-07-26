@@ -81,27 +81,26 @@ def predict_and_eval():
             image_name = image_name.replace('\n', '') + type
             label_name = image_name.replace(type, '.png')
 
-            # label_truth = Image.open(os.path.join(label_path, label_name))
+            label_truth = Image.open(os.path.join(label_path, label_name))
             # label_truth.save(f"pr_dir copy/{label_name}")
 
             # 测试集生成标签
             image = Image.open(os.path.join(image_path, image_name))
             label, score = unet.detect_image(image, mix=0) # label is classification result, pr is prediction score
             label = postprocess(np.array(label))
-            # image = image.resize((512, 512))
             label.save(f"pr_dir/fold_{fold+1}/{label_name}")
             # print(label_name, " done!")
 
             # only for 1 label, this work should be further accomplished, ROC for multiple labels
-            # if config.NUM_CLASSES==2:
-            #     label_all.append(np.array(label_truth))
-            #     predict_all.append(np.array(score[..., 1]))
+            if config.NUM_CLASSES==2:
+                label_all.append(np.array(label_truth))
+                predict_all.append(np.array(score[..., 1]))
 
         # evaluate the prediction by using the metrics
         seg_metrics(fold=fold+1)
 
         # get ROC func
-        # Get_ROC(predict_all,label_all,config.NUM_CLASSES)
+        Get_ROC(predict_all,label_all,config.NUM_CLASSES)
 
 if __name__ == '__main__':
     # show_image()
