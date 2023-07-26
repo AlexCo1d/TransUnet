@@ -1,637 +1,647 @@
-123
-423
-412
-616
-340
-437
-301
-206
-619
-269
-472
-122
-148
-394
-410
-531
-459
-153
-251
-631
-528
-473
-372
-505
-469
-34
-236
-133
-349
-350
-593
-13
-419
-495
-621
-343
-381
-439
-625
-380
-295
-367
-608
-112
-440
-551
-362
-402
-356
-288
-179
-538
-60
-56
-151
-391
-598
-450
-223
-89
-330
-127
-143
-338
-376
-506
-46
-273
-12
-534
-141
-203
-587
-145
-209
-139
-107
-555
-160
-104
-629
-224
-589
-368
-255
-575
-7
-483
-428
-98
-427
-142
-74
-36
-28
-177
-566
-421
-109
-512
-584
-229
-366
-458
-30
-275
-129
-195
-347
-80
-2
-535
-99
-4
-256
-259
-346
-396
-267
-319
-568
-399
-292
-624
-25
-47
-463
-617
-235
-90
-557
-409
-187
-50
-196
-42
-94
-497
-478
-596
-328
-11
-411
-290
-131
-320
-137
-27
-464
-159
-192
-173
-163
-322
-552
-496
-95
-81
-492
-447
-579
-297
-118
-361
-116
-78
-8
-302
-102
-581
-149
-0
-586
-266
-597
-208
-86
-190
-460
-600
-110
-467
-6
-75
-276
-211
-249
-407
-484
-9
-286
-305
-369
-438
-176
-207
-105
-285
-353
-279
-184
-514
-544
-481
-21
-125
-390
-193
-14
-607
-268
-172
-283
-120
-29
-556
-175
-523
-298
-287
-357
-191
-329
-313
-220
-614
-3
-281
-69
-312
-174
-134
-345
-100
-633
-35
-150
-476
-19
-202
-37
-71
-576
-166
-250
-48
-167
-232
-594
-201
-573
-384
-525
-308
-363
-336
-490
-352
-185
-221
-230
-355
-385
-485
-24
-210
-487
-540
-393
-1
-468
-88
-318
-358
-405
-488
-15
-262
-156
-265
-231
-252
-403
-553
-289
-198
-277
-570
-52
-590
-526
-434
-332
-471
-57
-446
-234
-225
-348
-82
-378
-635
-354
-257
-432
-158
-245
-168
-491
-54
-549
-43
-303
-588
-113
-263
-278
-486
-433
-239
-72
-111
-83
-10
-331
-205
-44
-351
-238
-392
-509
-453
-215
-119
-521
-388
-610
-33
-543
-401
-197
-304
-565
-108
-634
-605
-539
-448
-31
-140
-59
-406
-603
-465
-115
-70
-222
-68
-623
-466
-152
-334
-284
-147
-628
-561
-541
-128
-271
-545
-382
-627
-482
-101
-592
-216
-578
-530
-537
-154
-65
-475
-73
-299
-601
-162
-307
-404
-138
-365
-186
-246
-504
-615
-264
-364
-130
-550
-189
-527
-431
-562
-606
-135
-383
-499
-379
-217
-291
-408
-341
-146
-244
-296
-626
-272
-164
-124
-226
-161
-595
-199
-477
-567
-293
-237
-470
-426
-49
-247
-480
-377
-494
-261
-121
-420
-524
-572
-20
-92
-517
-456
-165
-240
-41
-106
-533
-316
-542
-17
-583
-260
-413
-23
-317
-609
-76
-194
-337
-183
-321
-309
-502
-554
-91
-280
-452
-564
-170
-436
-577
-144
-373
-39
-117
-188
-425
-546
-218
-324
-632
-311
-243
-241
-599
-85
-282
-219
-200
-171
-314
-585
-339
-97
-254
-306
-253
-84
-622
-315
-310
-613
-323
-182
-22
-155
-270
-45
-233
-462
-274
-114
-416
-560
-474
-442
-64
-636
-602
-604
-389
-435
-51
-61
-398
-508
-418
-55
-569
-16
-375
-180
-62
-580
-529
-32
-77
-132
-386
-445
-441
-417
-294
-547
-40
-479
-415
-212
-454
-515
-93
-451
-18
-204
-582
-611
-126
-501
-79
-503
-63
-325
-455
-532
-360
-424
-371
-258
-169
-370
-520
-395
-536
-518
-563
-457
-5
-66
-178
-511
-449
-248
-620
-374
-359
-422
-387
-26
-571
-103
-513
-429
-157
-58
-344
-300
-342
-96
-326
-630
-227
-397
-414
-510
-443
-53
-493
-333
-67
-498
-228
-213
-618
-559
-507
-489
-400
-558
-335
-612
-591
-519
-522
-574
-500
-461
-444
-516
-327
-87
-242
-548
-136
-214
-38
-430
-181
+benign (368)
+benign (116)
+malignant (153)
+benign (416)
+benign (127)
+malignant (15)
+benign (252)
+benign (304)
+malignant (7)
+malignant (120)
+malignant (189)
+malignant (192)
+malignant (134)
+benign (112)
+malignant (141)
+benign (39)
+malignant (59)
+benign (308)
+benign (409)
+benign (211)
+benign (357)
+benign (312)
+benign (20)
+malignant (70)
+malignant (22)
+benign (133)
+benign (151)
+malignant (210)
+benign (4)
+benign (425)
+malignant (79)
+benign (255)
+benign (37)
+benign (171)
+malignant (21)
+malignant (180)
+benign (247)
+malignant (156)
+benign (261)
+malignant (60)
+benign (434)
+benign (122)
+benign (124)
+benign (178)
+benign (432)
+malignant (199)
+malignant (25)
+benign (419)
+benign (366)
+malignant (84)
+benign (115)
+malignant (87)
+benign (343)
+malignant (187)
+benign (87)
+malignant (43)
+benign (358)
+benign (429)
+benign (161)
+benign (186)
+benign (296)
+benign (289)
+benign (359)
+malignant (150)
+benign (269)
+benign (348)
+benign (226)
+malignant (118)
+benign (281)
+benign (221)
+benign (56)
+benign (9)
+malignant (66)
+benign (315)
+benign (102)
+malignant (201)
+benign (10)
+benign (36)
+malignant (57)
+benign (144)
+benign (251)
+benign (290)
+benign (130)
+benign (286)
+benign (194)
+benign (341)
+benign (191)
+malignant (32)
+benign (422)
+malignant (178)
+malignant (166)
+benign (424)
+benign (101)
+benign (205)
+benign (192)
+benign (12)
+benign (430)
+malignant (176)
+benign (88)
+benign (403)
+benign (337)
+benign (91)
+benign (242)
+malignant (4)
+benign (62)
+benign (241)
+benign (45)
+malignant (113)
+benign (380)
+benign (3)
+malignant (35)
+malignant (61)
+benign (326)
+benign (202)
+benign (347)
+benign (213)
+benign (35)
+malignant (194)
+malignant (77)
+benign (437)
+malignant (202)
+benign (59)
+malignant (144)
+benign (260)
+benign (113)
+benign (386)
+benign (227)
+benign (140)
+benign (25)
+benign (172)
+malignant (19)
+benign (263)
+benign (291)
+benign (413)
+malignant (130)
+malignant (82)
+benign (271)
+benign (8)
+benign (21)
+benign (404)
+malignant (190)
+benign (57)
+benign (395)
+benign (327)
+malignant (39)
+benign (387)
+benign (342)
+benign (423)
+benign (28)
+malignant (24)
+benign (294)
+benign (229)
+benign (245)
+benign (52)
+benign (336)
+benign (401)
+malignant (128)
+benign (64)
+benign (333)
+benign (135)
+benign (335)
+benign (400)
+malignant (58)
+benign (53)
+benign (324)
+malignant (6)
+benign (175)
+malignant (186)
+malignant (88)
+benign (364)
+malignant (102)
+malignant (27)
+malignant (90)
+malignant (131)
+benign (50)
+benign (284)
+malignant (31)
+benign (330)
+malignant (67)
+benign (176)
+benign (321)
+benign (41)
+benign (23)
+benign (389)
+benign (339)
+benign (212)
+benign (152)
+malignant (170)
+benign (370)
+benign (274)
+malignant (157)
+malignant (96)
+benign (54)
+benign (75)
+benign (373)
+malignant (177)
+benign (204)
+malignant (136)
+malignant (46)
+benign (218)
+benign (231)
+benign (345)
+benign (159)
+malignant (206)
+malignant (175)
+malignant (125)
+malignant (38)
+benign (392)
+benign (375)
+benign (105)
+malignant (143)
+malignant (132)
+benign (230)
+benign (104)
+malignant (2)
+malignant (197)
+benign (399)
+benign (362)
+malignant (110)
+benign (223)
+benign (170)
+benign (136)
+benign (350)
+malignant (55)
+benign (239)
+malignant (63)
+benign (331)
+malignant (158)
+malignant (49)
+benign (100)
+benign (268)
+benign (83)
+malignant (167)
+malignant (208)
+benign (108)
+benign (288)
+benign (49)
+benign (89)
+benign (73)
+malignant (30)
+malignant (64)
+malignant (20)
+benign (6)
+malignant (26)
+malignant (74)
+benign (258)
+malignant (198)
+benign (414)
+malignant (94)
+benign (301)
+benign (98)
+benign (311)
+benign (256)
+malignant (3)
+benign (323)
+benign (72)
+benign (378)
+benign (246)
+malignant (114)
+benign (29)
+benign (365)
+benign (78)
+benign (262)
+benign (388)
+malignant (127)
+benign (85)
+benign (220)
+benign (224)
+benign (174)
+malignant (9)
+benign (42)
+malignant (182)
+benign (166)
+benign (238)
+benign (147)
+malignant (68)
+malignant (165)
+malignant (78)
+benign (2)
+benign (317)
+malignant (174)
+benign (137)
+benign (182)
+benign (371)
+malignant (162)
+malignant (93)
+malignant (196)
+malignant (193)
+benign (169)
+benign (107)
+malignant (108)
+malignant (148)
+benign (18)
+malignant (209)
+benign (114)
+benign (197)
+malignant (185)
+malignant (89)
+malignant (103)
+benign (30)
+benign (225)
+malignant (171)
+benign (80)
+malignant (69)
+benign (92)
+malignant (91)
+benign (397)
+benign (406)
+benign (154)
+benign (131)
+benign (235)
+benign (383)
+benign (129)
+benign (164)
+benign (318)
+malignant (71)
+benign (109)
+benign (177)
+benign (259)
+malignant (205)
+benign (360)
+malignant (36)
+benign (306)
+benign (248)
+malignant (28)
+benign (431)
+malignant (117)
+benign (141)
+benign (55)
+benign (382)
+malignant (159)
+benign (228)
+benign (217)
+benign (119)
+benign (277)
+benign (132)
+benign (328)
+malignant (152)
+malignant (99)
+benign (203)
+malignant (124)
+benign (275)
+benign (123)
+benign (299)
+benign (309)
+malignant (11)
+benign (356)
+benign (103)
+benign (106)
+benign (99)
+benign (374)
+benign (214)
+malignant (191)
+benign (16)
+malignant (123)
+benign (71)
+benign (196)
+benign (310)
+malignant (142)
+benign (188)
+benign (325)
+benign (180)
+benign (384)
+benign (165)
+benign (126)
+malignant (73)
+malignant (72)
+benign (195)
+malignant (204)
+benign (379)
+benign (201)
+benign (305)
+malignant (135)
+benign (32)
+malignant (17)
+malignant (86)
+benign (70)
+benign (60)
+malignant (105)
+benign (157)
+benign (200)
+benign (90)
+malignant (47)
+malignant (169)
+benign (93)
+benign (385)
+malignant (203)
+malignant (85)
+benign (193)
+benign (14)
+benign (74)
+malignant (139)
+benign (189)
+benign (11)
+benign (257)
+benign (68)
+benign (219)
+benign (354)
+benign (303)
+benign (215)
+malignant (80)
+benign (316)
+malignant (48)
+benign (216)
+benign (282)
+malignant (119)
+benign (313)
+malignant (81)
+benign (199)
+benign (267)
+benign (143)
+benign (298)
+benign (69)
+malignant (207)
+benign (320)
+benign (279)
+malignant (98)
+benign (24)
+benign (15)
+malignant (95)
+malignant (121)
+malignant (155)
+benign (67)
+malignant (184)
+benign (332)
+benign (22)
+malignant (129)
+benign (110)
+benign (134)
+benign (13)
+benign (377)
+malignant (44)
+benign (240)
+malignant (179)
+benign (168)
+benign (207)
+malignant (116)
+benign (418)
+malignant (53)
+benign (179)
+benign (1)
+benign (295)
+malignant (172)
+malignant (16)
+benign (210)
+benign (222)
+malignant (76)
+benign (426)
+benign (283)
+benign (120)
+benign (48)
+malignant (111)
+benign (402)
+benign (367)
+benign (44)
+benign (352)
+benign (346)
+malignant (12)
+benign (417)
+benign (7)
+benign (84)
+benign (190)
+benign (390)
+benign (82)
+malignant (1)
+malignant (10)
+malignant (112)
+benign (206)
+malignant (8)
+malignant (37)
+benign (117)
+benign (244)
+benign (293)
+malignant (164)
+benign (46)
+benign (167)
+benign (160)
+malignant (133)
+benign (405)
+benign (232)
+benign (322)
+benign (391)
+benign (253)
+benign (420)
+benign (65)
+benign (128)
+benign (184)
+benign (292)
+benign (278)
+malignant (83)
+benign (38)
+benign (300)
+malignant (75)
+benign (270)
+benign (208)
+benign (329)
+benign (361)
+benign (145)
+benign (156)
+benign (34)
+benign (209)
+benign (111)
+malignant (5)
+benign (27)
+malignant (56)
+benign (381)
+benign (77)
+benign (376)
+malignant (92)
+malignant (40)
+malignant (107)
+benign (276)
+benign (139)
+benign (155)
+benign (153)
+malignant (62)
+malignant (54)
+malignant (149)
+malignant (173)
+malignant (109)
+benign (254)
+benign (47)
+malignant (104)
+benign (411)
+benign (353)
+benign (307)
+benign (158)
+benign (183)
+benign (249)
+benign (436)
+benign (394)
+benign (96)
+benign (243)
+malignant (51)
+malignant (160)
+benign (118)
+malignant (45)
+benign (19)
+benign (410)
+malignant (13)
+benign (76)
+benign (95)
+benign (121)
+malignant (163)
+benign (173)
+benign (314)
+malignant (146)
+benign (185)
+benign (285)
+malignant (65)
+benign (250)
+malignant (181)
+benign (198)
+malignant (188)
+malignant (195)
+benign (40)
+malignant (115)
+malignant (29)
+benign (63)
+malignant (18)
+benign (86)
+malignant (154)
+benign (26)
+malignant (50)
+malignant (42)
+benign (398)
+benign (142)
+benign (79)
+benign (146)
+malignant (138)
+benign (412)
+benign (187)
+malignant (101)
+benign (66)
+malignant (100)
+malignant (147)
+benign (272)
+malignant (23)
+benign (369)
+malignant (33)
+benign (17)
+benign (265)
+benign (181)
+benign (297)
+benign (319)
+benign (427)
+benign (351)
+benign (415)
+benign (363)
+benign (344)
+benign (264)
+benign (334)
+benign (163)
+benign (266)
+malignant (122)
+malignant (168)
+benign (236)
+benign (125)
+benign (408)
+benign (433)
+benign (287)
+benign (421)
+benign (338)
+malignant (52)
+benign (58)
+malignant (183)
+benign (149)
+benign (372)
+benign (97)
+malignant (140)
+benign (237)
+malignant (41)
+benign (138)
+malignant (145)
+benign (302)
+benign (355)
+benign (33)
+malignant (97)
+benign (396)
+benign (51)
+malignant (126)
+benign (234)
+malignant (161)
+benign (428)
+benign (31)
+benign (393)
+malignant (106)
+benign (273)
+benign (43)
+benign (162)
+malignant (137)
+benign (150)
+benign (407)
+benign (435)
+benign (340)
+benign (5)
+benign (233)
+benign (61)
+malignant (14)
+malignant (200)
+benign (280)
+benign (349)
+benign (148)
+benign (94)
+benign (81)
+malignant (151)
+malignant (34)

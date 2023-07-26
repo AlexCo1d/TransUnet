@@ -28,11 +28,6 @@ class BaseConfig:
     #   2: Vit_CBAM_ASPP
     #   3: Vit_CBAM
     # -------------------------------#
-
-    # --------------#
-    # BATCH_SIZE
-    # --------------#
-    Batch_size = 2
     # (focal or ce) + dice
     focal_loss = True
     cls_weights = True
@@ -89,6 +84,10 @@ class BaseConfig:
     Freeze_Epoch = 40
     Freeze_Batch_Size = 2
     set_epoch_batch = [150, 1]
+    # --------------#
+    # BATCH_SIZE
+    # --------------#
+    Batch_size = 2
     # ----------------------#
     # 输出图像的形式
     # 0：不上色
@@ -126,4 +125,4 @@ class Config_DDTI(BaseConfig):
     model = 'Vit_CBAM_ASPP'
 
 
-config = Config_DDTI()
+config = Config_Breast()

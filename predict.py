@@ -65,8 +65,8 @@ def show_image():
 
 def predict_and_eval():
     from unet import uNet
-    # label_all = []
-    # predict_all = []
+    label_all = []
+    predict_all = []
 
     for fold in range(config.n_fold if config.n_fold>=1 else 1):
         if not os.path.exists(f'pr_dir/fold_{fold+1}'):

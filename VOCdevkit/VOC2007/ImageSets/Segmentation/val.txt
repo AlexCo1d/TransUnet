@@ -1,128 +1,130 @@
-122
-531
-459
-236
-13
-419
-343
-356
-288
-151
-450
-143
-376
-46
-141
-145
-629
-255
-28
-109
-129
-99
-568
-624
-196
-328
-290
-320
-322
-492
-447
-78
-208
-600
-467
-369
-207
-285
-481
-172
-175
-329
-232
-384
-363
-490
-385
-488
-156
-231
-570
-332
-432
-245
-491
-43
-113
-486
-433
-205
-44
-392
-215
-521
-465
-115
-628
-73
-601
-162
-138
-365
-246
-615
-264
-364
-562
-244
-124
-595
-477
-426
-49
-494
-524
-572
-41
-23
-183
-311
-85
-613
-22
-274
-114
-474
-636
-61
-398
-180
-580
-32
-132
-386
-445
-415
-212
-515
-126
-79
-63
-371
-258
-518
-563
-248
-620
-387
-513
-326
-397
-493
-333
-228
-559
-507
-400
-38
+benign (116)
+malignant (153)
+malignant (7)
+benign (133)
+benign (255)
+benign (37)
+benign (247)
+benign (434)
+benign (122)
+benign (432)
+malignant (25)
+malignant (87)
+benign (343)
+benign (87)
+benign (161)
+benign (186)
+benign (289)
+benign (359)
+malignant (150)
+malignant (201)
+malignant (57)
+benign (144)
+malignant (32)
+benign (422)
+benign (205)
+benign (88)
+benign (62)
+malignant (35)
+malignant (202)
+benign (260)
+benign (172)
+benign (291)
+malignant (130)
+benign (8)
+benign (21)
+benign (245)
+benign (52)
+benign (333)
+malignant (6)
+malignant (131)
+benign (50)
+benign (284)
+benign (321)
+benign (23)
+benign (54)
+benign (373)
+benign (218)
+malignant (175)
+malignant (143)
+benign (399)
+benign (239)
+benign (268)
+benign (108)
+benign (49)
+benign (89)
+malignant (20)
+benign (414)
+benign (301)
+benign (323)
+benign (220)
+benign (224)
+malignant (9)
+benign (238)
+malignant (165)
+benign (317)
+benign (114)
+benign (397)
+benign (164)
+benign (55)
+benign (123)
+benign (356)
+benign (103)
+benign (106)
+benign (180)
+benign (384)
+malignant (135)
+benign (70)
+malignant (85)
+benign (219)
+benign (354)
+benign (316)
+benign (216)
+benign (282)
+benign (313)
+benign (298)
+malignant (155)
+benign (110)
+malignant (44)
+benign (207)
+benign (418)
+malignant (53)
+benign (1)
+malignant (76)
+benign (48)
+malignant (111)
+benign (352)
+benign (346)
+malignant (12)
+malignant (10)
+benign (244)
+benign (160)
+benign (253)
+benign (278)
+benign (38)
+malignant (75)
+benign (329)
+benign (376)
+benign (155)
+malignant (54)
+malignant (149)
+malignant (173)
+benign (47)
+benign (411)
+benign (394)
+benign (19)
+malignant (13)
+benign (173)
+benign (63)
+benign (26)
+benign (79)
+benign (369)
+benign (363)
+benign (338)
+malignant (183)
+malignant (140)
+malignant (145)
+benign (302)
+malignant (97)
+benign (234)
+benign (280)

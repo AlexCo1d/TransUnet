@@ -677,6 +677,16 @@ def turn():
         image[image != 0] = 255
         Image.fromarray(image).save(os.path.join(dst_f, img))
 
+
+def stat():
+    src='./VOCdevkit/VOC2007/SegmentationClass/'
+    list=[]
+    for img in os.listdir(src):
+        image = np.array(Image.open(os.path.join(src, img)))
+        image[image==2]=1
+        Image.fromarray(image).save(os.path.join(src,img))
+
+
 if __name__ == '__main__':
     # observe_model()
     # main()
@@ -687,8 +697,10 @@ if __name__ == '__main__':
     # ob_weight()
     # preprocess()
     # postprocess_and_evaluate()
-    turn()
+    # turn()
+    stat()
     pass
+
 
 
 # export CUDA_VISIBLE_DEVICES=0,1,2
