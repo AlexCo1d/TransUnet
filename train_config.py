@@ -79,11 +79,11 @@ class BaseConfig:
     # ----------------------#
     save_dir = 'logs'
     Init_Epoch = 0
-    Interval_Epoch = 200
+    Interval_Epoch = 300
     # 设置冻结的epoch
     Freeze_Epoch = 40
     Freeze_Batch_Size = 2
-    set_epoch_batch = [150, 1]
+    set_epoch_batch = [250, 1]
     # --------------#
     # BATCH_SIZE
     # --------------#
