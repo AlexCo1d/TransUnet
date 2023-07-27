@@ -236,24 +236,15 @@ def Get_ROC(y_score_list, y_truth_list, num_classes):
     plot_roc(fpr, tpr, roc_auc)
 
 
-def seg_metrics(fold=1, basePredictPath=r"pr_dir", trueLabelPath='./VOCdevkit/VOC2007/SegmentationClass'):
+def seg_eval(PredictPath=r"pr_dir", LabelPath='./VOCdevkit/VOC2007/SegmentationClass'):
     #################################################################
     #  标签图像文件夹
     # LabelPath = r"pr_dir copy"
     #  类别数目(包括背景)
-    classNum = config.NUM_CLASSES
     average = 'binary' if config.NUM_CLASSES == 2 else 'micro'
     #################################################################
-    #  获取类别颜色字典
-    # colorDict_BGR, colorDict_GRAY = color_dict(LabelPath, classNum)
-
-    PredictPath = os.path.join(basePredictPath, f'fold_{fold}')
-    LabelPath = os.path.join(f"./VOCdevkit/VOC2007/ImageSets/Segmentation/valid_{fold}.txt")
     #  获取文件夹内所有图像,以及对应的标签
-    with open(LabelPath, "r") as f:
-        val_lines = f.readlines()
-    labelList = [i.strip() + '.png' for i in val_lines]
-    PredictList = os.listdir(PredictPath)
+    labelList=os.listdir(PredictPath)
 
     #  图像数目
     label_num = len(labelList)
@@ -261,7 +252,7 @@ def seg_metrics(fold=1, basePredictPath=r"pr_dir", trueLabelPath='./VOCdevkit/VO
     label_all = []
     predict_all = []
     for i in labelList:
-        Label = cv2.imread(os.path.join(trueLabelPath, i))
+        Label = cv2.imread(os.path.join(LabelPath, i))
         Label = cv2.cvtColor(Label, cv2.COLOR_BGR2GRAY)
         label_all.append(Label)
         Predict = cv2.imread(os.path.join(PredictPath, i))
@@ -350,18 +341,36 @@ def seg_metrics(fold=1, basePredictPath=r"pr_dir", trueLabelPath='./VOCdevkit/VO
     print('')
 
 
+def seg_metrics(fold=1, basePredictPath=r"pr_dir", trueLabelPath='./VOCdevkit/VOC2007/SegmentationClass'):
+    '''
+
+    Args:
+        fold: 第几折，Predict的存放路径
+        basePredictPath: basePredict路径
+        trueLabelPath: 真实label的存放路径
+
+    Returns:
+        命令行输出分割指标。
+    '''
+    if fold < 1:
+        PredictPath = basePredictPath
+    else:
+        PredictPath = os.path.join(basePredictPath, f'fold_{fold}')
+    seg_eval(PredictPath, trueLabelPath)
+
+
 if __name__ == '__main__':
     import argparse
 
     # 创建一个解析器对象
     parser = argparse.ArgumentParser(
         description="use for set the predict and label to get metrics, you must have a VOC dataset "
-                    "first!,remind to place them in fold_n!!!")
+                    "first! type predict path first， if use cross validation plz designate one then")
     # 添加参数
     parser.add_argument('--predictPath', type=str, default=r"pr_dir", help='dir for predicted label')
     parser.add_argument('--labelPath', type=str, default='./VOCdevkit/VOC2007/SegmentationClass', help='dir for '
                                                                                                        'ground truth '
                                                                                                        'label')
-    parser.add_argument('--fold', type=int, default=1, )
+    parser.add_argument('--fold', type=int, default=-1, )
     args = parser.parse_args()
     seg_metrics(fold=args.fold, basePredictPath=args.predictPath, trueLabelPath=args.labelPath)
