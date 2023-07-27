@@ -100,7 +100,7 @@ def predict_and_eval():
         seg_metrics(fold=fold+1)
 
         # get ROC func
-        Get_ROC(predict_all,label_all,config.NUM_CLASSES)
+        # Get_ROC(predict_all,label_all,config.NUM_CLASSES)
 
 if __name__ == '__main__':
     # show_image()

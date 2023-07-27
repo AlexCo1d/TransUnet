@@ -122,6 +122,7 @@ class Config_DDTI(BaseConfig):
     inputs_size = [256, 256, 3]
     image_type = '.png'  # image is jpg or png
     NUM_CLASSES = 2
+    component = 1
     model = 'Vit_CBAM_ASPP'
 
 
