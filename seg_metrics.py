@@ -236,7 +236,7 @@ def Get_ROC(y_score_list, y_truth_list, num_classes):
     plot_roc(fpr, tpr, roc_auc)
 
 
-def seg_eval(PredictPath=r"pr_dir", LabelPath='./VOCdevkit/VOC2007/SegmentationClass'):
+def seg_eval(fold, PredictPath=r"pr_dir", LabelPath='./VOCdevkit/VOC2007/SegmentationClass'):
     #################################################################
     #  标签图像文件夹
     # LabelPath = r"pr_dir copy"
@@ -356,7 +356,7 @@ def seg_metrics(fold=1, basePredictPath=r"pr_dir", trueLabelPath='./VOCdevkit/VO
         PredictPath = basePredictPath
     else:
         PredictPath = os.path.join(basePredictPath, f'fold_{fold}')
-    seg_eval(PredictPath, trueLabelPath)
+    seg_eval(fold, PredictPath, trueLabelPath)
 
 
 if __name__ == '__main__':
