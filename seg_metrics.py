@@ -119,13 +119,27 @@ def Frequency_Weighted_Intersection_over_Union(confusionMatrix):
     return FWIoU
 
 
-def compute_direct_dice(confusionMatrix):
+def compute_direct_dice(cm):
     #  返回交并比IoU
-    intersection = 2 * np.diag(confusionMatrix)
-    union = np.sum(confusionMatrix, axis=1) + np.sum(confusionMatrix, axis=0)
-    dice = intersection / union
-    dice = np.nanmean(dice)
-    return dice
+    """
+    Compute per-class Dice coefficient given a confusion matrix.
+    """
+    # Calculate sum across rows and columns
+    sum_rows = np.sum(cm, axis=1)
+    sum_cols = np.sum(cm, axis=0)
+
+    # Compute per-class Dice coefficient
+    dice_class = np.zeros(cm.shape[0])
+    for i in range(cm.shape[0]):
+        tp = cm[i, i]
+        fn = sum_rows[i] - tp
+        fp = sum_cols[i] - tp
+
+        dice_class[i] = (2. * tp) / ((2. * tp) + fn + fp)
+    if cm.shape[0] == 2:
+        return dice_class[1]
+    else:
+        return dice_class
 
 
 def dice_coefficient(y_true, y_pred):
@@ -244,7 +258,7 @@ def seg_eval(fold=1, PredictPath=r"pr_dir", LabelPath='./VOCdevkit/VOC2007/Segme
     average = 'binary' if config.NUM_CLASSES == 2 else 'micro'
     #################################################################
     #  获取文件夹内所有图像,以及对应的标签
-    labelList=os.listdir(PredictPath)
+    labelList = os.listdir(PredictPath)
 
     #  图像数目
     label_num = len(labelList)
