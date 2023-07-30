@@ -236,7 +236,7 @@ def Get_ROC(y_score_list, y_truth_list, num_classes):
     plot_roc(fpr, tpr, roc_auc)
 
 
-def seg_eval(fold, PredictPath=r"pr_dir", LabelPath='./VOCdevkit/VOC2007/SegmentationClass'):
+def seg_eval(fold=1, PredictPath=r"pr_dir", LabelPath='./VOCdevkit/VOC2007/SegmentationClass'):
     #################################################################
     #  标签图像文件夹
     # LabelPath = r"pr_dir copy"
@@ -282,7 +282,7 @@ def seg_eval(fold, PredictPath=r"pr_dir", LabelPath='./VOCdevkit/VOC2007/Segment
     #     #  不安装的话,输出灰度值
     #     except:
     #         print(colorDict_GRAY[i][0], end="  ")
-
+    confusionMatrix = confusion_matrix(label_all, predict_all)
     # confusionMatrix = ConfusionMatrix(classNum, predict_all, label_all)
     # # precision = Precision(confusionMatrix)
     # # recall = Recall(confusionMatrix)
@@ -291,10 +291,10 @@ def seg_eval(fold, PredictPath=r"pr_dir", LabelPath='./VOCdevkit/VOC2007/Segment
     # # FWIOU = Frequency_Weighted_Intersection_over_Union(confusionMatrix)
     # # mIOU = MeanIntersectionOverUnion(confusionMatrix)
     # # f1ccore = F1Score(confusionMatrix)
-    # dice = compute_direct_dice(confusionMatrix)
+    dice = compute_direct_dice(confusionMatrix)
 
     # sklearn
-    confusionMatrix = confusion_matrix(label_all, predict_all)
+
     iou, miou = compute_miou(confusionMatrix)
     accuracy = accuracy_score(label_all, predict_all)
     precision = precision_score(label_all, predict_all, average=average)
@@ -330,8 +330,8 @@ def seg_eval(fold, PredictPath=r"pr_dir", LabelPath='./VOCdevkit/VOC2007/Segment
     # print(mIOU)
     # print("FWIoU:")
     # print(FWIOU)
-    # print("pixel-wise dice:")
-    # print(dice)
+    print("pixel-wise dice:")
+    print(dice)
     print("iou:")
     print(iou)
     print("miou:")
