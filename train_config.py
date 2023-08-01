@@ -96,7 +96,7 @@ class BaseConfig:
     # -----------------------#
     output_type = 2
     # 跳跃连接数量
-    n_skip = 4
+    n_skip = 3
 
     # 连通部件数量，不指定则为-1
     component = -1
@@ -126,4 +126,4 @@ class Config_DDTI(BaseConfig):
     model = 'Vit_CBAM_ASPP'
 
 
-config = Config_Breast()
+config = Config_Cervical()

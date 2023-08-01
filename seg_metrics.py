@@ -137,7 +137,7 @@ def compute_direct_dice(cm):
 
         dice_class[i] = (2. * tp) / ((2. * tp) + fn + fp)
     if cm.shape[0] == 2:
-        return dice_class[1]
+        return dice_class
     else:
         return dice_class
 
@@ -179,7 +179,7 @@ def compute_dice(label_list, prediction_list):
         # 如果需要，您可以在此处将图像值映射到类标签（例如，将像素值从0-255映射到0-4）
         if dice_val != 0:
             dice_values1.append(dice_val)
-            dice_values2.append(dice_coefficient(label, prediction))
+            # dice_values2.append(dice_coefficient(label, prediction))
 
     # print(len(dice_values1))
     mean_dice_value = np.nanmean(dice_values1)
