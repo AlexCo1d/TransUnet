@@ -79,7 +79,7 @@ class BaseConfig:
     # ----------------------#
     save_dir = 'logs'
     Init_Epoch = 0
-    Interval_Epoch = 300
+    Interval_Epoch = 150
     # 设置冻结的epoch
     Freeze_Epoch = 40
     Freeze_Batch_Size = 2
@@ -96,7 +96,7 @@ class BaseConfig:
     # -----------------------#
     output_type = 2
     # 跳跃连接数量
-    n_skip = 3
+    n_skip = 4
 
     # 连通部件数量，不指定则为-1
     component = -1
@@ -126,4 +126,4 @@ class Config_DDTI(BaseConfig):
     model = 'Vit_CBAM_ASPP'
 
 
-config = Config_Cervical()
+config = Config_Breast()
