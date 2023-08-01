@@ -167,7 +167,7 @@ def cal_dice(seg, gt, classes=2, background_id=0):
 
 def compute_dice(label_list, prediction_list):
     dice_values1 = []
-    # dice_values2 = []
+    dice_values2 = []
     for label, prediction in zip(label_list, prediction_list):
         dice_val = cal_dice(prediction, label, classes=config.NUM_CLASSES, background_id=0)
         # label[label_img!=0]=1
@@ -177,7 +177,9 @@ def compute_dice(label_list, prediction_list):
         #     prediction_img[prediction_img == colorDict_GRAY[i][0]] = i
 
         # 如果需要，您可以在此处将图像值映射到类标签（例如，将像素值从0-255映射到0-4）
-        if len(np.unique(prediction))!=1 or len(np.unique(label))!=1:
+        if dice_val != 0:
+            dice_values2.append(dice_val)
+        if len(np.unique(prediction)) != 1 or len(np.unique(label)) != 1:
             dice_values1.append(dice_val)
         else:
             dice_values1.append(1)
@@ -187,7 +189,7 @@ def compute_dice(label_list, prediction_list):
     mean_dice_value = np.nanmean(dice_values1)
     # print(f'mean_dice: {mean_dice_value}')
     # print(f'naive mean_dice: {np.nanmean(dice_values2)}')
-    return mean_dice_value
+    return mean_dice_value, np.nanmean(dice_values2)
 
 
 def compute_miou(cm):
@@ -275,7 +277,7 @@ def seg_eval(fold=1, PredictPath=r"pr_dir", LabelPath='./VOCdevkit/VOC2007/Segme
         Predict = cv2.cvtColor(Predict, cv2.COLOR_BGR2GRAY)
         predict_all.append(Predict)
 
-    dice1 = compute_dice(label_all, predict_all)
+    dice1,dice2 = compute_dice(label_all, predict_all)
 
     label_all = np.concatenate([array.flatten() for array in label_all])
     predict_all = np.concatenate([array.flatten() for array in predict_all])
@@ -354,6 +356,8 @@ def seg_eval(fold=1, PredictPath=r"pr_dir", LabelPath='./VOCdevkit/VOC2007/Segme
     print(miou)
     print("dice:")
     print(dice1)
+    print("naive dice:")
+    print(dice2)
     print('')
 
 
