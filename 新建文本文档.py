@@ -679,12 +679,13 @@ def turn():
 
 
 def stat():
-    src='./VOCdevkit/VOC2007/SegmentationClass/'
-    list=[]
-    for img in os.listdir(src):
-        image = np.array(Image.open(os.path.join(src, img)))
-        image[image==2]=1
-        Image.fromarray(image).save(os.path.join(src,img))
+    label_path='./VOCdevkit/VOC2007/SegmentationClass/'
+    image_path='./VOCdevkit/VOC2007/JPEGImages'
+    for label_name in os.listdir(label_path):
+        label=np.array(Image.open(os.path.join(label_path,label_name)))
+        if len(np.unique(label))==1:
+            os.remove(os.path.join(label_path,label_name))
+            os.remove(os.path.join(image_path,label_name.replace('.png','.jpg')))
 
 
 if __name__ == '__main__':
