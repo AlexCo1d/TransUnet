@@ -1,35 +1,16 @@
-# coding=utf-8
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import division, absolute_import, print_function
 
 import copy
-import logging
-import math
 
-from os.path import join as pjoin
-
-import torch
-import torch.nn as nn
+import numpy
 import numpy as np
+import torch
+from torch import nn
+from torch.nn import LayerNorm
 
-from torch.nn import CrossEntropyLoss, Dropout, Softmax, Linear, Conv2d, LayerNorm
-from torch.nn.modules.utils import _pair
-from scipy import ndimage
-from nets import vit_seg_configs as configs
-from nets.transunet_modeling import *
-from nets.vit_seg_modeling_resnet_skip import *
-
-logger = logging.getLogger(__name__)
-
-ATTENTION_Q = "MultiHeadDotProductAttention_1/query"
-ATTENTION_K = "MultiHeadDotProductAttention_1/key"
-ATTENTION_V = "MultiHeadDotProductAttention_1/value"
-ATTENTION_OUT = "MultiHeadDotProductAttention_1/out"
-FC_0 = "MlpBlock_3/Dense_0"
-FC_1 = "MlpBlock_3/Dense_1"
-ATTENTION_NORM = "LayerNorm_0"
-MLP_NORM = "LayerNorm_2"
+from nets.transunet_modeling import DecoderBlock, Conv2dReLU, VisionTransformer, SegmentationHead, Embeddings, Block, \
+    Transformer, Encoder
+from nets.vit_seg_modeling_resnet_skip import ResNetV2_CBAM_4skip, ResNetV2_CBAM, SELayer
 
 
 class SELayer(nn.Module):
@@ -90,63 +71,6 @@ class CBAMLayer(nn.Module):
         # print('x:',x.shape)
         return x
 
-###  CBAM_ASPP和CBAM_Layer的区别是什么
-class CBAM_ASPP(nn.Module):
-    def __init__(self, dim_in, dim_out, atrous_rates=(6, 12, 18), bn_mom=0.1):
-        super().__init__()
-        self.branch1 = nn.Sequential(
-            nn.Conv2d(dim_in, dim_out, 1, 1, padding=0, dilation=1, bias=True),
-            nn.BatchNorm2d(dim_out, momentum=bn_mom),
-            nn.ReLU(inplace=True),
-        )
-        self.branch2 = nn.Sequential(
-            nn.Conv2d(dim_in, dim_out, 3, 1, padding=atrous_rates[0], dilation=atrous_rates[0], bias=True),
-            nn.BatchNorm2d(dim_out, momentum=bn_mom),
-            nn.ReLU(inplace=True),
-        )
-        self.branch3 = nn.Sequential(
-            nn.Conv2d(dim_in, dim_out, 3, 1, padding=atrous_rates[1], dilation=atrous_rates[1], bias=True),
-            nn.BatchNorm2d(dim_out, momentum=bn_mom),
-            nn.ReLU(inplace=True),
-        )
-        self.branch4 = nn.Sequential(
-            nn.Conv2d(dim_in, dim_out, 3, 1, padding=atrous_rates[2], dilation=atrous_rates[2], bias=True),
-            nn.BatchNorm2d(dim_out, momentum=bn_mom),
-            nn.ReLU(inplace=True),
-        )
-        self.branch5_conv = nn.Conv2d(dim_in, dim_out, 1, 1, 0, bias=True)
-        self.branch5_bn = nn.BatchNorm2d(dim_out, momentum=bn_mom)
-        self.branch5_relu = nn.ReLU(inplace=True)
-
-        self.conv_cat = nn.Sequential(
-            nn.Conv2d(dim_out * 5, dim_out, 1, 1, padding=0, bias=True),
-            nn.BatchNorm2d(dim_out, momentum=bn_mom),
-            nn.ReLU(inplace=True),
-        )
-        # print('dim_in:',dim_in)
-        # print('dim_out:',dim_out)
-        self.cbam = CBAMLayer(channel=dim_out * 5)
-
-    def forward(self, x):
-        [b, c, row, col] = x.size()
-        conv1x1 = self.branch1(x)
-        conv3x3_1 = self.branch2(x)
-        conv3x3_2 = self.branch3(x)
-        conv3x3_3 = self.branch4(x)
-        global_feature = torch.mean(x, 2, True)
-        global_feature = torch.mean(global_feature, 3, True)
-        global_feature = self.branch5_conv(global_feature)
-        global_feature = self.branch5_bn(global_feature)
-        global_feature = self.branch5_relu(global_feature)
-        global_feature = F.interpolate(global_feature, (row, col), None, 'bilinear', True)
-
-        feature_cat = torch.cat([conv1x1, conv3x3_1, conv3x3_2, conv3x3_3, global_feature], dim=1)
-        # print('feature:',feature_cat.shape)
-        # 加入cbam注意力机制
-        cbamaspp = self.cbam(feature_cat)
-        result = self.conv_cat(cbamaspp)
-        return result
-
 
 class Embeddings_CBAM(Embeddings):
     """Construct the embeddings from patch, position embeddings.
@@ -162,7 +86,6 @@ class Embeddings_CBAM(Embeddings):
                                               width_factor=config.resnet.width_factor)
 
 
-# not change module, so save here
 class Encoder(nn.Module):
     def __init__(self, config, vis):
         super(Encoder, self).__init__()
@@ -196,7 +119,32 @@ class Transformer_CBAM(Transformer):
         return encoded, attn_weights, features
 
 
-# DecoderBlock_CBAM
+class DecoderBlock_SE(DecoderBlock):
+    def __init__(
+            self,
+            in_channels,
+            out_channels,
+            skip_channels=0,
+            use_batchnorm=True,
+    ):
+        super().__init__(
+            in_channels,
+            out_channels,
+            skip_channels,
+            use_batchnorm)
+
+        self.se = SELayer(out_channels)
+
+    def forward(self, x, skip=None):
+        x = self.up(x)
+        if skip is not None:
+            x = torch.cat([x, skip], dim=1)
+        x = self.conv1(x)
+        x = self.conv2(x)
+        x = self.se(x)
+        return x
+
+
 class DecoderBlock_4skip_CBAM(DecoderBlock):
     def __init__(
             self,
@@ -300,32 +248,6 @@ class DecoderBlock_3skip(DecoderBlock):
         return x
 
 
-class DecoderBlock_SE(DecoderBlock):
-    def __init__(
-            self,
-            in_channels,
-            out_channels,
-            skip_channels=0,
-            use_batchnorm=True,
-    ):
-        super().__init__(
-            in_channels,
-            out_channels,
-            skip_channels,
-            use_batchnorm)
-
-        self.se = SELayer(out_channels)
-
-    def forward(self, x, skip=None):
-        x = self.up(x)
-        if skip is not None:
-            x = torch.cat([x, skip], dim=1)
-        x = self.conv1(x)
-        x = self.conv2(x)
-        x = self.se(x)
-        return x
-
-
 class DecoderCup_3skip(nn.Module):
     def __init__(self, config):
         super().__init__()
@@ -425,7 +347,7 @@ class DecoderCup_4skip(nn.Module):
         return x
 
 
-class DecoderCup_4skip_CBAM_ASPP_CBAM(DecoderCup_4skip):
+class DecoderCup_4skip_CBAM(DecoderCup_4skip):
     def __init__(self, config):
         super().__init__(config)
         head_channels = config.skip_channels[0]  # 512
@@ -451,7 +373,6 @@ class DecoderCup_4skip_CBAM_ASPP_CBAM(DecoderCup_4skip):
         #     zip(in_channels, out_channels, skip_channels)
         # ]
         self.blocks = nn.ModuleList(blocks)
-        self.cbam_aspp = CBAM_ASPP(head_channels, head_channels)
 
     def forward(self, hidden_states, features=None):
         # for f in range(len(features)):
@@ -465,7 +386,6 @@ class DecoderCup_4skip_CBAM_ASPP_CBAM(DecoderCup_4skip):
         x = hidden_states.permute(0, 2, 1)
         x = x.contiguous().view(B, hidden, h, w)
         x = self.conv_more(x)
-        x = self.cbam_aspp(x)
 
         for i, decoder_block in enumerate(self.blocks):
             if features is not None:
@@ -477,7 +397,7 @@ class DecoderCup_4skip_CBAM_ASPP_CBAM(DecoderCup_4skip):
         return x
 
 
-class DecoderCup_3skip_CBAM_ASPP_CBAM(DecoderCup_3skip):
+class DecoderCup_3skip_CBAM(DecoderCup_3skip):
     def __init__(self, config):
         super().__init__(config)
         head_channels = 512
@@ -494,7 +414,6 @@ class DecoderCup_3skip_CBAM_ASPP_CBAM(DecoderCup_3skip):
             zip(in_channels, out_channels, skip_channels)
         ]
         self.blocks = nn.ModuleList(blocks)
-        self.cbam_aspp = ASPP(head_channels, head_channels)
 
     def forward(self, hidden_states, features=None):
         B, n_patch, hidden = hidden_states.size()  # reshape from (B, n_patch, hidden) to (B, h, w, hidden)
@@ -506,7 +425,6 @@ class DecoderCup_3skip_CBAM_ASPP_CBAM(DecoderCup_3skip):
         x = hidden_states.permute(0, 2, 1)
         x = x.contiguous().view(B, hidden, h, w)
         x = self.conv_more(x)
-        x = self.cbam_aspp(x)
 
         for i, decoder_block in enumerate(self.blocks):
             if features is not None:
@@ -549,7 +467,7 @@ class Vit_CBAM(VisionTransformer):
         return logits
 
 
-class Vit_CBAM_ASPP(VisionTransformer):
+class Vit_CBAM_CBAM(VisionTransformer):
     def __init__(self, config, img_size=256, num_classes=21843, zero_head=False, vis=False, cgm=True):
         super().__init__(config, img_size, num_classes, zero_head, vis, )
         self.num_classes = num_classes
@@ -557,9 +475,9 @@ class Vit_CBAM_ASPP(VisionTransformer):
         self.classifier = config.classifier
         self.transformer = Transformer_CBAM(config, img_size, vis)
         if config.n_skip == 3:
-            self.decoder = DecoderCup_3skip_CBAM_ASPP_CBAM(config)
+            self.decoder = DecoderCup_3skip_CBAM(config)
         else:
-            self.decoder = DecoderCup_4skip_CBAM_ASPP_CBAM(config)
+            self.decoder = DecoderCup_4skip_CBAM(config)
         self.segmentation_head = SegmentationHead(
             in_channels=16,
             out_channels=config['n_classes'],

@@ -16,7 +16,7 @@ import os
 from utils.visualization import blend_images
 
 
-class uNet(object):
+class network(object):
     # -----------------------------------------#
     #   注意修改model_path、num_classes
     #   使其符合自己的模型

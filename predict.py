@@ -45,8 +45,8 @@ type = config.image_type
 
 
 def show_image():
-    from unet import uNet
-    uNet = uNet()
+    from Network import network
+    uNet = network()
     uNet.net.eval()
 
     with open(txt_path, "r") as file:
@@ -64,7 +64,7 @@ def show_image():
 
 
 def predict_and_eval():
-    from unet import uNet
+    from Network import network
     label_all = []
     predict_all = []
 
@@ -72,7 +72,7 @@ def predict_and_eval():
         if not os.path.exists(f'pr_dir/fold_{fold+1}'):
             os.mkdir(f'pr_dir/fold_{fold+1}')
 
-        unet = uNet(fold=fold)
+        unet = network(fold=fold)
         unet.net.eval()
         with open(txt_path+f'_{fold+1}.txt', "r") as file:
             lines = file.readlines()

@@ -1,4 +1,4 @@
-from unet import uNet as psp
+from Network import network as psp
 from torch import nn
 from PIL import Image
 from torch.autograd import Variable
