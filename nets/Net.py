@@ -4,7 +4,7 @@ import functools
 import torch.nn.functional as F
 
 from nets.vit_cbam_aspp_modeling import Vit_CBAM, Vit_CBAM_ASPP
-from nets.vit_cbam_modeling import Vit_CBAM
+from nets.vit_cbam_modeling import Vit_CBAM, Vit_CBAM_CBAM
 from .transunet_modeling import VisionTransformer as ViT_seg
 from .transunet_modeling import CONFIGS as CONFIGS_ViT_seg
 from train_config import config
