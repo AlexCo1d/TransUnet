@@ -27,6 +27,7 @@ class BaseConfig:
     #   1: BASIC(defaultTransUnet)
     #   2: Vit_CBAM_ASPP
     #   3: Vit_CBAM
+    #   4：Vit_CBAM_CBAM(w/o ASPP)
     # -------------------------------#
     # (focal or ce) + dice
     focal_loss = True
