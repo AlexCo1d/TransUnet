@@ -59,7 +59,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
     start_time = time.time()
 
     if local_rank == 0:
-        print(f'Start Train, Fold:{fold+1}')
+        print(f'Start Train, Fold:{fold + 1}')
         pbar = tqdm(total=epoch_size, desc=f'Epoch {epoch + 1}/{Epoch}', postfix=dict, mininterval=0.3)
 
     model_train.train()
@@ -142,7 +142,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
     if local_rank == 0:
         pbar.close()
         print('Finish Train')
-        print(f'Start Validation, Fold:{fold+1}')
+        print(f'Start Validation, Fold:{fold + 1}')
         pbar = tqdm(total=epoch_size_val, desc=f'Epoch {epoch + 1}/{Epoch}', postfix=dict, mininterval=0.3)
 
     model_train.eval()
@@ -211,11 +211,11 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_size
         # -----------------------------------------------#
         if (epoch + 1) % 10 == 0 or epoch + 1 == Epoch:
             torch.save(model.state_dict(), os.path.join(save_dir, 'ep%03d-loss%.3f-val_loss%.3f-fold%s.pth' % (
-                (epoch + 1), total_loss / epoch_size, val_toal_loss / epoch_size_val, fold+1)))
+                (epoch + 1), total_loss / epoch_size, val_toal_loss / epoch_size_val, fold + 1)))
 
         if len(loss_history.val_loss) <= 1 or (val_toal_loss / epoch_size_val) <= min(loss_history.val_loss):
             print('Save best model to best_epoch_weights.pth')
-            torch.save(model.state_dict(), os.path.join(save_dir, f"best_epoch_weights_fold_{fold+1}.pth"))
+            torch.save(model.state_dict(), os.path.join(save_dir, f"best_epoch_weights_fold_{fold + 1}.pth"))
 
         torch.save(model.state_dict(), os.path.join(save_dir, "last_epoch_weights.pth"))
     # print('Finish Validation')
@@ -319,7 +319,9 @@ if __name__ == "__main__":
     #                       整体交叉训练的训练的循环：
     # ------------------------------------------------------#
     # ------------------------------------------------------#
-    for fold in range(config.n_fold if config.n_fold>=1 else 1):
+    assert config.cur_fold<config.n_fold
+    fold = config.cur_fold if config.cur_fold != -1 else 0
+    while fold < config.n_fold:
 
         # -------------------------------------------#
         # 得到model,并进行初始化，可以选择!
@@ -538,6 +540,10 @@ if __name__ == "__main__":
                     dist.barrier()
             if local_rank == 0:
                 loss_history.writer.close()
+
+        fold += 1
+        if config.cur_fold != -1:
+            break
 
     # if True:
     #     lr = 1e-5

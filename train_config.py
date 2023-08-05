@@ -4,8 +4,11 @@ class BaseConfig:
     # ---------------------#
     #   if n_fold=1 then all train, if other divide the dataset into n part, using cross validation
     #   建议为5，大数据集可以为10
+    #   cur_fold represent the fold that been training, if cur_fold=-1, then train all folds.
     # ---------------------#
     n_fold = 5
+    cur_fold=-1
+    # ---------
     log_dir = "logs/"
     # ---------------------#
     #   分类个数+1
@@ -80,11 +83,11 @@ class BaseConfig:
     # ----------------------#
     save_dir = 'logs'
     Init_Epoch = 0
-    Interval_Epoch = 150
+    Interval_Epoch = 300
     # 设置冻结的epoch
     Freeze_Epoch = 40
     Freeze_Batch_Size = 2
-    set_epoch_batch = [250, 1]
+    set_epoch_batch = [500, 1]
     # --------------#
     # BATCH_SIZE
     # --------------#
