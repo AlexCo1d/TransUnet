@@ -387,8 +387,8 @@ if __name__ == '__main__':
         description="use for set the predict and label to get metrics, you must have a VOC dataset "
                     "first! type predict path first， if use cross validation plz designate one then")
     # 添加参数
-    parser.add_argument('--predictPath', type=str, default=r"pr_dir", help='dir for predicted label')
-    parser.add_argument('--labelPath', type=str, default='./VOCdevkit/VOC2007/SegmentationClass', help='dir for '
+    parser.add_argument("-p", '--predictPath', type=str, default=r"pr_dir", help='dir for predicted label')
+    parser.add_argument('-l', '--labelPath', type=str, default='./VOCdevkit/VOC2007/SegmentationClass', help='dir for '
                                                                                                        'ground truth '
                                                                                                        'label')
     parser.add_argument('--fold', type=int, default=-1, )
